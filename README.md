@@ -1,5 +1,17 @@
 # canvas-select 标注插件
 
+## 快捷键
+
+`shift`+`Backspace` 删除选中矩形
+
+`shift`+`ArrowDown` 下移选中矩形
+
+`shift`+`ArrowUp` 上移选中矩形
+
+`shift`+`ArrowLeft` 左移选中矩形
+
+`shift`+`ArrowRight` 右移选中矩形
+
 ```html
 <body>
   <div class="container"></div>
@@ -9,14 +21,14 @@
   const canvasSelect = new CanvasSelect(".container");
   canvasSelect.setData([
     {
-      name: "火车",
+      label: "火车",
       coor: [
         [10, 10],
         [100, 100],
       ],
     },
     {
-      name: "房屋",
+      label: "房屋",
       coor: [
         [20, 20],
         [300, 80],
@@ -30,7 +42,7 @@
     console.log("select", info);
     // 添加label
     // window.target = info;
-    // window.target.name="新label"
+    // window.target.label="新label"
     // canvasSelect.update()
   });
   canvasSelect.on("error", function (info) {

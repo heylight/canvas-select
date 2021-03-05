@@ -1,6 +1,6 @@
 type Coordinate = number[][]
 interface ShapeData {
-  name: string
+  label: string
   active?: boolean
   creating?: boolean
   dragging?: boolean
@@ -78,7 +78,7 @@ class CanvasSelect {
       this.remmber.left = e.offsetX
       this.remmber.top = e.offsetY
       this.dataset.push(this.parseData({
-        name: '',
+        label: '',
         coor: [[e.offsetX, e.offsetY], [e.offsetX, e.offsetY]],
         creating: true,
       }, this.dataset.length))
@@ -222,7 +222,7 @@ class CanvasSelect {
     return []
   }
   get data() {
-    return this.dataset.map(({ name, coor }) => ({ name, coor }))
+    return this.dataset.map(({ label, coor }) => ({ label, coor }))
   }
   /**
    * 判断是否在矩形内
@@ -266,9 +266,9 @@ class CanvasSelect {
    * @param item 要转化的数据
    */
   parseData(item: object, index: number): ShapeData {
-    const { name, coor, creating } = this.deepCopy(item)
+    const { label, coor, creating } = this.deepCopy(item)
     return {
-      name,
+      label,
       index,
       active: false,
       creating: Boolean(creating),
@@ -296,7 +296,7 @@ class CanvasSelect {
     this.ctx.strokeStyle = (item.active || item.creating) ? this.activeStrokeStyle : this.strokeStyle
     this.ctx.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1])
     this.ctx.restore()
-    this.drawLabel(a, item.name)
+    this.drawLabel(a, item.label)
   }
   // 绘制label
   drawLabel(point: number[], str: string) {

@@ -1,6 +1,6 @@
 declare type Coordinate = number[][];
 interface ShapeData {
-    name: string;
+    label: string;
     active?: boolean;
     creating?: boolean;
     dragging?: boolean;
@@ -37,7 +37,7 @@ declare class CanvasSelect {
     get createShapeData(): ShapeData;
     get ctrlsData(): number[][];
     get data(): {
-        name: string;
+        label: string;
         coor: Coordinate;
     }[];
     /**
