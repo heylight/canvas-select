@@ -16,6 +16,10 @@
 
 ## 使用
 
+```
+npm i canvas-select
+```
+
 ```html
 <body>
   <div class="container"></div>
