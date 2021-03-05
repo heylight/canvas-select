@@ -12,6 +12,8 @@
 
 `shift`+`ArrowRight` 右移选中矩形
 
+## 使用
+
 ```html
 <body>
   <div class="container"></div>
