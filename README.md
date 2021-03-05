@@ -1,5 +1,7 @@
 # canvas-select 标注插件
 
+使用 canvas 图形标注
+
 ## 快捷键
 
 `shift`+`Backspace` 删除选中矩形
