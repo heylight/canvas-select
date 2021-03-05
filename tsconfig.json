@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "downlevelIteration": true,
+    "lib": ["ES6", "DOM"],
+    "module": "es6",
+    "target": "es5",
+    "allowJs": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "experimentalDecorators": true,
+    "declaration": true
+  },
+  "include": ["src/**/*"]
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>例子</title>
+    <style>
+      .container {
+        width: 500px;
+        height: 500px;
+        background-color: #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container"></div>
+  </body>
+  <script src="../lib/canvas-select.min.js"></script>
+  <script>
+    const canvasSelect = new CanvasSelect(".container");
+    canvasSelect.setData([
+      {
+        name: "火车",
+        coor: [
+          [10, 10],
+          [100, 100],
+        ],
+      },
+      {
+        name: "房屋",
+        coor: [
+          [20, 20],
+          [300, 80],
+        ],
+      },
+    ]);
+    canvasSelect.on("delete", function (info) {
+      console.log("delete", info);
+    });
+    canvasSelect.on("select", function (info) {
+      console.log("select", info);
+      window.target = info;
+    });
+    canvasSelect.on("error", function (info) {
+      console.log("error", info);
+    });
+    canvasSelect.on("update", function (info) {
+      console.log("update", info);
+    });
+  </script>
+</html>
