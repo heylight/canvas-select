@@ -167,9 +167,10 @@ class CanvasSelect {
         let index = this.dataset.findIndex(x => x.active)
         let item = this.dataset.find(x => x.active)
         if (item) {
-          this.dataset.splice(index, 1)
-          this.update()
           this.emit('delete', item)
+          this.dataset.splice(index, 1)
+          this.dataset.forEach((item, i) => item.index = i)
+          this.update()
         }
       }
     })
@@ -338,6 +339,7 @@ class CanvasSelect {
     if (num > -1) {
       this.emit('delete', this.dataset[num])
       this.dataset.splice(num, 1)
+      this.dataset.forEach((item, i) => item.index = i)
       this.update()
     }
   }
