@@ -301,7 +301,7 @@ class CanvasSelect {
   // 绘制label
   drawLabel(point: number[], str: string) {
     if (str.length) {
-      let newStr = str.length < 5 ? str : (str.substr(0, 5) + '...')
+      let newStr = str.length < 5 ? str : (str.substr(0, 4) + '...')
       let text = this.ctx.measureText(newStr)
       this.ctx.save()
       this.ctx.fillStyle = '#fff'
