@@ -4,6 +4,7 @@ interface ShapeData {
     active?: boolean;
     creating?: boolean;
     dragging?: boolean;
+    uuid?: string;
     coor: Coordinate;
     index: number;
     width: number;
@@ -40,6 +41,11 @@ declare class CanvasSelect {
         label: string;
         coor: Coordinate;
     }[];
+    /**
+     * 生成uuid
+     * @returns
+     */
+    static createUuid(): string;
     /**
      * 判断是否在矩形内
      * @param point 点击坐标

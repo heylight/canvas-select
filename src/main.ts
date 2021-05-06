@@ -4,6 +4,7 @@ interface ShapeData {
   active?: boolean
   creating?: boolean
   dragging?: boolean
+  uuid?: string
   coor: Coordinate
   index: number
   width: number
@@ -160,6 +161,7 @@ class CanvasSelect {
         else {
           const [[x0, y0], [x1, y1]] = creator.coor
           creator.coor = [[Math.min(x0, x1), Math.min(y0, y1)], [Math.max(x0, x1), Math.max(y0, y1)]]
+          creator.uuid = CanvasSelect.createUuid()
           this.emit('add', creator)
         }
       }
@@ -228,6 +230,22 @@ class CanvasSelect {
     return this.dataset.map(({ label, coor }) => ({ label, coor }))
   }
   /**
+   * 生成uuid
+   * @returns 
+   */
+  static createUuid(): string {
+    const s: any[] = [];
+    const hexDigits = "0123456789abcdef";
+    for (let i = 0; i < 36; i++) {
+      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+    }
+    s[14] = "4";
+    s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);
+    s[8] = s[13] = s[18] = s[23] = "-";
+    const uuid = s.join("");
+    return uuid;
+  }
+  /**
    * 判断是否在矩形内
    * @param point 点击坐标
    * @param area 目标区域
@@ -269,13 +287,14 @@ class CanvasSelect {
    * @param item 要转化的数据
    */
   parseData(item: object, index: number): ShapeData {
-    const { label, coor, creating } = this.deepCopy(item)
+    const { label, coor, creating, uuid } = this.deepCopy(item)
     return {
       label,
       index,
       active: false,
       creating: Boolean(creating),
       coor,
+      uuid: uuid || CanvasSelect.createUuid(),
       get width() {
         return this.coor[1][0] - this.coor[0][0]
       },
