@@ -4,6 +4,7 @@ interface ShapeData {
   active?: boolean
   creating?: boolean
   dragging?: boolean
+  uuid?: string
   coor: Coordinate
   index: number
   width: number
@@ -267,13 +268,14 @@ class CanvasSelect {
    * @param item 要转化的数据
    */
   parseData(item: object, index: number): ShapeData {
-    const { label, coor, creating } = this.deepCopy(item)
+    const { label, coor, creating, uuid } = this.deepCopy(item)
     return {
       label,
       index,
       active: false,
       creating: Boolean(creating),
       coor,
+      uuid,
       get width() {
         return this.coor[1][0] - this.coor[0][0]
       },
