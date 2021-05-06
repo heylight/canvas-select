@@ -4,7 +4,6 @@ interface ShapeData {
   active?: boolean
   creating?: boolean
   dragging?: boolean
-  uuid?: string
   coor: Coordinate
   index: number
   width: number
@@ -124,6 +123,7 @@ class CanvasSelect {
           let [[a0, b0], [a1, b1]] = coor
           if ((a1 - a0) >= this.MIN_WIDTH && (b1 - b0) >= this.MIN_HEIGHT) {
             this.activeShapeData.coor = coor
+            this.emit('resize', this.activeShapeData)
           } else {
             this.emit('error', `宽不能小于${this.MIN_WIDTH},高不能小于${this.MIN_HEIGHT}`)
           }
@@ -134,6 +134,7 @@ class CanvasSelect {
             let newStart = [e.offsetX - left, e.offsetY - top]
             let newEnd = [e.offsetX + right, e.offsetY + bottom]
             this.activeShapeData.coor = [newStart, newEnd]
+            this.emit('move', this.activeShapeData)
           }
         } else if (this.createShapeData) {
           // 创建矩形
@@ -159,7 +160,7 @@ class CanvasSelect {
         else {
           const [[x0, y0], [x1, y1]] = creator.coor
           creator.coor = [[Math.min(x0, x1), Math.min(y0, y1)], [Math.max(x0, x1), Math.max(y0, y1)]]
-          this.emit('update', creator)
+          this.emit('add', creator)
         }
       }
     })
@@ -268,14 +269,13 @@ class CanvasSelect {
    * @param item 要转化的数据
    */
   parseData(item: object, index: number): ShapeData {
-    const { label, coor, creating, uuid } = this.deepCopy(item)
+    const { label, coor, creating } = this.deepCopy(item)
     return {
       label,
       index,
       active: false,
       creating: Boolean(creating),
       coor,
-      uuid,
       get width() {
         return this.coor[1][0] - this.coor[0][0]
       },
@@ -334,6 +334,7 @@ class CanvasSelect {
     this.clear()
     this.dataset.forEach(item => this.drawShape(item))
     this.ctrlsData.forEach(item => this.drawCircle(item))
+    this.emit('update', this.dataset)
   }
   // 删除指定矩形
   deleteByIndex(index: number) {
