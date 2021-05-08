@@ -12,8 +12,11 @@
   </head>
   <body>
     <canvas width="500" height="500" class="container"></canvas>
-    <button onclick="changeRect()">矩形</button>
-    <button onclick="changePolygon()">多边形</button>
+    <div>
+      <button onclick="change(1)">矩形</button>
+      <button onclick="change(2)">多边形</button>
+      <button onclick="change(0)">取消</button>
+    </div>
   </body>
   <script src="./canvas-select.min.js"></script>
   <script>
@@ -63,13 +66,10 @@
     canvasSelect.on("resize", function (info) {
       console.log("resize", info);
     });
-    function changeRect() {
-      canvasSelect.createType = 1;
+    function change(num) {
+      canvasSelect.createType = num;
       console.log(canvasSelect.createType);
     }
-    function changePolygon() {
-      canvasSelect.createType = 2;
-      console.log(canvasSelect.createType);
-    }
+    
   </script>
 </html>
