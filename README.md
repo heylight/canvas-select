@@ -13,7 +13,9 @@
 
 4. 实例化插件。
 
+
 可对instance.canvas监听事件，根据使用场景进一步扩展方法。
+
 ```
 npm i canvas-select
 ```

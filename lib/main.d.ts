@@ -21,6 +21,7 @@ declare class CanvasSelect {
     movePoint: Point;
     createType: number;
     ctrlIndex: number;
+    cursor: string;
     constructor(el: HTMLCanvasElement | string);
     setData(data: Array<Rect | Polygon>): void;
     get activeShape(): Rect | Polygon;

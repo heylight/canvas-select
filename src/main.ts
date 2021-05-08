@@ -41,6 +41,8 @@ class CanvasSelect {
 
   ctrlIndex: number = -1
 
+  cursor:string='auto'
+
   constructor(el: HTMLCanvasElement | string) {
     const container = typeof el === 'string' ? document.querySelector(el) : el;
     if (Object.prototype.toString.call(container).includes('HTMLCanvasElement')) {
@@ -160,8 +162,13 @@ class CanvasSelect {
       this.update();
     });
     this.canvas.addEventListener('mousemove', (e: MouseEvent) => {
-      const hoverShape = this.dataset.find((shape) => this.isPointInArea([e.offsetX, e.offsetY], shape));
-      this.canvas.style.cursor = hoverShape ? 'move' : 'auto';
+      const hoverShape = this.activeShape && this.isPointInArea([e.offsetX, e.offsetY], this.activeShape);
+      const nowcursor = hoverShape ? 'move' : 'auto';
+      if (this.cursor !== nowcursor) {
+        this.cursor = nowcursor;
+        this.canvas.style.cursor = nowcursor;
+      }
+      this.movePoint = [e.offsetX, e.offsetY];
       if (e.buttons === 1) {
         if (this.ctrlIndex > -1) {
           this.emit('resize', this.activeShape);
@@ -207,6 +214,7 @@ class CanvasSelect {
           } else if (this.activeShape.type === 2) {
             this.activeShape.coor.splice(this.ctrlIndex, 1, [e.offsetX, e.offsetY]);
           }
+          this.update();
         } else if (this.activeShape && this.activeShape.dragging) {
           // 拖动
           const coor: Point[] = [];
@@ -217,15 +225,15 @@ class CanvasSelect {
             coor.push([x, y]);
           }
           this.activeShape.coor = coor;
+          this.update();
         } else if (this.createShape) {
           // 创建状态
           if (this.createShape.type === 1) {
             this.createShape.coor.splice(1, 1, [e.offsetX, e.offsetY]);
           }
+          this.update();
         }
       }
-      this.movePoint = [e.offsetX, e.offsetY];
-      this.update();
     });
     this.canvas.addEventListener('mouseup', () => {
       if (this.createShape) {
