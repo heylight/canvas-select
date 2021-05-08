@@ -5,7 +5,8 @@
   "main": "lib/canvas-select.min.js",
   "scripts": {
     "watch": "rollup -c -w",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "dev": "cd lib&&live-server"
   },
   "keywords": [
     "canvas",

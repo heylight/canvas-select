@@ -1,38 +1,6 @@
-interface BaseShape {
-    label: string;
-    type: number;
-    active: boolean;
-    creating?: boolean;
-    dragging?: boolean;
-    index: number;
-    uuid: string;
-}
-declare type Point = [number, number];
-declare class Rect implements BaseShape {
-    index: number;
-    label: string;
-    type: number;
-    active: boolean;
-    creating: boolean;
-    dragging: boolean;
-    coor: Point[];
-    constructor(coor: Point[], index: number);
-    uuid: string;
-    get ctrlsData(): number[][];
-}
-declare class Polygon implements BaseShape {
-    index: number;
-    label: string;
-    type: number;
-    active: boolean;
-    creating: boolean;
-    dragging: boolean;
-    finish?: boolean;
-    coor: Point[];
-    constructor(coor: Point[], index: number);
-    uuid: string;
-    get ctrlsData(): Point[];
-}
+import Rect from './Rect';
+import Polygon from './Polygon';
+import { Point } from './Types';
 declare class CanvasSelect {
     MIN_WIDTH: number;
     MIN_HEIGHT: number;
@@ -85,7 +53,7 @@ declare class CanvasSelect {
      * @param point 位置
      * @param str 文本
      */
-    drawLabel(point: Point, str: string): void;
+    drawLabel(point: Point, label: string): void;
     deleteByIndex(index: number): void;
     /**
      * 注册事件

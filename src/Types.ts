@@ -1,5 +1,5 @@
 export interface BaseShape {
-    label: string
+    label?: string
     type: number // 形状
     active: boolean
     creating?: boolean

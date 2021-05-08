@@ -3,7 +3,7 @@ import { BaseShape, Point } from './Types';
 export default class Rect implements BaseShape {
     index: number
 
-    label: string = ''
+    label:string=''
 
     type: number = 1
 

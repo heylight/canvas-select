@@ -37,9 +37,7 @@
           [50, 200],
         ],
       },
-      ,
       {
-        label: "老虎",
         type: 2,
         coor: [
           [230, 150],
@@ -58,8 +56,8 @@
       console.log("add", info);
     });
     // data更新
-    canvasSelect.on("update", function (info) {
-      console.log("update", info);
+    canvasSelect.on("update", function () {
+      console.log("update");
     });
     // resize
     canvasSelect.on("resize", function (info) {

@@ -37,7 +37,7 @@ class CanvasSelect {
 
   movePoint: Point
 
-  createType: number = 1 // 0 不创建，1 创建矩形，2 创建多边形
+  createType: number = 0 // 0 不创建，1 创建矩形，2 创建多边形
 
   ctrlIndex: number = -1
 
@@ -64,16 +64,18 @@ class CanvasSelect {
         label, type, coor, uuid,
       } = item;
       let shape: (Rect | Polygon);
-      if (type > 0) {
+      if (typeof type === 'number' && type > 0) {
         if (type === 1 && coor.length === 2) {
           shape = new Rect(coor, index);
         }
         if (type === 2 && coor.length > 2) {
           shape = new Polygon(coor, index);
         }
-        shape.label = label;
+        shape.label = (label || '').toString();
         shape.uuid = uuid || CanvasSelect.createUuid();
         this.dataset.push(shape);
+      } else {
+        this.emit('error', 'type is invalidated');
       }
     });
     this.update();
@@ -240,6 +242,7 @@ class CanvasSelect {
         }
       }
       this.update();
+      this.emit('update');
     });
     this.canvas.addEventListener('dblclick', () => {
       if (this.createShape && this.createShape.type === 2) {
@@ -386,9 +389,9 @@ class CanvasSelect {
    * @param point 位置
    * @param str 文本
    */
-  drawLabel(point: Point, str: string) {
-    if (str.length) {
-      const newStr = str.length < 5 ? str : (`${str.substr(0, 4)}...`);
+  drawLabel(point: Point, label: string) {
+    if (label.length) {
+      const newStr = label.length < 5 ? label : (`${label.substr(0, 4)}...`);
       const text = this.ctx.measureText(newStr);
       this.ctx.save();
       this.ctx.fillStyle = '#fff';
