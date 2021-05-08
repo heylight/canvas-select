@@ -1,84 +1,91 @@
-declare type Coordinate = number[][];
-interface ShapeData {
+interface BaseShape {
     label: string;
-    active?: boolean;
+    type: number;
+    active: boolean;
     creating?: boolean;
     dragging?: boolean;
-    uuid?: string;
-    coor: Coordinate;
     index: number;
-    width: number;
-    height: number;
+    uuid: string;
 }
-interface Remmber {
-    left: number;
-    top: number;
-    right?: number;
-    bottom?: number;
+declare type Point = [number, number];
+declare class Rect implements BaseShape {
+    index: number;
+    label: string;
+    type: number;
+    active: boolean;
+    creating: boolean;
+    dragging: boolean;
+    coor: Point[];
+    constructor(coor: Point[], index: number);
+    uuid: string;
+    get ctrlsData(): number[][];
+}
+declare class Polygon implements BaseShape {
+    index: number;
+    label: string;
+    type: number;
+    active: boolean;
+    creating: boolean;
+    dragging: boolean;
+    finish?: boolean;
+    coor: Point[];
+    constructor(coor: Point[], index: number);
+    uuid: string;
+    get ctrlsData(): Point[];
 }
 declare class CanvasSelect {
     MIN_WIDTH: number;
     MIN_HEIGHT: number;
     CTRL_R: number;
-    EventList: [];
-    width: number;
-    height: number;
-    strokeStyle: string;
     activeStrokeStyle: string;
+    activeFillStyle: string;
+    strokeStyle: string;
+    fillStyle: string;
+    EventList: [];
+    WIDTH: number;
+    HEIGHT: number;
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    container: HTMLElement;
-    dataset: ShapeData[];
+    dataset: Array<Rect | Polygon>;
     offlineCanvas: HTMLCanvasElement;
     offlineCtx: CanvasRenderingContext2D;
-    remmber: Remmber;
+    remmber: number[][];
+    movePoint: Point;
+    createType: number;
     ctrlIndex: number;
-    constructor(el: string);
-    get activeShapeData(): ShapeData;
-    get createShapeData(): ShapeData;
-    get ctrlsData(): number[][];
-    get data(): {
-        label: string;
-        coor: Coordinate;
-    }[];
+    constructor(el: HTMLCanvasElement | string);
+    setData(data: Array<Rect | Polygon>): void;
+    get activeShape(): Rect | Polygon;
+    get createShape(): Rect | Polygon;
     /**
      * 生成uuid
      * @returns
      */
     static createUuid(): string;
+    init(): void;
     /**
-     * 判断是否在矩形内
-     * @param point 点击坐标
-     * @param area 目标区域
-     */
-    isPointInArea(point: number[], area: number[][]): boolean;
+    * 判断是否在矩形内
+    * @param point 点击坐标
+    * @param area 目标区域
+    */
+    isPointInArea(point: Point, shape: (Rect | Polygon)): boolean;
     /**
      * 判断是否在控制点内
      * @param point 点击坐标
      * @param area 目标区域
      */
     isPointInCtrl(point: number[], area: number[]): boolean;
-    /**
-     * 设置初始画布
-     * @param data 初始化数据
-     */
-    setData(data: object[]): void;
-    /**
-     * 数据转换
-     * @param item 要转化的数据
-     */
-    parseData(item: object, index: number): ShapeData;
-    /**
-     * 深拷贝
-     * @param obj 对象
-     * @returns object
-     */
-    deepCopy(obj: object): any;
-    drawShape(item: ShapeData): void;
-    drawLabel(point: number[], str: string): void;
-    drawCircle(item: number[]): void;
     clear(): void;
     update(): void;
+    drawRect(shape: Rect): void;
+    drawPolygon(shape: Polygon): void;
+    drawCtrls(point: Point): void;
+    /**
+     * 绘制label
+     * @param point 位置
+     * @param str 文本
+     */
+    drawLabel(point: Point, str: string): void;
     deleteByIndex(index: number): void;
     /**
      * 注册事件

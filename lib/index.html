@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>例子</title>
+    <style>
+      .container {
+        background-color: #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="500" height="500" class="container"></canvas>
+    <button onclick="changeRect()">矩形</button>
+    <button onclick="changePolygon()">多边形</button>
+  </body>
+  <script src="./canvas-select.min.js"></script>
+  <script>
+    const canvasSelect = new CanvasSelect(".container");
+    window.canvasSelect = canvasSelect;
+    canvasSelect.setData([
+      {
+        label: "你好",
+        type: 1,
+        coor: [
+          [10, 10],
+          [100, 100],
+        ],
+      },
+      {
+        label: "世界",
+        type: 2,
+        coor: [
+          [30, 150],
+          [120, 100],
+          [50, 200],
+        ],
+      },
+      ,
+      {
+        label: "老虎",
+        type: 2,
+        coor: [
+          [230, 150],
+          [320, 100],
+          [250, 200],
+        ],
+      },
+    ]);
+    // 选中
+    canvasSelect.on("select", (info) => {
+      console.log("select", info);
+      window.info = info;
+    });
+    // 添加
+    canvasSelect.on("add", (info) => {
+      console.log("add", info);
+    });
+    // data更新
+    canvasSelect.on("update", function (info) {
+      console.log("update", info);
+    });
+    // resize
+    canvasSelect.on("resize", function (info) {
+      console.log("resize", info);
+    });
+    function changeRect() {
+      canvasSelect.createType = 1;
+      console.log(canvasSelect.createType);
+    }
+    function changePolygon() {
+      canvasSelect.createType = 2;
+      console.log(canvasSelect.createType);
+    }
+  </script>
+</html>

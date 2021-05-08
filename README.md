@@ -43,11 +43,9 @@ npm i canvas-select
       ],
     },
   ]);
-  // 删除选中
   canvasSelect.on("delete", function (info) {
     console.log("delete", info);
   });
-  // 选中
   canvasSelect.on("select", function (info) {
     console.log("select", info);
     // 添加label
@@ -55,21 +53,11 @@ npm i canvas-select
     // window.target.label="新label"
     // canvasSelect.update()
   });
-  // 报错
   canvasSelect.on("error", function (info) {
     console.log("error", info);
   });
-  // 添加
-  canvasSelect.on("add", function (info) {
-    console.log("add", info);
-  });
-  // data更新
   canvasSelect.on("update", function (info) {
     console.log("update", info);
-  });
-  // resize
-  canvasSelect.on("resize", function (info) {
-    console.log("resize", info);
   });
 </script>
 ```

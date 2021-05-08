@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "1.1.0",
+  "version": "1.0.3",
   "description": "",
   "main": "lib/canvas-select.min.js",
   "scripts": {
@@ -8,7 +8,10 @@
     "build": "rollup -c"
   },
   "keywords": [
-    "mark"
+    "canvas",
+    "marker",
+    "select",
+    "标注"
   ],
   "author": "heylight",
   "license": "ISC",
