@@ -1,9 +1,19 @@
 # canvas-select 标注插件
 
-常用于AI图片标注，视频帧标注
+>用于AI平台图片标注，视频帧标注等。
 
 ## 使用
+为了提高绘制性能，使用该插件需要对标注图片与canvas进行定位布局。
 
+1. 等待图片img标签加载(onload)完成,获取图片的实际width,height，
+
+2. 设置canvas的width,height与图片相同，
+
+3. 将canvas标签定位到图片正上方，
+
+4. 实例化插件。
+
+可对instance.canvas监听事件，根据使用场景进一步扩展方法。
 ```
 npm i canvas-select
 ```
