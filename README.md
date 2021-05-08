@@ -12,7 +12,15 @@ npm i canvas-select
 ```
 ```js
    const instance = new CanvasSelect(".container");
-    instance.setData([
+  // 实例对象属性可自定义
+  // instance.MIN_WIDTH = 10 // 框选最小宽度
+  // instance.MIN_HEIGHT = 10 // 框选最小高度
+  // instance.CTRL_R = 5 // 控制点半径
+  // instance.activeStrokeStyle = '#f00'
+  // instance.activeFillStyle = 'rgba(255, 0, 0,0.1)'
+  // instance.strokeStyle = 'rgba(0, 0, 255)'
+  // instance.fillStyle = 'rgba(0, 0, 255,0.1)'
+  let option=[
       {
         label: "你好", // label (非必填)
         type: 1, // 矩形 （必填）
@@ -39,7 +47,8 @@ npm i canvas-select
           [250, 200],
         ],
       },
-    ]);
+    ]
+    instance.setData(option);
     // 0 不创建，1创建矩形，2创建多边形
     instance.createType = 1
     // 选中
