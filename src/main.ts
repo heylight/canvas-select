@@ -162,12 +162,12 @@ class CanvasSelect {
       this.update();
     });
     this.canvas.addEventListener('mousemove', (e: MouseEvent) => {
-      const hoverShape = this.activeShape && this.isPointInArea([e.offsetX, e.offsetY], this.activeShape);
-      const nowcursor = hoverShape ? 'move' : 'auto';
-      if (this.cursor !== nowcursor) {
-        this.cursor = nowcursor;
-        this.canvas.style.cursor = nowcursor;
-      }
+      // const hoverShape = this.activeShape && this.isPointInArea([e.offsetX, e.offsetY], this.activeShape);
+      // const nowcursor = hoverShape ? 'move' : 'auto';
+      // if (this.cursor !== nowcursor) {
+      //   this.cursor = nowcursor;
+      //   this.canvas.style.cursor = nowcursor;
+      // }
       this.movePoint = [e.offsetX, e.offsetY];
       if (e.buttons === 1) {
         if (this.ctrlIndex > -1) {
@@ -234,6 +234,7 @@ class CanvasSelect {
           this.update();
         }
       }
+      if (this.createShape) this.update();
     });
     this.canvas.addEventListener('mouseup', () => {
       if (this.createShape) {
@@ -274,6 +275,10 @@ class CanvasSelect {
           }
         }
         this.update();
+      }
+      const tar = this.createShape || this.activeShape;
+      if (tar && e.key === 'Backspace') {
+        this.deleteByIndex(tar.index);
       }
     });
   }
