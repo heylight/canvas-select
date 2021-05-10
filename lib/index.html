@@ -22,6 +22,29 @@
   <script>
     const canvasSelect = new CanvasSelect(".container");
     window.canvasSelect = canvasSelect;
+
+    // 选中
+    canvasSelect.on("select", (info) => {
+      console.log("select", info);
+      window.info = info;
+    });
+    // 添加
+    canvasSelect.on("add", (info) => {
+      console.log("add", info);
+    });
+    // data更新
+    canvasSelect.on("update", function () {
+      console.log("update");
+    });
+    // resize
+    canvasSelect.on("resize", function (info) {
+      console.log("resize", info);
+    });
+    // error
+    canvasSelect.on("error", function (msg) {
+      console.log("error", msg);
+    });
+
     canvasSelect.setData([
       {
         label: "你好",
@@ -49,23 +72,6 @@
         ],
       },
     ]);
-    // 选中
-    canvasSelect.on("select", (info) => {
-      console.log("select", info);
-      window.info = info;
-    });
-    // 添加
-    canvasSelect.on("add", (info) => {
-      console.log("add", info);
-    });
-    // data更新
-    canvasSelect.on("update", function () {
-      console.log("update");
-    });
-    // resize
-    canvasSelect.on("resize", function (info) {
-      console.log("resize", info);
-    });
     function change(num) {
       canvasSelect.createType = num;
       console.log(canvasSelect.createType);

@@ -62,22 +62,26 @@ class CanvasSelect {
 
   setData(data: Array<Rect | Polygon>) {
     data.forEach((item, index) => {
-      const {
-        label, type, coor, uuid,
-      } = item;
-      let shape: (Rect | Polygon);
-      if (typeof type === 'number' && type > 0) {
-        if (type === 1 && coor.length === 2) {
-          shape = new Rect(coor, index);
+      if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
+        const {
+          label, type, coor, uuid,
+        } = item;
+        let shape: (Rect | Polygon);
+        if (typeof type === 'number' && type > 0) {
+          if (type === 1 && coor.length === 2) {
+            shape = new Rect(coor, index);
+          }
+          if (type === 2 && coor.length > 2) {
+            shape = new Polygon(coor, index);
+          }
+          shape.label = (label || '').toString();
+          shape.uuid = uuid || CanvasSelect.createUuid();
+          this.dataset.push(shape);
+        } else {
+          this.emit('error', 'type is invalidated.');
         }
-        if (type === 2 && coor.length > 2) {
-          shape = new Polygon(coor, index);
-        }
-        shape.label = (label || '').toString();
-        shape.uuid = uuid || CanvasSelect.createUuid();
-        this.dataset.push(shape);
       } else {
-        this.emit('error', 'type is invalidated');
+        this.emit('error', `${item} in data must be an enumerable Object.`);
       }
     });
     this.update();
@@ -276,9 +280,8 @@ class CanvasSelect {
         }
         this.update();
       }
-      const tar = this.createShape || this.activeShape;
-      if (tar && e.key === 'Backspace') {
-        this.deleteByIndex(tar.index);
+      if (this.activeShape && e.key === 'Backspace') {
+        this.deleteByIndex(this.activeShape.index);
       }
     });
   }
