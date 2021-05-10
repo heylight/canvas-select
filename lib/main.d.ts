@@ -9,7 +9,7 @@ declare class CanvasSelect {
     activeFillStyle: string;
     strokeStyle: string;
     fillStyle: string;
-    EventList: [];
+    EventList: object;
     WIDTH: number;
     HEIGHT: number;
     canvas: HTMLCanvasElement;

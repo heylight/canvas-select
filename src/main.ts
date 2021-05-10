@@ -17,7 +17,7 @@ class CanvasSelect {
 
   fillStyle = 'rgba(0, 0, 255,0.1)'
 
-  EventList: [] = []
+  EventList: object = {}
 
   WIDTH: number
 
