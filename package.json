@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "",
   "main": "lib/canvas-select.min.js",
   "scripts": {
