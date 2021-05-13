@@ -55,6 +55,10 @@ declare class CanvasSelect {
      * @param data Array
      */
     setData(data: Array<Rect | Polygon>): void;
+    /**
+     * 计算缩放步长
+     * @param init 是否为init
+     */
     calcStep(init?: boolean): void;
     /**
      * 缩放

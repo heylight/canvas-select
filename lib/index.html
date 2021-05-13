@@ -11,7 +11,7 @@
     </style>
   </head>
   <body>
-    <canvas width="500" height="500" class="container"></canvas>
+    <canvas width="800" height="800" class="container"></canvas>
     <div>
       <button onclick="change(1)">创建矩形</button>
       <button onclick="change(2)">创建多边形</button>
@@ -25,12 +25,7 @@
   <script>
     const canvasSelect = new CanvasSelect(".container", "/one.jpg");
     window.canvasSelect = canvasSelect;
-    // 选中
-    canvasSelect.on("select", (info) => {
-      console.log("select", info);
-      window.info = info;
-    });
-    canvasSelect.setData([
+    const option = [
       {
         label: "hello",
         type: 1,
@@ -58,7 +53,15 @@
           [614, 418],
         ],
       },
-    ]);
+    ];
+    canvasSelect.on("load", () => {
+      canvasSelect.setData(option);
+    });
+    // 选中
+    canvasSelect.on("select", (info) => {
+      console.log("select", info);
+      window.info = info;
+    });
 
     function change(num) {
       canvasSelect.createType = num;

@@ -18,6 +18,6 @@ module.exports = {
     'no-bitwise': 0,
     'no-multi-assign': 0,
     'no-param-reassign': ['error', { props: false }],
-    'max-len': ['error', { code: 120 }],
+    'max-len': ['error', { code: 1050 }],
   },
 };

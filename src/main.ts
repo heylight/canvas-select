@@ -79,7 +79,7 @@ class CanvasSelect {
       this.canvas = container as HTMLCanvasElement;
       this.ctx = this.canvas.getContext('2d');
       this.WIDTH = this.canvas.clientWidth;
-      this.HEIGHT = this.canvas.clientWidth;
+      this.HEIGHT = this.canvas.clientHeight;
       this.offlineCanvas = document.createElement('canvas');
       this.offlineCanvas.width = this.WIDTH;
       this.offlineCanvas.height = this.HEIGHT;
@@ -200,7 +200,7 @@ class CanvasSelect {
       if (this.lock) return;
       const offsetX = e.offsetX / this.scale;
       const offsetY = e.offsetY / this.scale;
-      if (e.buttons !== 1) {
+      if (e.buttons === 0) {
         const ctrls = this.activeShape ? this.activeShape.ctrlsData : [];
         const isHoverCtrl = ctrls.find((coor) => this.isPointInCtrl([e.offsetX, e.offsetY], coor));
         const isHoverShape = this.dataset.find((shape) => this.isPointInArea([e.offsetX, e.offsetY], shape));
@@ -368,6 +368,10 @@ class CanvasSelect {
     this.update();
   }
 
+  /**
+   * 计算缩放步长
+   * @param init 是否为init
+   */
   calcStep(init?: boolean) {
     if (init) {
       this.scaleStep = 100;

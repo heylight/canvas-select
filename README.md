@@ -59,11 +59,12 @@ let option = [
     ],
   },
 ];
-// 加载初始数据，数据option格式如上
-instance.setData(option);
+instance.on("load", () => {
+  // 图片加载完成时候再加载数据
+  instance.setData(option);
+});
 // 0 不创建(默认)，1创建矩形，2创建多边形
 instance.createType = 1;
-
 instance.on("select", (info) => {
   console.log("select", info);
   // 可对选中对参数info进行修改
@@ -74,40 +75,40 @@ instance.on("select", (info) => {
 
 ## 2、实例属性
 
-| 属性名称          |    类型 |       默认值        |                    说明                     |
-| ----------------- | ------: | :-----------------: | :-----------------------------------------: |
-| createType        | boolean |          0          |  0 不创建(默认)，1 创建矩形，2 创建多边形   |
+| 属性名称          |  类型   |       默认值        |                    说明                     |
+| ----------------- | :-----: | :-----------------: | :-----------------------------------------: |
+| createType        | boolean |          0          |     0 不创建，1 创建矩形，2 创建多边形      |
 | lock              | boolean |        false        |                是否锁定画布                 |
-| MIN_WIDTH         |  number |         10          |                最小矩形宽度                 |
-| MIN_HEIGHT        |  number |         10          |                最小矩形高度                 |
-| strokeStyle       |  string |   rgb(0, 0, 255)    |                形状边线颜色                 |
-| fillStyle         |  string | rgba(0, 0, 255,0.1) |                形状填充颜色                 |
-| activeStrokeStyle |  string |        #f00         |             选中的形状边线颜色              |
-| activeFillStyle   |  string |        #f00         |             选中的形状填充颜色              |
-| ctrlStrokeStyle   |  string |        #000         |               控制点边线颜色                |
-| ctrlFillStyle     |  string |        #fff         |               控制点填充颜色                |
-| ctrlRadius        |  number |          3          |                 控制点半径                  |
-| labelFillStyle    |  string |        #fff         |               label 填充颜色                |
-| labelFont         |  string |   12px serif #000   |               label 文字样式                |
-| labelMaxLen       |  number |          5          | label 字符最大显示个数，超出字符将用...表示 |
+| MIN_WIDTH         | number  |         10          |                最小矩形宽度                 |
+| MIN_HEIGHT        | number  |         10          |                最小矩形高度                 |
+| strokeStyle       | string  |   rgb(0, 0, 255)    |                形状边线颜色                 |
+| fillStyle         | string  | rgba(0, 0, 255,0.1) |                形状填充颜色                 |
+| activeStrokeStyle | string  |        #f00         |             选中的形状边线颜色              |
+| activeFillStyle   | string  |        #f00         |             选中的形状填充颜色              |
+| ctrlStrokeStyle   | string  |        #000         |               控制点边线颜色                |
+| ctrlFillStyle     | string  |        #fff         |               控制点填充颜色                |
+| ctrlRadius        | number  |          3          |                 控制点半径                  |
+| labelFillStyle    | string  |        #fff         |               label 填充颜色                |
+| labelFont         | string  |   12px serif #000   |               label 文字样式                |
+| labelMaxLen       | number  |          5          | label 字符最大显示个数，超出字符将用...表示 |
 
 ## 3、实例方法
 
 | 方法名称      | 参数类型 |                 说明                  |
-| ------------- | -------: | :-----------------------------------: |
-| setData       |    Array | 更新画布， 修改实例属性后要执行此方法 |
-| setScale      |  boolean |     true 放大画布，false 缩小画布     |
-| fitZoom       |       无 |      适配图片到画布 （contain）       |
-| update        |       无 | 更新画布， 修改实例属性后要执行此方法 |
-| deleteByIndex |   number |           根据索引删除形状            |
+| ------------- | :------: | :-----------------------------------: |
+| setData       |  Array   | 更新画布， 修改实例属性后要执行此方法 |
+| setScale      | boolean  |     true 放大画布，false 缩小画布     |
+| fitZoom       |    无    |      适配图片到画布 （contain）       |
+| update        |    无    | 更新画布， 修改实例属性后要执行此方法 |
+| deleteByIndex |  number  |           根据索引删除形状            |
 
 ## 4、事件
 
 | 事件名称 | 回调参数 |        说明        |
-| -------- | -------: | :----------------: |
-| select   |     info |   当前选中的数据   |
-| add      |     info |   当前添加的数据   |
-| resize   |     info | 当前正在缩放的数据 |
-| load     |       无 |    图片加载完成    |
-| update   |       无 |   画布(数据)更新   |
-| error    |    error |      错误信息      |
+| -------- | :------: | :----------------: |
+| select   |   info   |   当前选中的数据   |
+| add      |   info   |   当前添加的数据   |
+| resize   |   info   | 当前正在缩放的数据 |
+| load     |    无    |    图片加载完成    |
+| update   |    无    |   画布(数据)更新   |
+| error    |  error   |      错误信息      |
