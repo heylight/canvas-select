@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>例子</title>
+    <style>
+      .container {
+        background-color: #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="500" height="500" class="container"></canvas>
+    <div>
+      <button onclick="change(1)">创建矩形</button>
+      <button onclick="change(2)">创建多边形</button>
+      <button onclick="change(0)">取消创建</button>
+      <button onclick="zoom(true)">放大</button>
+      <button onclick="zoom(false)">缩小</button>
+      <button onclick="fitting()">适配</button>
+    </div>
+  </body>
+  <script src="./canvas-select.min.js"></script>
+  <script>
+    const canvasSelect = new CanvasSelect(".container", "/one.jpg");
+    window.canvasSelect = canvasSelect;
+    // 选中
+    canvasSelect.on("select", (info) => {
+      console.log("select", info);
+      window.info = info;
+    });
+    canvasSelect.setData([
+      {
+        label: "hello",
+        type: 1,
+        coor: [
+          [130, 300],
+          [400, 400],
+        ],
+      },
+      {
+        label: "world",
+        type: 2,
+        coor: [
+          [30, 150],
+          [120, 100],
+          [50, 200],
+        ],
+      },
+      {
+        label: "",
+        type: 2,
+        coor: [
+          [594, 368],
+          [684, 318],
+          [784, 368],
+          [614, 418],
+        ],
+      },
+    ]);
+
+    function change(num) {
+      canvasSelect.createType = num;
+      console.log(canvasSelect.createType);
+    }
+    function zoom(type) {
+      canvasSelect.setScale(type);
+    }
+    function fitting() {
+      canvasSelect.fitZoom();
+    }
+  </script>
+</html>
