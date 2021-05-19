@@ -18,6 +18,12 @@
 
 - 选中形状，`Backspace`删除
 
+支持 UMD 模块规范
+
+```html
+<script src="path/to/canvas-select.min.js"></script>
+```
+
 ```
 npm i canvas-select
 ```
@@ -51,6 +57,7 @@ let option = [
     ],
   },
   {
+    label: "",
     type: 2, // 多边形
     coor: [
       [230, 150],
@@ -60,7 +67,7 @@ let option = [
   },
 ];
 instance.on("load", () => {
-  // 图片加载完成时候再加载数据
+  // 图片加载完成时候加载数据
   instance.setData(option);
 });
 // 0 不创建(默认)，1创建矩形，2创建多边形
@@ -96,7 +103,7 @@ instance.on("select", (info) => {
 
 | 方法名称      | 参数类型 |                 说明                  |
 | ------------- | :------: | :-----------------------------------: |
-| setData       |  Array   | 更新画布， 修改实例属性后要执行此方法 |
+| setData       |  Array   |             加载初始数据              |
 | setScale      | boolean  |     true 放大画布，false 缩小画布     |
 | fitZoom       |    无    |      适配图片到画布 （contain）       |
 | update        |    无    | 更新画布， 修改实例属性后要执行此方法 |
