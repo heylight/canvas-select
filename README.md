@@ -1,8 +1,8 @@
 # canvas-select
 
-用于 2D 图片标注。
+用于 2D 图片标注，支持矩形标注、多边形标注、点标注。
 
-![图例](example.png)
+![图例](example1.png)
 
 ## 1、使用
 

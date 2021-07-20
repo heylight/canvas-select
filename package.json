@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "",
   "main": "lib/canvas-select.min.js",
   "types": "lib/main.d.ts",
@@ -13,7 +13,10 @@
     "canvas",
     "marker",
     "select",
-    "标注"
+    "标注",
+    "矩形标注",
+    "多边形标注",
+    "点标注"
   ],
   "author": "heylight",
   "license": "ISC",
