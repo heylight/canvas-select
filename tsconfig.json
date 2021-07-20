@@ -3,11 +3,12 @@
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
     "downlevelIteration": true,
-    "lib": ["ES6", "DOM"],
+    "lib": ["es2016", "DOM"],
     "module": "es6",
     "target": "es5",
     "allowJs": true,
     "suppressImplicitAnyIndexErrors": true,
+    "sourceMap": true,
     "experimentalDecorators": true,
     "declaration": true
   },

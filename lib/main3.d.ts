@@ -40,101 +40,22 @@ declare class CanvasSelect {
     scaleStep: number;
     constructor(el: HTMLCanvasElement | string, imgSrc?: string);
     get activeShape(): Rect | Polygon | Dot;
+    get createShape(): Rect | Polygon | Dot;
     get scale(): number;
-    /**
-     * 初始化
-     */
-    init(): void;
     /**
      * 生成uuid
      * @returns
      */
     static createUuid(): string;
     /**
+     * 初始化
+     */
+    init(): void;
+    /**
      * 设置数据
      * @param data Array
      */
     setData(data: any[]): void;
-    /**
-     * 判断是非在标注实例上
-     * @param mousePoint 点击位置
-     * @returns
-     */
-    hoverOnShape(mousePoint: Point): [number, Rect | Polygon | Dot];
-    /**
-     * 判断鼠标是否在背景图内部
-     * @param e MouseEvent
-     * @returns 布尔值
-     */
-    isInContent(e: MouseEvent): boolean;
-    /**
-     * 判断是否在矩形内
-     * @param point 坐标
-     * @param coor 区域坐标
-     * @returns 布尔值
-     */
-    isPointInRect(point: Point, coor: Point[]): boolean;
-    /**
-     * 判断是否在多边形内
-     * @param point 坐标
-     * @param coor 区域坐标
-     * @returns 布尔值
-     */
-    isPointInPolygon(point: Point, coor: Point[]): boolean;
-    /**
-     * 判断是否在圆内
-     * @param point 坐标
-     * @param center 圆心
-     * @param r 半径
-     * @returns 布尔值
-     */
-    isPointInCircle(point: Point, center: Point, r: number): boolean;
-    /**
-     * 绘制矩形
-     * @param shape 标注实例
-     * @returns
-     */
-    drawRect(shape: Rect): void;
-    /**
-     * 绘制多边形
-     * @param shape 标注实例
-     */
-    drawPolygon(shape: Polygon): void;
-    /**
-     * 绘制点
-     * @param shape 标注实例
-     */
-    drawDot(shape: Dot): void;
-    /**
-     * 绘制控制点
-     * @param point 坐标
-     */
-    drawCtrl(point: Point): void;
-    /**
-     * 绘制控制点列表
-     * @param shape 标注实例
-     */
-    drawCtrlList(shape: Rect | Polygon): void;
-    /**
-     * 绘制label
-     * @param point 位置
-     * @param label 文本
-     */
-    drawLabel(point: Point, label?: string): void;
-    /**
-     * 绘制背景图片
-     */
-    paintImage(): void;
-    clear(): void;
-    /**
-     * 更新画布
-     */
-    update(): void;
-    /**
-     * 删除指定矩形
-     * @param index number
-     */
-    deleteByIndex(index: number): void;
     /**
      * 计算缩放步长
      * @param init 是否为init
@@ -154,6 +75,69 @@ declare class CanvasSelect {
      * @param scale nummer
      */
     stayPosition(scale: number): void;
+    /**
+     * 判断鼠标是否在背景图内部
+     * @param e MouseEvent
+     * @returns
+     */
+    isInContent(e: MouseEvent): boolean;
+    /**
+     * 判断是否在矩形内
+     * @param point 点击坐标
+     * @param area 目标区域
+     */
+    isPointInArea(point: Point, shape: (Rect | Polygon | Dot)): boolean;
+    /**
+     * 判断是否在控制点内
+     * @param point 点击坐标
+     * @param area 目标区域
+     */
+    isPointInCircle(point: number[], area: number[]): boolean;
+    /**
+     * 绘制矩形
+     * @param shape Rect
+     */
+    drawRect(shape: Rect): void;
+    /**
+     * 绘制多边形
+     * @param shape Polygon
+     */
+    drawPolygon(shape: Polygon): void;
+    /**
+     * 绘制多边形
+     * @param shape Polygon
+     */
+    drawDot(shape: Dot): void;
+    /**
+     * 绘制背景图片
+     */
+    paintImage(): void;
+    /**
+     * 绘制控制点
+     * @param point Point
+     */
+    drawCtrlss(shape: Rect | Polygon): void;
+    /**
+     * 绘制控制点
+     * @param point Point
+     */
+    drawCtrls(point: Point): void;
+    /**
+     * 绘制label
+     * @param point 位置
+     * @param str 文本
+     */
+    drawLabel(point: Point, label: string): void;
+    clear(): void;
+    /**
+     * 更新画布
+     */
+    update(): void;
+    /**
+     * 删除指定矩形
+     * @param index number
+     */
+    deleteByIndex(index: number): void;
     /**
      * 注册事件
      * @param eventName 事件名称

@@ -13,8 +13,6 @@ export default class Polygon implements BaseShape {
 
   dragging: boolean = false
 
-  finish?: boolean = true
-
   coor: Point[]
 
   constructor(coor: Point[], index: number) {

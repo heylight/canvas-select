@@ -6,7 +6,6 @@ export default class Polygon implements BaseShape {
     active: boolean;
     creating: boolean;
     dragging: boolean;
-    finish?: boolean;
     coor: Point[];
     constructor(coor: Point[], index: number);
     uuid: string;

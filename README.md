@@ -1,6 +1,6 @@
-# canvas-select 标注插件
+# canvas-select
 
-用于 AI 平台图片标注，视频帧标注等。
+用于 2D 图片标注。
 
 ![图例](example.png)
 
@@ -34,11 +34,11 @@ npm i canvas-select
 
 ```js
 // 构造函数CanvasSelect 参数1表示canvas dom节点，参数2表示需要标注的图片链接
-const instance = new CanvasSelect(".container", "/one.jpg");
+const instance = new CanvasSelect('.container', '/one.jpg');
 
 let option = [
   {
-    label: "你好", // label (非必填)
+    label: '矩形标注', // label (非必填)
     type: 1, // 矩形 （必填）
     coor: [
       // 矩形坐标，由2个点表示 (必填)
@@ -47,7 +47,7 @@ let option = [
     ],
   },
   {
-    label: "世界",
+    label: '多边形标注',
     type: 2, // 多边形 （必填）
     coor: [
       // 多边形坐标，由3个以上点表示 (必填)
@@ -57,23 +57,19 @@ let option = [
     ],
   },
   {
-    label: "",
-    type: 2, // 多边形
-    coor: [
-      [230, 150],
-      [320, 100],
-      [250, 200],
-    ],
+    label: '点标注',
+    type: 3, // 点标注 （必填）
+    coor: [800, 800],
   },
 ];
-instance.on("load", () => {
+instance.on('load', () => {
   // 图片加载完成时候加载数据
   instance.setData(option);
 });
-// 0 不创建(默认)，1创建矩形，2创建多边形
+// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注
 instance.createType = 1;
-instance.on("select", (info) => {
-  console.log("select", info);
+instance.on('select', (info) => {
+  console.log('select', info);
   // 可对选中对参数info进行修改
   // 例如：info.label="hello"
   // 然后调用instance.update()更新视图
@@ -115,7 +111,7 @@ instance.on("select", (info) => {
 | -------- | :------: | :----------------: |
 | select   |   info   |   当前选中的数据   |
 | add      |   info   |   当前添加的数据   |
+| delete   |   info   |   当前删除的数据   |
 | resize   |   info   | 当前正在缩放的数据 |
 | load     |    无    |    图片加载完成    |
-| update   |    无    |   画布(数据)更新   |
 | error    |  error   |      错误信息      |

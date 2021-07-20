@@ -1,3 +1,4 @@
+import sourcemaps from 'rollup-plugin-sourcemaps';
 import babel from '@rollup/plugin-babel';
 import typescript from 'rollup-plugin-typescript2';
 import { uglify } from 'rollup-plugin-uglify';
@@ -9,6 +10,12 @@ export default {
     file: 'lib/canvas-select.min.js',
     format: 'umd',
     name: 'CanvasSelect',
+    sourcemap: true,
   },
-  plugins: [typescript(), babel({ babelHelpers: 'bundled' }), uglify()],
+  plugins: [
+    sourcemaps(),
+    typescript(),
+    babel({ babelHelpers: 'bundled' }),
+    uglify(),
+  ],
 };

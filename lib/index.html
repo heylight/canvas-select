@@ -15,6 +15,7 @@
     <div>
       <button onclick="change(1)">创建矩形</button>
       <button onclick="change(2)">创建多边形</button>
+      <button onclick="change(3)">创建点</button>
       <button onclick="change(0)">取消创建</button>
       <button onclick="zoom(true)">放大</button>
       <button onclick="zoom(false)">缩小</button>
@@ -23,11 +24,11 @@
   </body>
   <script src="./canvas-select.min.js"></script>
   <script>
-    const canvasSelect = new CanvasSelect(".container", "/one.jpg");
+    const canvasSelect = new CanvasSelect('.container', '/one.jpg');
     window.canvasSelect = canvasSelect;
     const option = [
       {
-        label: "hello",
+        label: '矩形标注',
         type: 1,
         coor: [
           [130, 300],
@@ -35,16 +36,7 @@
         ],
       },
       {
-        label: "world",
-        type: 2,
-        coor: [
-          [30, 150],
-          [120, 100],
-          [50, 200],
-        ],
-      },
-      {
-        label: "",
+        label: '多边形标注',
         type: 2,
         coor: [
           [594, 368],
@@ -53,16 +45,23 @@
           [614, 418],
         ],
       },
+      {
+        label: '点标注',
+        type: 3,
+        coor: [800, 800],
+      },
     ];
-    canvasSelect.on("load", () => {
+    canvasSelect.on('load', () => {
       canvasSelect.setData(option);
     });
     // 选中
-    canvasSelect.on("select", (info) => {
-      console.log("select", info);
+    canvasSelect.on('select', (info) => {
+      console.log('select', info);
       window.info = info;
     });
-
+    canvasSelect.on('resize', (info) => {
+      console.log('resize', info);
+    });
     function change(num) {
       canvasSelect.createType = num;
       console.log(canvasSelect.createType);
