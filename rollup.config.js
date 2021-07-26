@@ -1,7 +1,7 @@
 import sourcemaps from 'rollup-plugin-sourcemaps';
 import babel from '@rollup/plugin-babel';
 import typescript from 'rollup-plugin-typescript2';
-import { uglify } from 'rollup-plugin-uglify';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/main.ts',
@@ -16,6 +16,6 @@ export default {
     sourcemaps(),
     typescript(),
     babel({ babelHelpers: 'bundled' }),
-    uglify(),
+    terser(),
   ],
 };

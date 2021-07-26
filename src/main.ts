@@ -161,13 +161,15 @@ class CanvasSelect {
             });
           }
           this.update();
-        } else if (oncreating && this.isInContent(e)) {
+        } else if (oncreating) {
           // 多边形新增点
-          const pShape = this.activeShape as Polygon;
-          const [x, y] = pShape.coor[pShape.coor.length - 1];
-          if (x !== offsetX && y !== offsetY) {
-            pShape.coor.push([offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
-            this.update();
+          if (this.isInContent(e)) {
+            const pShape = this.activeShape as Polygon;
+            const [x, y] = pShape.coor[pShape.coor.length - 1];
+            if (x !== offsetX && y !== offsetY) {
+              pShape.coor.push([offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
+              this.update();
+            }
           }
         } else if (this.createType && this.isInContent(e)) {
           // 创建矩形/多边形
@@ -284,7 +286,7 @@ class CanvasSelect {
         this.update();
       }
     });
-    this.canvas.addEventListener('mouseup', () => {
+    this.canvas.addEventListener('mouseup', (e) => {
       if (this.lock) return;
       this.remmber = [];
       if (this.activeShape) {
