@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "",
   "main": "lib/canvas-select.min.js",
   "types": "lib/main.d.ts",

@@ -329,6 +329,7 @@ class CanvasSelect {
           }
         }
         this.update();
+        return
       }
       if (this.activeShape && e.key === 'Backspace') {
         this.deleteByIndex(this.activeShape.index);

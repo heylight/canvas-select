@@ -1,6 +1,6 @@
 # canvas-select
 
-用于 2D 图片标注，支持矩形标注、多边形标注、点标注。
+用于 2D 图片标注，支持矩形标注、多边形标注、点标注。[demo](https://codepen.io/heylight/pen/VwbQLje)
 
 ![图例](example1.png)
 
@@ -17,6 +17,8 @@
 - 鼠标滚轮缩放画布。
 
 - 选中形状，`Backspace`删除
+
+- 通过 instance.dataset 查看标注结果
 
 支持 UMD 模块规范
 
@@ -70,7 +72,7 @@ instance.on('load', () => {
 instance.createType = 1;
 instance.on('select', (info) => {
   console.log('select', info);
-  // 可对选中对参数info进行修改
+  // 可对选中对参数info进行修改例如标签名
   // 例如：info.label="hello"
   // 然后调用instance.update()更新视图
 });
