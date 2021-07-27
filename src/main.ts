@@ -317,23 +317,25 @@ class CanvasSelect {
     });
     document.body.addEventListener('keyup', (e: KeyboardEvent) => {
       if (this.lock) return;
-      const activeShape = this.activeShape as Polygon;
-      if (activeShape?.type === 2) {
-        if (e.key === 'Escape') {
-          this.dataset.pop();
-        } else if (e.key === 'Backspace') {
-          if (this.activeShape.coor.length > 1) {
-            this.activeShape.coor.pop();
-          } else {
-            this.dataset.pop();
+      if (this.activeShape) {
+        console.log(this.activeShape.type)
+        if (this.activeShape.type === 2) {
+          console.log('jjjjj')
+          if (e.key === 'Escape') {
+            this.deleteByIndex(this.activeShape.index);
+          } else if (e.key === 'Backspace') {
+            if (this.activeShape.coor.length > 1 && (this.activeShape as Polygon).creating) {
+              this.activeShape.coor.pop();
+            } else {
+              this.deleteByIndex(this.activeShape.index);
+            }
           }
+          this.update();
+        } else if (this.activeShape && e.key === 'Backspace') {
+          this.deleteByIndex(this.activeShape.index);
         }
-        this.update();
-        return
       }
-      if (this.activeShape && e.key === 'Backspace') {
-        this.deleteByIndex(this.activeShape.index);
-      }
+
     });
   }
 
