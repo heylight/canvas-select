@@ -318,9 +318,7 @@ class CanvasSelect {
     document.body.addEventListener('keyup', (e: KeyboardEvent) => {
       if (this.lock) return;
       if (this.activeShape) {
-        console.log(this.activeShape.type)
         if (this.activeShape.type === 2) {
-          console.log('jjjjj')
           if (e.key === 'Escape') {
             this.deleteByIndex(this.activeShape.index);
           } else if (e.key === 'Backspace') {
