@@ -209,7 +209,7 @@ class CanvasSelect {
         this.update();
       } else if (e.buttons === 1) {
         if (this.activeShape) {
-          if (this.ctrlIndex > -1) {
+          if (this.ctrlIndex > -1 && this.isInContent(e)) {
             const [[x, y]] = this.remmber;
             this.emit('resize', this.activeShape);
             // resize矩形
