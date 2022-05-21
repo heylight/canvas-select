@@ -3,11 +3,11 @@
   "version": "2.2.0",
   "description": "",
   "main": "lib/canvas-select.min.js",
-  "types": "lib/main.d.ts",
+  "types": "lib/index.d.ts",
   "scripts": {
     "watch": "rollup -c -w",
     "build": "rollup -c",
-    "dev": "cd lib && live-server"
+    "serve": "live-server"
   },
   "keywords": [
     "canvas",

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>例子</title>
+    <title>canvas-select示例</title>
     <style>
       .container {
         background-color: #ccc;
@@ -11,7 +11,7 @@
     </style>
   </head>
   <body>
-    <canvas width="800" height="800" class="container"></canvas>
+    <canvas width="600" height="600" class="container"></canvas>
     <div>
       <button onclick="change(1)">创建矩形</button>
       <button onclick="change(2)">创建多边形</button>
@@ -22,9 +22,9 @@
       <button onclick="fitting()">适配</button>
     </div>
   </body>
-  <script src="./canvas-select.min.js"></script>
+  <script src="./lib/canvas-select.min.js"></script>
   <script>
-    const canvasSelect = new CanvasSelect('.container', '/one.jpg');
+    const canvasSelect = new CanvasSelect('.container', './one.jpg');
     window.canvasSelect = canvasSelect;
     const option = [
       {
@@ -51,17 +51,20 @@
         coor: [800, 800],
       },
     ];
-    canvasSelect.on('load', () => {
-      canvasSelect.setData(option);
-    });
+    // canvasSelect.on('load', () => {
+    //   canvasSelect.setData(option);
+    // });
+    canvasSelect.setData(option);
     // 选中
     canvasSelect.on('select', (info) => {
       console.log('select', info);
       window.info = info;
     });
-    canvasSelect.on('resize', (info) => {
-      console.log('resize', info);
+    canvasSelect.on('updated', (info) => {
+      console.log('updated', info);
+      window.tiger = info;
     });
+
     function change(num) {
       canvasSelect.createType = num;
       console.log(canvasSelect.createType);
