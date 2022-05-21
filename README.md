@@ -2,7 +2,7 @@
 
 用于 2D 图片标注，支持矩形标注、多边形标注、点标注。[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](example1.png)
+![图例](pic.png)
 
 ## 简介
 
@@ -108,8 +108,8 @@ instance.on('select', (info) => {
 | ctrlStrokeStyle   | string  |        #000         |                  |               控制点边线颜色                |
 | ctrlFillStyle     | string  |        #fff         |                  |               控制点填充颜色                |
 | ctrlRadius        | number  |          3          |                  |                 控制点半径                  |
-| labelFillStyle    | string  |        #fff         |                  |               label 填充颜色                |
-| labelFont         | string  |   12px serif #000   |                  |               label 文字样式                |
+| labelFillStyle    | string  |        #fff         |       支持       |               label 填充颜色                |
+| labelFont         | string  |   12px serif #000   |       支持       |               label 文字样式                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示 |
 
 ## 3、实例方法

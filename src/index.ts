@@ -361,17 +361,18 @@ export default class CanvasSelect extends EventBus {
             await this.canStart
             data.forEach((item, index) => {
                 if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
-                    const { label, type, coor, strokeStyle, fillStyle, uuid } = item;
+                    const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, labelFont, uuid } = item;
+                    const style = { strokeStyle, fillStyle, labelFillStyle, labelFont }
                     let shape
                     switch (type) {
                         case 1:
-                            shape = new Rect(coor, index, label, strokeStyle, fillStyle, uuid);
+                            shape = new Rect(coor, index, label, style, uuid);
                             break;
                         case 2:
-                            shape = new Polygon(coor, index, label, strokeStyle, fillStyle, uuid);
+                            shape = new Polygon(coor, index, label, style, uuid);
                             break;
                         case 3:
-                            shape = new Dot(coor, index, label, strokeStyle, fillStyle, uuid);
+                            shape = new Dot(coor, index, label, style, uuid);
                             break;
                         default:
                             break;
@@ -477,27 +478,29 @@ export default class CanvasSelect extends EventBus {
      */
     drawRect(shape: Rect) {
         if (shape.coor.length !== 2) return;
-        const [[x0, y0], [x1, y1]] = shape.coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
+        const { labelFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
+        const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
-        this.ctx.fillStyle = shape.fillStyle || this.fillStyle;
-        this.ctx.strokeStyle = (shape.active || shape.creating) ? this.activeStrokeStyle : (shape.strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         const w = x1 - x0;
         const h = y1 - y0;
         this.ctx.strokeRect(x0, y0, w, h);
-        if (!shape.creating) this.ctx.fillRect(x0, y0, w, h);
+        if (!creating) this.ctx.fillRect(x0, y0, w, h);
         this.ctx.restore();
-        this.drawLabel(shape.coor[0], shape.label);
+        this.drawLabel(coor[0], label, labelFillStyle, labelFont);
     }
     /**
      * 绘制多边形
      * @param shape 标注实例
      */
     drawPolygon(shape: Polygon) {
+        const { labelFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
         this.ctx.save();
-        this.ctx.fillStyle = shape.fillStyle || this.fillStyle;
-        this.ctx.strokeStyle = (shape.active || shape.creating) ? this.activeStrokeStyle : (shape.strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
-        shape.coor.forEach((el: Point, i) => {
+        coor.forEach((el: Point, i) => {
             const [x, y] = el.map((a) => Math.round(a * this.scale));
             if (i === 0) {
                 this.ctx.moveTo(x, y);
@@ -505,33 +508,34 @@ export default class CanvasSelect extends EventBus {
                 this.ctx.lineTo(x, y);
             }
         });
-        if (shape.creating) {
+        if (creating) {
             const [x, y] = this.movePoint.map((a) => Math.round(a * this.scale));
             this.ctx.lineTo(x - this.originX, y - this.originY);
-        } else if (shape.coor.length > 2) {
+        } else if (coor.length > 2) {
             this.ctx.closePath();
         }
         this.ctx.fill();
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(shape.coor[0], shape.label);
+        this.drawLabel(coor[0], label, labelFillStyle, labelFont);
     }
     /**
      * 绘制点
      * @param shape 标注实例
      */
     drawDot(shape: Dot) {
-        const [x, y] = shape.coor.map((a) => a * this.scale);
+        const { labelFillStyle, labelFont, strokeStyle, fillStyle, active, coor, label } = shape
+        const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
-        this.ctx.fillStyle = shape.fillStyle || this.ctrlFillStyle;
-        this.ctx.strokeStyle = shape.active ? this.activeStrokeStyle : (shape.strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = fillStyle || this.ctrlFillStyle;
+        this.ctx.strokeStyle = active ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
         this.ctx.fill();
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(shape.coor as Point, shape.label);
+        this.drawLabel(coor as Point, label, labelFillStyle, labelFont);
     }
     /**
      * 绘制控制点
@@ -563,7 +567,7 @@ export default class CanvasSelect extends EventBus {
      * @param point 位置
      * @param label 文本
      */
-    drawLabel(point: Point, label: string = '') {
+    drawLabel(point: Point, label: string = '', labelFillStyle = '', labelFont = '') {
         if (label.length) {
             const newStr = label.length < this.labelMaxLen + 1 ? label : (`${label.substr(0, this.labelMaxLen)}...`);
             const text = this.ctx.measureText(newStr);
@@ -571,9 +575,9 @@ export default class CanvasSelect extends EventBus {
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < (text.width + 4) / this.scale;
             const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < 16 / this.scale;
             this.ctx.save();
-            this.ctx.fillStyle = this.labelFillStyle;
+            this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
             this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - 15) : y + 1, text.width + 4, 16);
-            this.ctx.font = this.labelFont;
+            this.ctx.font = labelFont || this.labelFont;
             this.ctx.strokeText(newStr, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 4) : y + 12, 80);
             this.ctx.restore();
         }
