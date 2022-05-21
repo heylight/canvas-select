@@ -2,7 +2,6 @@ import Rect from './Rect';
 import Polygon from './Polygon';
 import Dot from './Dot';
 import { Point } from './Types';
-
 class CanvasSelect {
   lock: boolean = false // 只读模式
 

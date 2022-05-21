@@ -1,13 +1,13 @@
 {
   "name": "canvas-select",
-  "version": "2.1.5",
+  "version": "2.2.0",
   "description": "",
   "main": "lib/canvas-select.min.js",
   "types": "lib/main.d.ts",
   "scripts": {
     "watch": "rollup -c -w",
     "build": "rollup -c",
-    "dev": "cd lib&&live-server"
+    "dev": "cd lib && live-server"
   },
   "keywords": [
     "canvas",
@@ -28,7 +28,9 @@
     "rollup": "^2.53.2",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.30.0"
+    "rollup-plugin-typescript2": "^0.30.0",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.4"
   },
   "homepage": "https://github.com/heylight/canvas-select",
   "repository": {
