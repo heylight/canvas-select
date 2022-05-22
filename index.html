@@ -11,7 +11,7 @@
     </style>
   </head>
   <body>
-    <canvas width="600" height="600" class="container"></canvas>
+    <canvas width="800" height="500" class="container"></canvas>
     <div>
       <button onclick="change(1)">创建矩形</button>
       <button onclick="change(2)">创建多边形</button>
@@ -21,10 +21,14 @@
       <button onclick="zoom(false)">缩小</button>
       <button onclick="fitting()">适配</button>
     </div>
+    <div>输出结果</div>
+    <pre></pre>
   </body>
   <script src="./lib/canvas-select.min.js"></script>
   <script>
-    const canvasSelect = new CanvasSelect('.container', './one.jpg');
+    const output = document.querySelector('pre');
+    const canvasSelect = new CanvasSelect('.container', './two.jpeg');
+    canvasSelect.strokeStyle = 'rgb(52,244,39)';
     window.canvasSelect = canvasSelect;
     const option = [
       {
@@ -35,21 +39,21 @@
           [400, 400],
         ],
       },
-      {
-        label: '多边形标注',
-        type: 2,
-        coor: [
-          [594, 368],
-          [684, 318],
-          [784, 368],
-          [614, 418],
-        ],
-      },
-      {
-        label: '点标注',
-        type: 3,
-        coor: [800, 800],
-      },
+      // {
+      //   label: '多边形标注',
+      //   type: 2,
+      //   coor: [
+      //     [594, 368],
+      //     [684, 318],
+      //     [784, 368],
+      //     [614, 418],
+      //   ],
+      // },
+      // {
+      //   label: '点标注',
+      //   type: 3,
+      //   coor: [800, 800],
+      // },
     ];
     // canvasSelect.on('load', () => {
     //   canvasSelect.setData(option);
@@ -57,12 +61,11 @@
     canvasSelect.setData(option);
     // 选中
     canvasSelect.on('select', (info) => {
-      console.log('select', info);
       window.info = info;
     });
     canvasSelect.on('updated', (info) => {
-      console.log('updated', info);
       window.tiger = info;
+      output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
     });
 
     function change(num) {
