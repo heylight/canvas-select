@@ -133,23 +133,22 @@ export default class CanvasSelect extends EventBus {
             if (this.lock) return;
             e.preventDefault();
             this.setScale(e.deltaY < 0);
-            const offsetX = e.offsetX / this.scale;
-            const offsetY = e.offsetY / this.scale;
+            const offsetX = Math.round(e.offsetX / this.scale);
+            const offsetY = Math.round(e.offsetY / this.scale);
             this.movePoint = [offsetX, offsetY];
             this.update()
         });
         this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
-            const offsetX = e.offsetX / this.scale;
-            const offsetY = e.offsetY / this.scale;
-            const mousePoint: Point = [e.offsetX, e.offsetY];
             if (this.lock) return;
-            if (e.buttons === 2) { // 点击鼠标右键
+            const offsetX = Math.round(e.offsetX / this.scale);
+            const offsetY = Math.round(e.offsetY / this.scale);
+            const mousePoint: Point = [e.offsetX, e.offsetY];
+            if (e.buttons === 2) { // 鼠标右键
                 this.remmberOrigin = [e.offsetX - this.originX, e.offsetY - this.originY];
-            } else if (e.buttons === 1) {
+            } else if (e.buttons === 1) { // 鼠标左键
                 // 点击到控制点
-                const activeShape = this.activeShape;
                 // @ts-ignore
-                const ctrls = activeShape?.ctrlsData || [];
+                const ctrls = this.activeShape?.ctrlsData || [];
                 this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(mousePoint, coor, this.ctrlRadius));
                 if (this.ctrlIndex > -1) {
                     const [x0, y0] = ctrls[this.ctrlIndex];
@@ -157,40 +156,45 @@ export default class CanvasSelect extends EventBus {
                     return;
                 }
                 // 是否点击到形状
-                const [targetShapeIndex, targetShape] = this.hoverOnShape(mousePoint);
-                const oncreating = this.activeShape?.type === 2 && (this.activeShape as Polygon).creating;
-                if (!oncreating && targetShapeIndex > -1) {
-                    this.emit('select', targetShape)
+                const [hitShapeIndex, hitShape] = this.hitOnShape(mousePoint);
+                // 是否正在创建多边形
+                const oncreating = this.activeShape?.type === 2 && this.activeShape.creating;
+                if (oncreating) {
+                    // 多边形新增点
+                    if (this.isInBackground(e)) {
+                        const pShape = this.activeShape as Polygon;
+                        const [x, y] = pShape.coor[pShape.coor.length - 1];
+                        if (x !== offsetX && y !== offsetY) {
+                            const nx = Math.round(offsetX - this.originX / this.scale)
+                            const ny = Math.round(offsetY - this.originY / this.scale)
+                            pShape.coor.push([nx, ny]);
+                            this.update();
+                        }
+                    }
+                } else if (hitShapeIndex > -1) {
+                    this.emit('select', hitShape)
                     this.dataset.forEach((item, i) => {
-                        item.active = i === targetShapeIndex;
+                        item.active = i === hitShapeIndex;
                     });
-                    targetShape.dragging = true;
-                    this.dataset.splice(targetShapeIndex, 1);
-                    this.dataset.push(targetShape);
+                    hitShape.dragging = true;
+                    this.dataset.splice(hitShapeIndex, 1);
+                    this.dataset.push(hitShape);
                     this.remmber = [];
-                    if (targetShape.type === 3) {
-                        const [x, y] = (targetShape as Dot).coor;
+                    if (hitShape.type === 3) {
+                        const [x, y] = hitShape.coor;
                         this.remmber = [[offsetX - x, offsetY - y]];
                     } else {
-                        targetShape.coor.forEach((pt: any) => {
+                        hitShape.coor.forEach((pt: any) => {
                             this.remmber.push([offsetX - pt[0], offsetY - pt[1]]);
                         });
                     }
                     this.update();
-                } else if (oncreating) {
-                    // 多边形新增点
-                    if (this.isInContent(e)) {
-                        const pShape = this.activeShape as Polygon;
-                        const [x, y] = pShape.coor[pShape.coor.length - 1];
-                        if (x !== offsetX && y !== offsetY) {
-                            pShape.coor.push([offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
-                            this.update();
-                        }
-                    }
-                } else if (this.createType && this.isInContent(e)) {
+                } else if (this.createType > 0 && this.isInBackground(e)) {
                     // 创建矩形/多边形
                     let newShape;
-                    const curPoint: Point = [offsetX - this.originX / this.scale, offsetY - this.originY / this.scale];
+                    const nx = Math.round(offsetX - this.originX / this.scale)
+                    const ny = Math.round(offsetY - this.originY / this.scale)
+                    const curPoint: Point = [nx, ny];
                     if (this.createType === 1) {
                         newShape = new Rect([curPoint, curPoint], this.dataset.length);
                         newShape.creating = true;
@@ -213,92 +217,94 @@ export default class CanvasSelect extends EventBus {
             }
         });
         this.canvas.addEventListener('mousemove', (e: MouseEvent) => {
-            const offsetX = e.offsetX / this.scale;
-            const offsetY = e.offsetY / this.scale;
             if (this.lock) return;
+            const offsetX = Math.round(e.offsetX / this.scale);
+            const offsetY = Math.round(e.offsetY / this.scale);
             // 记录鼠标位置
             this.movePoint = [offsetX, offsetY];
             if (e.buttons === 2 && e.which === 3) {
                 // 拖动背景
-                this.originX = e.offsetX - this.remmberOrigin[0];
-                this.originY = e.offsetY - this.remmberOrigin[1];
+                this.originX = Math.round(e.offsetX - this.remmberOrigin[0]);
+                this.originY = Math.round(e.offsetY - this.remmberOrigin[1]);
                 this.update();
-            } else if (e.buttons === 1) {
-                if (this.activeShape) {
-                    if (this.ctrlIndex > -1 && this.isInContent(e)) {
-                        const [[x, y]] = this.remmber;
-                        // resize矩形
-                        if (this.activeShape.type === 1) {
-                            const [[x0, y0], [x1, y1]] = (this.activeShape as Rect).coor;
-                            let coor: Point[] = [];
-                            switch (this.ctrlIndex) {
-                                case 0:
-                                    coor = [[offsetX - x, offsetY - y], [x1, y1]];
-                                    break;
-                                case 1:
-                                    coor = [[x0, offsetY - y], [x1, y1]];
-                                    break;
-                                case 2:
-                                    coor = [[x0, offsetY - y], [offsetX - x, y1]];
-                                    break;
-                                case 3:
-                                    coor = [[x0, y0], [offsetX - x, y1]];
-                                    break;
-                                case 4:
-                                    coor = [[x0, y0], [offsetX - x, offsetY - y]];
-                                    break;
-                                case 5:
-                                    coor = [[x0, y0], [x1, offsetY - y]];
-                                    break;
-                                case 6:
-                                    coor = [[offsetX - x, y0], [x1, offsetY - y]];
-                                    break;
-                                case 7:
-                                    coor = [[offsetX - x, y0], [x1, y1]];
-                                    break;
-                                default:
-                                    break;
-                            }
-                            const [[a0, b0], [a1, b1]] = coor;
-                            if ((a1 - a0) >= this.MIN_WIDTH && (b1 - b0) >= this.MIN_HEIGHT) {
-                                this.activeShape.coor = coor;
-                            } else {
-                                this.emit('error', `宽不能小于${this.MIN_WIDTH},高不能小于${this.MIN_HEIGHT}。`);
-                            }
-                        } else if (this.activeShape.type === 2) {
-                            this.activeShape.coor.splice(this.ctrlIndex, 1, [offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
+            } else if (e.buttons === 1 && this.activeShape) {
+                if (this.ctrlIndex > -1 && this.isInBackground(e)) {
+                    const [[x, y]] = this.remmber;
+                    // resize矩形
+                    if (this.activeShape.type === 1) {
+                        const [[x0, y0], [x1, y1]] = (this.activeShape as Rect).coor;
+                        let coor: Point[] = [];
+                        switch (this.ctrlIndex) {
+                            case 0:
+                                coor = [[offsetX - x, offsetY - y], [x1, y1]];
+                                break;
+                            case 1:
+                                coor = [[x0, offsetY - y], [x1, y1]];
+                                break;
+                            case 2:
+                                coor = [[x0, offsetY - y], [offsetX - x, y1]];
+                                break;
+                            case 3:
+                                coor = [[x0, y0], [offsetX - x, y1]];
+                                break;
+                            case 4:
+                                coor = [[x0, y0], [offsetX - x, offsetY - y]];
+                                break;
+                            case 5:
+                                coor = [[x0, y0], [x1, offsetY - y]];
+                                break;
+                            case 6:
+                                coor = [[offsetX - x, y0], [x1, offsetY - y]];
+                                break;
+                            case 7:
+                                coor = [[offsetX - x, y0], [x1, y1]];
+                                break;
+                            default:
+                                break;
                         }
-                        this.update();
-                    } else if (this.activeShape.dragging) {
-                        let coor = [];
-                        const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
-                        const h = this.IMAGE_ORIGIN_HEIGHT || this.HEIGHT;
-                        if (this.activeShape.type === 3) {
-                            const [t1, t2] = this.remmber[0];
-                            const x = offsetX - t1;
-                            const y = offsetY - t2;
-                            if (x < 0 || x > w || y < 0 || y > h) return;
-                            coor = [x, y];
+                        const [[a0, b0], [a1, b1]] = coor;
+                        if ((a1 - a0) >= this.MIN_WIDTH && (b1 - b0) >= this.MIN_HEIGHT) {
+                            this.activeShape.coor = coor;
                         } else {
-                            for (let i = 0; i < this.activeShape.coor.length; i++) {
-                                const tar = this.remmber[i];
-                                const x = offsetX - tar[0];
-                                const y = offsetY - tar[1];
-                                if (x < 0 || x > w || y < 0 || y > h) return;
-                                coor.push([x, y]);
-                            }
+                            this.emit('error', `宽不能小于${this.MIN_WIDTH},高不能小于${this.MIN_HEIGHT}。`);
                         }
-                        (this.activeShape as any).coor = coor;
-                        this.update();
-                    } else if ((this.activeShape as Rect).creating && this.activeShape.type === 1 && this.isInContent(e)) {
-                        const x = offsetX - this.originX / this.scale;
-                        const y = offsetY - this.originY / this.scale;
-                        this.activeShape.coor.splice(1, 1, [x, y]);
+                    } else if (this.activeShape.type === 2) {
+                        const nx = Math.round(offsetX - this.originX / this.scale)
+                        const ny = Math.round(offsetY - this.originY / this.scale)
+                        const newPoint = [nx, ny]
+                        this.activeShape.coor.splice(this.ctrlIndex, 1, newPoint);
                     }
-                    this.emit('updated', this.activeShape)
+                } else if (this.activeShape.dragging) { // 拖拽
+                    let coor = [];
+                    let noLimit = true
+                    const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
+                    const h = this.IMAGE_ORIGIN_HEIGHT || this.HEIGHT;
+                    if (this.activeShape.type === 3) {
+                        const [t1, t2] = this.remmber[0];
+                        const x = offsetX - t1;
+                        const y = offsetY - t2;
+                        if (x < 0 || x > w || y < 0 || y > h) noLimit = false;
+                        coor = [x, y];
+                    } else {
+                        for (let i = 0; i < this.activeShape.coor.length; i++) {
+                            const tar = this.remmber[i];
+                            const x = offsetX - tar[0];
+                            const y = offsetY - tar[1];
+                            if (x < 0 || x > w || y < 0 || y > h) noLimit = false
+                            coor.push([x, y]);
+                        }
+                    }
+                    if (noLimit) this.activeShape.coor = coor;
+                } else if (this.activeShape.creating && this.activeShape.type === 1 && this.isInBackground(e)) {
+                    // 创建矩形
+                    const x = Math.round(offsetX - this.originX / this.scale);
+                    const y = Math.round(offsetY - this.originY / this.scale);
+                    this.activeShape.coor.splice(1, 1, [x, y]);
                 }
+                this.emit('updated', this.activeShape)
                 this.update();
             } else if (this.activeShape?.type === 2 && (this.activeShape as Polygon)?.creating) {
+                // 多边形添加点
                 this.update();
             }
         });
@@ -307,14 +313,14 @@ export default class CanvasSelect extends EventBus {
             this.remmber = [];
             if (this.activeShape) {
                 this.activeShape.dragging = false;
-                if ((this.activeShape as Rect).creating && this.activeShape.type === 1) {
-                    const [[x0, y0], [x1, y1]] = (this.activeShape as Rect).coor;
+                if (this.activeShape.creating && this.activeShape.type === 1) {
+                    const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                     if (Math.abs(x0 - x1) < this.MIN_WIDTH || Math.abs(y0 - y1) < this.MIN_HEIGHT) {
                         this.dataset.pop();
                         this.emit('error', `宽不能小于${this.MIN_WIDTH},高不能小于${this.MIN_HEIGHT}`);
                     } else {
                         this.activeShape.coor = [[Math.min(x0, x1), Math.min(y0, y1)], [Math.max(x0, x1), Math.max(y0, y1)]];
-                        (this.activeShape as Rect).creating = false;
+                        this.activeShape.creating = false;
                         this.emit('add', this.activeShape);
                     }
                     this.update();
@@ -326,7 +332,8 @@ export default class CanvasSelect extends EventBus {
             if (this.activeShape?.type === 2) {
                 if (this.activeShape.coor.length > 2) {
                     this.emit('add', this.activeShape);
-                    (this.activeShape as Polygon).creating = false;
+                    this.emit('updated', this.activeShape);
+                    this.activeShape.creating = false;
                     this.update();
                 }
             }
@@ -336,20 +343,17 @@ export default class CanvasSelect extends EventBus {
             if (this.activeShape) {
                 if (this.activeShape.type === 2) {
                     if (e.key === 'Escape') {
-                        this.deleteByIndex(this.activeShape.index);
-                    } else if (e.key === 'Backspace') {
-                        if (this.activeShape.coor.length > 1 && (this.activeShape as Polygon).creating) {
+                        if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
                             this.activeShape.coor.pop();
                         } else {
                             this.deleteByIndex(this.activeShape.index);
                         }
                     }
                     this.update();
-                } else if (this.activeShape && e.key === 'Backspace') {
+                } else if (e.key === 'Backspace') {
                     this.deleteByIndex(this.activeShape.index);
                 }
             }
-
         });
     }
     /**
@@ -388,26 +392,26 @@ export default class CanvasSelect extends EventBus {
         }
     }
     /**
-     * 判断是非在标注实例上
+     * 判断是否在标注实例上
      * @param mousePoint 点击位置
      * @returns 
      */
-    hoverOnShape(mousePoint: Point): [number, Rect | Polygon | Dot] {
-        let targetShapeIndex = -1;
-        const targetShape = this.dataset.reduceRight((target, shape, i) => {
+    hitOnShape(mousePoint: Point): [number, Rect | Polygon | Dot] {
+        let hitShapeIndex = -1;
+        const hitShape = this.dataset.reduceRight((target, shape, i) => {
             if (!target) {
                 if (
                     (shape.type === 3 && this.isPointInCircle(mousePoint, shape.coor as Point, 3))
                     || (shape.type === 1 && this.isPointInRect(mousePoint, (shape as Rect).coor))
                     || (shape.type === 2 && this.isPointInPolygon(mousePoint, (shape as Polygon).coor))
                 ) {
-                    targetShapeIndex = i;
+                    hitShapeIndex = i;
                     target = shape;
                 }
             }
             return target;
         }, null);
-        return [targetShapeIndex, targetShape];
+        return [hitShapeIndex, hitShape];
     }
 
     /**
@@ -415,7 +419,7 @@ export default class CanvasSelect extends EventBus {
      * @param e MouseEvent
      * @returns 布尔值
      */
-    isInContent(e: MouseEvent): boolean {
+    isInBackground(e: MouseEvent): boolean {
         const offsetX = e.offsetX / this.scale;
         const offsetY = e.offsetY / this.scale;
         return offsetX >= this.originX / this.scale && offsetY >= this.originY / this.scale
