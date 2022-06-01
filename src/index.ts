@@ -90,7 +90,9 @@ export default class CanvasSelect extends EventBus {
             this.offlineCanvas.height = this.HEIGHT;
             this.offlineCtx = this.offlineCanvas.getContext('2d');
             this.initScreen();
-            if (imgSrc) this.image.src = imgSrc;
+            if (imgSrc) {
+                this.setImage(imgSrc)
+            }
         } else {
             console.warn('HTMLCanvasElement is required!');
         }
@@ -357,10 +359,19 @@ export default class CanvasSelect extends EventBus {
         });
     }
     /**
+     * 添加/切换图片
+     * @param url 图片链接
+     */
+    setImage(url: string) {
+        this.imageLoaded = false
+        this.image.src = url
+    }
+    /**
      * 设置数据
      * @param data Array
      */
     async setData(data: any[]) {
+        let initdata: any[] = []
         try {
             await this.canStart
             data.forEach((item, index) => {
@@ -381,11 +392,12 @@ export default class CanvasSelect extends EventBus {
                         default:
                             break;
                     }
-                    this.dataset.push(shape);
+                    initdata.push(shape);
                 } else {
                     this.emit('error', `${item} in data must be an enumerable Object.`);
                 }
             });
+            this.dataset = initdata
             this.update();
         } catch (error) {
             this.emit('error', error);
