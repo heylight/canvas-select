@@ -49,8 +49,11 @@ npm i canvas-select
 ```
 
 ```js
-// 构造函数CanvasSelect 参数1表示canvas dom节点，参数2表示需要标注的图片链接
+// 构造函数CanvasSelect 参数1表示canvas dom节点，可选参数2表示需要标注的图片链接
 const instance = new CanvasSelect('.container', '/one.jpg');
+// or
+// const instance = new CanvasSelect('.container');
+// instance.setImage('/one.jpg')
 
 let option = [
   {
@@ -95,27 +98,28 @@ instance.on('select', (info) => {
 
 对任意属性的修改都需要调用`instance.update()`更新视图
 
-| 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                    说明                     |
-| ----------------- | :-----: | :-----------------: | :--------------: | :-----------------------------------------: |
-| createType        | boolean |          0          |                  |     0 不创建，1 创建矩形，2 创建多边形      |
-| lock              | boolean |        false        |                  |                是否锁定画布                 |
-| MIN_WIDTH         | number  |         10          |                  |                最小矩形宽度                 |
-| MIN_HEIGHT        | number  |         10          |                  |                最小矩形高度                 |
-| strokeStyle       | string  |   rgb(0, 0, 255)    |       支持       |                形状边线颜色                 |
-| fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                形状填充颜色                 |
-| activeStrokeStyle | string  |        #f00         |                  |             选中的形状边线颜色              |
-| activeFillStyle   | string  |        #f00         |                  |             选中的形状填充颜色              |
-| ctrlStrokeStyle   | string  |        #000         |                  |               控制点边线颜色                |
-| ctrlFillStyle     | string  |        #fff         |                  |               控制点填充颜色                |
-| ctrlRadius        | number  |          3          |                  |                 控制点半径                  |
-| labelFillStyle    | string  |        #fff         |       支持       |               label 填充颜色                |
-| labelFont         | string  |   12px serif #000   |       支持       |               label 文字样式                |
-| labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示 |
+| 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                     说明                     |
+| ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------: |
+| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 创建多边形，3 点标注 |
+| lock              | boolean |        false        |                  |                 是否锁定画布                 |
+| MIN_WIDTH         | number  |         10          |                  |                 最小矩形宽度                 |
+| MIN_HEIGHT        | number  |         10          |                  |                 最小矩形高度                 |
+| strokeStyle       | string  |   rgb(0, 0, 255)    |       支持       |                 形状边线颜色                 |
+| fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                 形状填充颜色                 |
+| activeStrokeStyle | string  |        #f00         |                  |              选中的形状边线颜色              |
+| activeFillStyle   | string  |        #f00         |                  |              选中的形状填充颜色              |
+| ctrlStrokeStyle   | string  |        #000         |                  |                控制点边线颜色                |
+| ctrlFillStyle     | string  |        #fff         |                  |                控制点填充颜色                |
+| ctrlRadius        | number  |          3          |                  |                  控制点半径                  |
+| labelFillStyle    | string  |        #fff         |       支持       |                label 填充颜色                |
+| labelFont         | string  |   12px serif #000   |       支持       |                label 文字样式                |
+| labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
 
 ## 3、实例方法
 
 | 方法名称      | 参数类型 |                 说明                  |
 | ------------- | :------: | :-----------------------------------: |
+| setImage      |  string  |             添加/切换图片             |
 | setData       |  Array   |             加载初始数据              |
 | setScale      | boolean  |     true 放大画布，false 缩小画布     |
 | fitZoom       |    无    |      适配图片到画布 （contain）       |

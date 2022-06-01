@@ -27,7 +27,7 @@
   <script src="./lib/canvas-select.min.js"></script>
   <script>
     const output = document.querySelector('pre');
-    const canvasSelect = new CanvasSelect('.container', './two.jpeg');
+    const canvasSelect = new CanvasSelect('.container');
     canvasSelect.strokeStyle = 'rgb(52,244,39)';
     window.canvasSelect = canvasSelect;
     const option = [
@@ -59,6 +59,10 @@
     //   canvasSelect.setData(option);
     // });
     canvasSelect.setData(option);
+    // 选中
+    canvasSelect.on('load', (info) => {
+      console.log('加载图片');
+    });
     // 选中
     canvasSelect.on('select', (info) => {
       window.info = info;
