@@ -2,7 +2,7 @@
 
 用于 2D 图片标注，支持矩形标注、多边形标注、点标注。[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](pic.png)
+![图例](https://cdn.jsdelivr.net/npm/canvas-select@2.3.3/pic.png)
 
 ## 简介
 
@@ -37,7 +37,7 @@
 支持 UMD 模块规范
 
 ```html
-<script src="path/to/canvas-select.min.js"></script>
+<script src="https://unpkg.com/canvas-select@^2/lib/canvas-select.min.js"></script>
 ```
 
 ```
