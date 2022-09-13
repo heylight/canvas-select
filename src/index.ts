@@ -343,13 +343,11 @@ export default class CanvasSelect extends EventBus {
         document.body.addEventListener('keyup', (e: KeyboardEvent) => {
             if (this.lock) return;
             if (this.activeShape) {
-                if (this.activeShape.type === 2) {
-                    if (e.key === 'Escape') {
-                        if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
-                            this.activeShape.coor.pop();
-                        } else {
-                            this.deleteByIndex(this.activeShape.index);
-                        }
+                if (this.activeShape.type === 2 && e.key === 'Escape') {
+                    if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
+                        this.activeShape.coor.pop();
+                    } else {
+                        this.deleteByIndex(this.activeShape.index);
                     }
                     this.update();
                 } else if (e.key === 'Backspace') {
