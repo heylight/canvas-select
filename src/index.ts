@@ -131,15 +131,6 @@ export default class CanvasSelect extends EventBus {
             if (this.lock) return;
             e.preventDefault();
         });
-        this.canvas.addEventListener('mousewheel', (e: WheelEvent) => {
-            if (this.lock) return;
-            e.preventDefault();
-            this.setScale(e.deltaY < 0);
-            const offsetX = Math.round(e.offsetX / this.scale);
-            const offsetY = Math.round(e.offsetY / this.scale);
-            this.movePoint = [offsetX, offsetY];
-            this.update()
-        });
         this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             if (this.lock) return;
             const offsetX = Math.round(e.offsetX / this.scale);
