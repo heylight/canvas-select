@@ -117,6 +117,7 @@ instance.on('select', (info) => {
 | labelFillStyle    | string  |        #fff         |       支持       |                label 填充颜色                |
 | labelFont         | string  |   12px serif #000   |       支持       |                label 文字样式                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
+| dataset           |  array  |         []          |       支持       |          获取实例中已标注图形的信息          |
 
 ## 3、实例方法
 
