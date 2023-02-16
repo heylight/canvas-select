@@ -10,6 +10,9 @@
     "serve": "live-server",
     "dev": "npm run watch & npm run serve"
   },
+  "files": [
+    "/lib"
+  ],
   "keywords": [
     "canvas",
     "marker",
