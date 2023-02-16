@@ -43,7 +43,7 @@
 <script src="https://unpkg.com/canvas-select@^2/lib/canvas-select.min.js"></script>
 ```
 
-```
+```bash
 npm i canvas-select
 ```
 
@@ -105,6 +105,7 @@ instance.on('select', (info) => {
 | ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------: |
 | createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 创建多边形，3 点标注 |
 | lock              | boolean |        false        |                  |                 是否锁定画布                 |
+| scrollZoom        | boolean |        true         |                  |                 是否滚动缩放                 |
 | MIN_WIDTH         | number  |         10          |                  |                 最小矩形宽度                 |
 | MIN_HEIGHT        | number  |         10          |                  |                 最小矩形高度                 |
 | strokeStyle       | string  |   rgb(0, 0, 255)    |       支持       |                 形状边线颜色                 |

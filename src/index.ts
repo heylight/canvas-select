@@ -77,18 +77,26 @@ export default class CanvasSelect extends EventBus {
 
     canStart: Promise<any>
 
+    scrollZoom = false // 滚动缩放
+
     constructor(el: HTMLCanvasElement | string, imgSrc?: string) {
         super()
+        const dpr = window.devicePixelRatio || 1
         const container = typeof el === 'string' ? document.querySelector(el) : el;
         if (Object.prototype.toString.call(container).includes('HTMLCanvasElement')) {
             this.canvas = container as HTMLCanvasElement;
             this.ctx = this.canvas.getContext('2d');
-            this.WIDTH = this.canvas.clientWidth;
-            this.HEIGHT = this.canvas.clientHeight;
+            this.WIDTH = this.canvas.width;
+            this.HEIGHT = this.canvas.height;
+            this.canvas.width = this.WIDTH * dpr
+            this.canvas.height = this.HEIGHT * dpr
+            this.canvas.style.width = this.WIDTH + 'px'
+            this.canvas.style.height = this.HEIGHT + 'px'
             this.offlineCanvas = document.createElement('canvas');
             this.offlineCanvas.width = this.WIDTH;
             this.offlineCanvas.height = this.HEIGHT;
             this.offlineCtx = this.offlineCanvas.getContext('2d');
+            this.ctx.scale(dpr, dpr)
             this.initScreen();
             if (imgSrc) {
                 this.setImage(imgSrc)
@@ -132,7 +140,7 @@ export default class CanvasSelect extends EventBus {
             e.preventDefault();
         });
         this.canvas.addEventListener('mousewheel', (e: WheelEvent) => {
-            if (this.lock) return;
+            if (this.lock || !this.scrollZoom) return;
             e.preventDefault();
             this.setScale(e.deltaY < 0);
             const offsetX = Math.round(e.offsetX / this.scale);
