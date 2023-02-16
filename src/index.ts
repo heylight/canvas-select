@@ -77,7 +77,7 @@ export default class CanvasSelect extends EventBus {
 
     canStart: Promise<any>
 
-    scrollZoom = false // 滚动缩放
+    scrollZoom = true // 滚动缩放
 
     constructor(el: HTMLCanvasElement | string, imgSrc?: string) {
         super()
