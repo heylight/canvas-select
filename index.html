@@ -31,40 +31,11 @@
 <script src="./lib/canvas-select.min.js"></script>
 <script>
   const output = document.querySelector('pre');
-  const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
+  // const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
+  const canvasSelect = new CanvasSelect('.container', '/one.jpg');
   canvasSelect.strokeStyle = 'rgb(52,244,39)';
-  window.canvasSelect = canvasSelect;
-  const option =
-    [
-      {
-        "label": "鹦鹉",
-        "coor": [
-          [
-            112,
-            107
-          ],
-          [
-            247,
-            223
-          ]
-        ],
-        "type": 1
-      },
-      {
-        "label": "",
-        "coor": [
-          [
-            10,
-            20
-          ],
-          [
-            100,
-            250
-          ]
-        ],
-        "type": 4
-      }
-    ]
+  window.c = canvasSelect;
+  const option = []
   // canvasSelect.on('load', () => {
   //   canvasSelect.setData(option);
   // });
@@ -76,6 +47,7 @@
   // 选中
   canvasSelect.on('select', (info) => {
     window.info = info;
+    canvasSelect.update
   });
   canvasSelect.on('updated', (info) => {
     window.tiger = info;
