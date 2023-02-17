@@ -14,7 +14,7 @@
 </head>
 
 <body>
-  <canvas width="800" height="500" class="container"></canvas>
+  <canvas width="600" height="500" class="container"></canvas>
   <div>
     <button onclick="change(1)">创建矩形</button>
     <button onclick="change(2)">创建多边形</button>
@@ -24,6 +24,7 @@
     <button onclick="zoom(true)">放大</button>
     <button onclick="zoom(false)">缩小</button>
     <button onclick="fitting()">适配</button>
+    <button onclick="update()">更新</button>
   </div>
   <div>输出结果</div>
   <pre></pre>
@@ -63,6 +64,9 @@
   }
   function fitting() {
     canvasSelect.fitZoom();
+  }
+  function update() {
+    canvasSelect.update();
   }
 </script>
 

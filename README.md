@@ -7,11 +7,11 @@
 
 查看示例[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](https://cdn.jsdelivr.net/npm/canvas-select@2.3.3/pic.png)
+![图例](/example.png)
 
 ## 简介
 
-- 支持矩形标注、多边形标注、点标注。
+- 支持矩形标注、多边形标注、点标注、折线标注。
 
 - 支持拖拽、缩放。
 
@@ -37,7 +37,7 @@
 
 - 选中形状，`Backspace`删除。
 
-- 通过 instance.dataset 查看标注结果。
+- `通过 instance.dataset 查看标注结果`。
 
 支持 UMD 模块规范
 
@@ -86,6 +86,16 @@ let option = [
     label: '点标注',
     type: 3, // 点标注 （必填）
     coor: [800, 800],
+  },
+  {
+    label: '折线标注',
+    type: 3, // 折线标注 （必填）
+    coor: [
+      // 由2个以上点表示 (必填)
+      [30, 150],
+      [120, 100],
+      [50, 200],
+    ],
   },
 ];
 // 加载数据
