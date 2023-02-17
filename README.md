@@ -7,7 +7,7 @@
 
 查看示例[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](/example.png)
+![图例](https://cdn.jsdelivr.net/npm/canvas-select@2.4.0-beta.7/example.png)
 
 ## 简介
 
