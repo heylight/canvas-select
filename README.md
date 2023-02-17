@@ -1,6 +1,6 @@
 # canvas-select
 
-一个用于图片标注的javascript库，简单轻量，支持矩形标注、多边形标注、点标注。
+一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注。
 
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
@@ -35,9 +35,9 @@
 
 - 鼠标滚轮缩放画布。
 
-- 选中形状，`Backspace`删除
+- 选中形状，`Backspace`删除。
 
-- 通过 instance.dataset 查看标注结果
+- 通过 instance.dataset 查看标注结果。
 
 支持 UMD 模块规范
 
@@ -46,8 +46,10 @@
 ```
 
 ```bash
-npm i canvas-select
+npm i canvas-select --save
 ```
+
+注意: 画布尺寸不要使用css或者style定义
 
 ```html
 <canvas width="500" height="500" class="container"></canvas>
@@ -118,7 +120,8 @@ instance.on('select', (info) => {
 | ctrlFillStyle     | string  |        #fff         |                  |                控制点填充颜色                |
 | ctrlRadius        | number  |          3          |                  |                  控制点半径                  |
 | labelFillStyle    | string  |        #fff         |       支持       |                label 填充颜色                |
-| labelFont         | string  |   12px serif #000   |       支持       |                label 文字样式                |
+| labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
+| textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
 
 ## 3、实例方法

@@ -7,6 +7,7 @@ export default class Shape {
     public strokeStyle: string = ''
     public fillStyle: string = ''
     public labelFillStyle: string = ''
+    public textFillStyle: string = ''
     public labelFont: string = ''
     public type: number // 形状
     public active: boolean = false
