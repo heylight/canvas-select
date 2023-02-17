@@ -1,6 +1,6 @@
 # canvas-select
 
-一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注。
+一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注、折线标注。
 
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
@@ -107,7 +107,7 @@ instance.on('select', (info) => {
 
 | 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                     说明                     |
 | ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------: |
-| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 创建多边形，3 点标注 |
+| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 多边形，3 点标注，4 折线 |
 | lock              | boolean |        false        |                  |                 锁定画布                 |
 | scrollZoom        | boolean |        true         |                  |                 滚动缩放                 |
 | MIN_WIDTH         | number  |         10          |                  |                 最小矩形宽度                 |
