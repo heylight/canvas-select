@@ -3,6 +3,7 @@ import Polygon from './shape/Polygon';
 import Dot from './shape/Dot';
 import { Point } from './Types';
 import EventBus from './EventBus';
+import Line from './shape/Line';
 
 export default class CanvasSelect extends EventBus {
     lock: boolean = false // 只读模式
@@ -27,7 +28,9 @@ export default class CanvasSelect extends EventBus {
 
     labelFillStyle = '#fff'
 
-    labelFont = '12px serif #000'
+    labelFont = '10px sans-serif'
+
+    textFillStyle = '#000'
 
     labelMaxLen = 5
 
@@ -39,7 +42,7 @@ export default class CanvasSelect extends EventBus {
 
     ctx: CanvasRenderingContext2D
 
-    dataset: Array<Rect | Polygon | Dot> = []
+    dataset: Array<Rect | Polygon | Dot | Line> = []
 
     offlineCanvas: HTMLCanvasElement
 
@@ -77,18 +80,26 @@ export default class CanvasSelect extends EventBus {
 
     canStart: Promise<any>
 
+    scrollZoom = true // 滚动缩放
+
     constructor(el: HTMLCanvasElement | string, imgSrc?: string) {
         super()
+        const dpr = window.devicePixelRatio || 1
         const container = typeof el === 'string' ? document.querySelector(el) : el;
         if (Object.prototype.toString.call(container).includes('HTMLCanvasElement')) {
             this.canvas = container as HTMLCanvasElement;
             this.ctx = this.canvas.getContext('2d');
-            this.WIDTH = this.canvas.clientWidth;
-            this.HEIGHT = this.canvas.clientHeight;
+            this.WIDTH = this.canvas.width;
+            this.HEIGHT = this.canvas.height;
+            this.canvas.width = this.WIDTH * dpr
+            this.canvas.height = this.HEIGHT * dpr
+            this.canvas.style.width = this.WIDTH + 'px'
+            this.canvas.style.height = this.HEIGHT + 'px'
             this.offlineCanvas = document.createElement('canvas');
             this.offlineCanvas.width = this.WIDTH;
             this.offlineCanvas.height = this.HEIGHT;
             this.offlineCtx = this.offlineCanvas.getContext('2d');
+            this.ctx.scale(dpr, dpr)
             this.initScreen();
             if (imgSrc) {
                 this.setImage(imgSrc)
@@ -132,7 +143,7 @@ export default class CanvasSelect extends EventBus {
             e.preventDefault();
         });
         this.canvas.addEventListener('mousewheel', (e: WheelEvent) => {
-            if (this.lock) return;
+            if (this.lock || !this.scrollZoom) return;
             e.preventDefault();
             this.setScale(e.deltaY < 0);
             const offsetX = Math.round(e.offsetX / this.scale);
@@ -159,12 +170,12 @@ export default class CanvasSelect extends EventBus {
                 }
                 // 是否点击到形状
                 const [hitShapeIndex, hitShape] = this.hitOnShape(mousePoint);
-                // 是否正在创建多边形
-                const oncreating = this.activeShape?.type === 2 && this.activeShape.creating;
+                // 是否正在创建多边形/折线
+                const oncreating = [2, 4].includes(this.activeShape?.type) && this.activeShape.creating;
                 if (oncreating) {
                     // 多边形新增点
                     if (this.isInBackground(e)) {
-                        const pShape = this.activeShape as Polygon;
+                        const pShape = this.activeShape;
                         const [x, y] = pShape.coor[pShape.coor.length - 1];
                         if (x !== offsetX && y !== offsetY) {
                             const nx = Math.round(offsetX - this.originX / this.scale)
@@ -206,6 +217,9 @@ export default class CanvasSelect extends EventBus {
                     } else if (this.createType === 3) {
                         newShape = new Dot(curPoint, this.dataset.length);
                         this.emit('add', newShape)
+                    } else if (this.createType === 4) {
+                        newShape = new Line([curPoint], this.dataset.length);
+                        newShape.creating = true;
                     }
                     this.dataset.forEach((sp) => { sp.active = false; });
                     newShape.active = true;
@@ -233,7 +247,7 @@ export default class CanvasSelect extends EventBus {
                 if (this.ctrlIndex > -1 && this.isInBackground(e)) {
                     const [[x, y]] = this.remmber;
                     // resize矩形
-                    if (this.activeShape.type === 1) {
+                    if (this.activeShape?.type === 1) {
                         const [[x0, y0], [x1, y1]] = (this.activeShape as Rect).coor;
                         let coor: Point[] = [];
                         switch (this.ctrlIndex) {
@@ -270,7 +284,7 @@ export default class CanvasSelect extends EventBus {
                         } else {
                             this.emit('error', `宽不能小于${this.MIN_WIDTH},高不能小于${this.MIN_HEIGHT}。`);
                         }
-                    } else if (this.activeShape.type === 2) {
+                    } else if ([2, 4].includes(this.activeShape?.type)) {
                         const nx = Math.round(offsetX - this.originX / this.scale)
                         const ny = Math.round(offsetY - this.originY / this.scale)
                         const newPoint = [nx, ny]
@@ -281,7 +295,7 @@ export default class CanvasSelect extends EventBus {
                     let noLimit = true
                     const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
                     const h = this.IMAGE_ORIGIN_HEIGHT || this.HEIGHT;
-                    if (this.activeShape.type === 3) {
+                    if (this.activeShape?.type === 3) {
                         const [t1, t2] = this.remmber[0];
                         const x = offsetX - t1;
                         const y = offsetY - t2;
@@ -297,7 +311,7 @@ export default class CanvasSelect extends EventBus {
                         }
                     }
                     if (noLimit) this.activeShape.coor = coor;
-                } else if (this.activeShape.creating && this.activeShape.type === 1 && this.isInBackground(e)) {
+                } else if (this.activeShape.creating && this.activeShape?.type === 1 && this.isInBackground(e)) {
                     // 创建矩形
                     const x = Math.round(offsetX - this.originX / this.scale);
                     const y = Math.round(offsetY - this.originY / this.scale);
@@ -305,7 +319,7 @@ export default class CanvasSelect extends EventBus {
                 }
                 this.emit('updated', this.activeShape)
                 this.update();
-            } else if (this.activeShape?.type === 2 && (this.activeShape as Polygon)?.creating) {
+            } else if ([2, 4].includes(this.activeShape?.type) && (this.activeShape as Polygon)?.creating) {
                 // 多边形添加点
                 this.update();
             }
@@ -315,7 +329,7 @@ export default class CanvasSelect extends EventBus {
             this.remmber = [];
             if (this.activeShape) {
                 this.activeShape.dragging = false;
-                if (this.activeShape.creating && this.activeShape.type === 1) {
+                if (this.activeShape.creating && this.activeShape?.type === 1) {
                     const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                     if (Math.abs(x0 - x1) < this.MIN_WIDTH || Math.abs(y0 - y1) < this.MIN_HEIGHT) {
                         this.dataset.pop();
@@ -331,19 +345,21 @@ export default class CanvasSelect extends EventBus {
         });
         this.canvas.addEventListener('dblclick', () => {
             if (this.lock) return;
-            if (this.activeShape?.type === 2) {
-                if (this.activeShape.coor.length > 2) {
+            if ([2, 4].includes(this.activeShape?.type)) {
+                if ((this.activeShape?.type === 2 && this.activeShape.coor.length > 2)
+                    || (this.activeShape?.type === 4 && this.activeShape.coor.length > 1)
+                ) {
                     this.emit('add', this.activeShape);
                     this.emit('updated', this.activeShape);
                     this.activeShape.creating = false;
-                    this.update();
+                    this.update(true);
                 }
             }
         });
         document.body.addEventListener('keyup', (e: KeyboardEvent) => {
             if (this.lock) return;
             if (this.activeShape) {
-                if (this.activeShape.type === 2 && e.key === 'Escape') {
+                if ([2, 4].includes(this.activeShape?.type) && e.key === 'Escape') {
                     if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
                         this.activeShape.coor.pop();
                     } else {
@@ -374,8 +390,8 @@ export default class CanvasSelect extends EventBus {
             await this.canStart
             data.forEach((item, index) => {
                 if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
-                    const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, labelFont, uuid } = item;
-                    const style = { strokeStyle, fillStyle, labelFillStyle, labelFont }
+                    const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont, uuid } = item;
+                    const style = { strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont }
                     let shape
                     switch (type) {
                         case 1:
@@ -386,6 +402,9 @@ export default class CanvasSelect extends EventBus {
                             break;
                         case 3:
                             shape = new Dot(coor, index, label, style, uuid);
+                            break;
+                        case 4:
+                            shape = new Line(coor, index, label, style, uuid);
                             break;
                         default:
                             break;
@@ -414,6 +433,7 @@ export default class CanvasSelect extends EventBus {
                     (shape.type === 3 && this.isPointInCircle(mousePoint, shape.coor as Point, 3))
                     || (shape.type === 1 && this.isPointInRect(mousePoint, (shape as Rect).coor))
                     || (shape.type === 2 && this.isPointInPolygon(mousePoint, (shape as Polygon).coor))
+                    || (shape.type === 4 && this.isPointInLine(mousePoint, (shape as Line).coor))
                 ) {
                     hitShapeIndex = i;
                     target = shape;
@@ -486,13 +506,39 @@ export default class CanvasSelect extends EventBus {
         return distance <= r;
     }
     /**
+     * 判断是否在折线内
+     * @param point 坐标
+     * @param coor 区域坐标
+     * @returns 布尔值
+     */
+    isPointInLine(point: Point, coor: Point[]): boolean {
+        this.offlineCtx.save();
+        this.offlineCtx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
+        this.offlineCtx.translate(this.originX, this.originY);
+        this.offlineCtx.lineWidth = 5;
+        this.offlineCtx.beginPath();
+        coor.forEach((pt, i) => {
+            const [x, y] = pt.map((a) => Math.round(a * this.scale));
+            if (i === 0) {
+                this.offlineCtx.moveTo(x, y);
+            } else {
+                this.offlineCtx.lineTo(x, y);
+            }
+        });
+        this.offlineCtx.stroke();
+        const areaData = this.offlineCtx.getImageData(0, 0, this.WIDTH, this.HEIGHT);
+        const index = (point[1] - 1) * this.WIDTH * 4 + point[0] * 4;
+        this.offlineCtx.restore();
+        return areaData.data[index + 3] !== 0;
+    }
+    /**
      * 绘制矩形
      * @param shape 标注实例
      * @returns 
      */
     drawRect(shape: Rect) {
         if (shape.coor.length !== 2) return;
-        const { labelFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
+        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.fillStyle;
@@ -502,14 +548,14 @@ export default class CanvasSelect extends EventBus {
         this.ctx.strokeRect(x0, y0, w, h);
         if (!creating) this.ctx.fillRect(x0, y0, w, h);
         this.ctx.restore();
-        this.drawLabel(coor[0], label, labelFillStyle, labelFont);
+        this.drawLabel(coor[0], label, labelFillStyle, labelFont, textFillStyle);
     }
     /**
      * 绘制多边形
      * @param shape 标注实例
      */
     drawPolygon(shape: Polygon) {
-        const { labelFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
+        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.fillStyle;
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
@@ -531,14 +577,14 @@ export default class CanvasSelect extends EventBus {
         this.ctx.fill();
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(coor[0], label, labelFillStyle, labelFont);
+        this.drawLabel(coor[0], label, labelFillStyle, labelFont, textFillStyle);
     }
     /**
      * 绘制点
      * @param shape 标注实例
      */
     drawDot(shape: Dot) {
-        const { labelFillStyle, labelFont, strokeStyle, fillStyle, active, coor, label } = shape
+        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, coor, label } = shape
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.ctrlFillStyle;
@@ -549,7 +595,32 @@ export default class CanvasSelect extends EventBus {
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(coor as Point, label, labelFillStyle, labelFont);
+        this.drawLabel(coor as Point, label, labelFillStyle, labelFont, textFillStyle);
+    }
+    /**
+     * 绘制折线
+     * @param shape 标注实例
+     */
+    drawLine(shape: Line) {
+        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
+        this.ctx.save();
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        this.ctx.beginPath();
+        coor.forEach((el: Point, i) => {
+            const [x, y] = el.map((a) => Math.round(a * this.scale));
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        });
+        if (creating) {
+            const [x, y] = this.movePoint.map((a) => Math.round(a * this.scale));
+            this.ctx.lineTo(x - this.originX, y - this.originY);
+        }
+        this.ctx.stroke();
+        this.ctx.restore();
+        this.drawLabel(coor[0], label, labelFillStyle, labelFont, textFillStyle);
     }
     /**
      * 绘制控制点
@@ -571,7 +642,7 @@ export default class CanvasSelect extends EventBus {
      * 绘制控制点列表
      * @param shape 标注实例
      */
-    drawCtrlList(shape: Rect | Polygon) {
+    drawCtrlList(shape: Rect | Polygon | Line) {
         shape.ctrlsData.forEach((point) => {
             this.drawCtrl(point);
         });
@@ -581,9 +652,9 @@ export default class CanvasSelect extends EventBus {
      * @param point 位置
      * @param label 文本
      */
-    drawLabel(point: Point, label: string = '', labelFillStyle = '', labelFont = '') {
+    drawLabel(point: Point, label = '', labelFillStyle = '', labelFont = '', textFillStyle = '') {
         if (label.length) {
-            const newStr = label.length < this.labelMaxLen + 1 ? label : (`${label.substr(0, this.labelMaxLen)}...`);
+            const newStr = label.length < this.labelMaxLen + 1 ? label : (`${label.slice(0, this.labelMaxLen)}...`);
             const text = this.ctx.measureText(newStr);
             const [x, y] = point.map((a) => a * this.scale);
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < (text.width + 4) / this.scale;
@@ -591,8 +662,9 @@ export default class CanvasSelect extends EventBus {
             this.ctx.save();
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
             this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - 15) : y + 1, text.width + 4, 16);
+            this.ctx.fillStyle = textFillStyle || this.textFillStyle;
             this.ctx.font = labelFont || this.labelFont;
-            this.ctx.strokeText(newStr, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 4) : y + 12, 80);
+            this.ctx.fillText(newStr, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 4) : y + 12, 80);
             this.ctx.restore();
         }
     }
@@ -611,7 +683,7 @@ export default class CanvasSelect extends EventBus {
     /**
      * 更新画布
      */
-    update() {
+    update(a = false) {
         this.ctx.save();
         this.clear();
         this.ctx.translate(this.originX, this.originY);
@@ -627,12 +699,15 @@ export default class CanvasSelect extends EventBus {
                 case 3:
                     this.drawDot(shape as Dot);
                     break;
+                case 4:
+                    this.drawLine(shape as Line);
+                    break;
                 default:
                     break;
             }
         });
-        if (this.activeShape && [1, 2].includes(this.activeShape.type)) {
-            this.drawCtrlList(this.activeShape as Rect | Polygon);
+        if (this.activeShape && [1, 2, 4].includes(this.activeShape?.type)) {
+            this.drawCtrlList(this.activeShape as Rect | Polygon | Line);
         }
         this.ctx.restore();
     }

@@ -1,15 +1,17 @@
 # canvas-select
 
+一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注、折线标注。
+
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 
-用于 2D 图片标注，支持矩形标注、多边形标注、点标注。[demo](https://codepen.io/heylight/pen/VwbQLje)
+查看示例[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](https://cdn.jsdelivr.net/npm/canvas-select@2.3.3/pic.png)
+![图例](https://cdn.jsdelivr.net/npm/canvas-select@2.4.0-beta.7/example.png)
 
 ## 简介
 
-- 支持矩形标注、多边形标注、点标注。
+- 支持矩形标注、多边形标注、点标注、折线标注。
 
 - 支持拖拽、缩放。
 
@@ -33,9 +35,9 @@
 
 - 鼠标滚轮缩放画布。
 
-- 选中形状，`Backspace`删除
+- 选中形状，`Backspace`删除。
 
-- 通过 instance.dataset 查看标注结果
+- `通过 instance.dataset 查看标注结果`。
 
 支持 UMD 模块规范
 
@@ -43,9 +45,11 @@
 <script src="https://unpkg.com/canvas-select@^2/lib/canvas-select.min.js"></script>
 ```
 
+```bash
+npm i canvas-select --save
 ```
-npm i canvas-select
-```
+
+注意: 画布尺寸不要使用css或者style定义
 
 ```html
 <canvas width="500" height="500" class="container"></canvas>
@@ -83,6 +87,16 @@ let option = [
     type: 3, // 点标注 （必填）
     coor: [800, 800],
   },
+  {
+    label: '折线标注',
+    type: 3, // 折线标注 （必填）
+    coor: [
+      // 由2个以上点表示 (必填)
+      [30, 150],
+      [120, 100],
+      [50, 200],
+    ],
+  },
 ];
 // 加载数据
 instance.setData(option);
@@ -103,8 +117,9 @@ instance.on('select', (info) => {
 
 | 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                     说明                     |
 | ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------: |
-| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 创建多边形，3 点标注 |
-| lock              | boolean |        false        |                  |                 是否锁定画布                 |
+| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 多边形，3 点标注，4 折线 |
+| lock              | boolean |        false        |                  |                 锁定画布                 |
+| scrollZoom        | boolean |        true         |                  |                 滚动缩放                 |
 | MIN_WIDTH         | number  |         10          |                  |                 最小矩形宽度                 |
 | MIN_HEIGHT        | number  |         10          |                  |                 最小矩形高度                 |
 | strokeStyle       | string  |   rgb(0, 0, 255)    |       支持       |                 形状边线颜色                 |
@@ -115,7 +130,8 @@ instance.on('select', (info) => {
 | ctrlFillStyle     | string  |        #fff         |                  |                控制点填充颜色                |
 | ctrlRadius        | number  |          3          |                  |                  控制点半径                  |
 | labelFillStyle    | string  |        #fff         |       支持       |                label 填充颜色                |
-| labelFont         | string  |   12px serif #000   |       支持       |                label 文字样式                |
+| labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
+| textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
 
 ## 3、实例方法
