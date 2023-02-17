@@ -19,6 +19,7 @@
     <button onclick="change(1)">创建矩形</button>
     <button onclick="change(2)">创建多边形</button>
     <button onclick="change(3)">创建点</button>
+    <button onclick="change(4)">创建折线</button>
     <button onclick="change(0)">取消创建</button>
     <button onclick="zoom(true)">放大</button>
     <button onclick="zoom(false)">缩小</button>
@@ -33,29 +34,37 @@
   const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
   canvasSelect.strokeStyle = 'rgb(52,244,39)';
   window.canvasSelect = canvasSelect;
-  const option = [
-    {
-      label: '鹦鹉',
-      type: 1,
-      coor: [[112, 107], [247, 223]
-      ],
-    },
-    // {
-    //   label: '多边形标注',
-    //   type: 2,
-    //   coor: [
-    //     [594, 368],
-    //     [684, 318],
-    //     [784, 368],
-    //     [614, 418],
-    //   ],
-    // },
-    // {
-    //   label: '点标注',
-    //   type: 3,
-    //   coor: [800, 800],
-    // },
-  ];
+  const option =
+    [
+      {
+        "label": "鹦鹉",
+        "coor": [
+          [
+            112,
+            107
+          ],
+          [
+            247,
+            223
+          ]
+        ],
+        "type": 1
+      },
+      {
+        "label": "",
+        "coor": [
+          [
+            10,
+            20
+          ],
+          [
+            100,
+            250
+          ]
+        ],
+        "type": 4
+      }
+    ]
   // canvasSelect.on('load', () => {
   //   canvasSelect.setData(option);
   // });
