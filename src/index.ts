@@ -384,8 +384,8 @@ export default class CanvasSelect extends EventBus {
             await this.canStart
             data.forEach((item, index) => {
                 if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
-                    const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, labelFont, uuid } = item;
-                    const style = { strokeStyle, fillStyle, labelFillStyle, labelFont }
+                    const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont, uuid } = item;
+                    const style = { strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont }
                     let shape
                     switch (type) {
                         case 1:
