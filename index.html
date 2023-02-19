@@ -14,7 +14,7 @@
 </head>
 
 <body>
-  <canvas width="600" height="500" class="container"></canvas>
+  <canvas width="640" height="427" class="container"></canvas>
   <div>
     <button onclick="change(1)">创建矩形</button>
     <button onclick="change(2)">创建多边形</button>
@@ -32,32 +32,55 @@
 <script src="./lib/canvas-select.min.js"></script>
 <script>
   const output = document.querySelector('pre');
-  // const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
-  const canvasSelect = new CanvasSelect('.container', '/one.jpg');
+  const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
+  // const canvasSelect = new CanvasSelect('.container', '/one.jpg');
   canvasSelect.strokeStyle = 'rgb(52,244,39)';
   window.c = canvasSelect;
   const option = []
-  // canvasSelect.on('load', () => {
-  //   canvasSelect.setData(option);
-  // });
+
+  for (let i = 0; i < 10; i++) {
+    option.push({
+      // "label": "标签",
+      "coor": [
+        [
+          79,
+          282
+        ],
+        [
+          134,
+          329
+        ]
+      ],
+      "type": 1
+    })
+  }
   canvasSelect.setData(option);
   // 选中
-  canvasSelect.on('load', (info) => {
-    console.log('加载图片');
+  canvasSelect.on('load', (src) => {
+    console.log('图片加载完成', src);
+  });
+  // 添加
+  canvasSelect.on('add', (info) => {
+    console.log('当前添加', info)
+    window.info = info;
+  });
+  // 删除
+  canvasSelect.on('delete', (info) => {
+    console.log('当前删除', info)
+    window.info = info;
   });
   // 选中
   canvasSelect.on('select', (info) => {
+    console.log('当前选中', info)
     window.info = info;
-    canvasSelect.update
   });
-  canvasSelect.on('updated', (info) => {
-    window.tiger = info;
-    output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
+  canvasSelect.on('updated', (result) => {
+    console.log('标注结果', result)
+    // output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
   });
 
   function change(num) {
     canvasSelect.createType = num;
-    console.log(canvasSelect.createType);
   }
   function zoom(type) {
     canvasSelect.setScale(type);

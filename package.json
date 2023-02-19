@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注、折线标注。",
   "main": "lib/canvas-select.min.js",
   "types": "lib/index.d.ts",
@@ -11,8 +11,7 @@
     "dev": "npm run watch & npm run serve"
   },
   "files": [
-    "/lib",
-    "/example.png"
+    "/lib"
   ],
   "keywords": [
     "canvas",

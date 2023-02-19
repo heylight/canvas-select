@@ -62,8 +62,6 @@ export default class CanvasSelect extends EventBus {
 
     image: HTMLImageElement = new Image()
 
-    imageLoaded: false
-
     IMAGE_ORIGIN_WIDTH: number;
 
     IMAGE_WIDTH: number;
@@ -78,16 +76,16 @@ export default class CanvasSelect extends EventBus {
 
     scaleStep: number = 0; // 缩放步长
 
-    canStart: Promise<any>
-
     scrollZoom = true // 滚动缩放
+
+    timer: NodeJS.Timer;
 
     constructor(el: HTMLCanvasElement | string, imgSrc?: string) {
         super()
         const dpr = window.devicePixelRatio || 1
         const container = typeof el === 'string' ? document.querySelector(el) : el;
-        if (Object.prototype.toString.call(container).includes('HTMLCanvasElement')) {
-            this.canvas = container as HTMLCanvasElement;
+        if (container instanceof HTMLCanvasElement) {
+            this.canvas = container;
             this.ctx = this.canvas.getContext('2d');
             this.WIDTH = this.canvas.width;
             this.HEIGHT = this.canvas.height;
@@ -101,9 +99,7 @@ export default class CanvasSelect extends EventBus {
             this.offlineCtx = this.offlineCanvas.getContext('2d');
             this.ctx.scale(dpr, dpr)
             this.initScreen();
-            if (imgSrc) {
-                this.setImage(imgSrc)
-            }
+            imgSrc && this.setImage(imgSrc);
         } else {
             console.warn('HTMLCanvasElement is required!');
         }
@@ -124,19 +120,12 @@ export default class CanvasSelect extends EventBus {
      */
     initScreen() {
         this.canvas.style.userSelect = 'none';
-        this.canStart = new Promise((resolve) => {
-            if (this.imageLoaded) {
-                resolve(true)
-            } else {
-                this.image.addEventListener('load', () => {
-                    this.emit('load');
-                    this.IMAGE_ORIGIN_WIDTH = this.IMAGE_WIDTH = this.image.width;
-                    this.IMAGE_ORIGIN_HEIGHT = this.IMAGE_HEIGHT = this.image.height;
-                    this.fitZoom();
-                    resolve(true)
-                });
-            }
-        })
+        this.image.addEventListener('load', () => {
+            this.emit('load', this.image.src);
+            this.IMAGE_ORIGIN_WIDTH = this.IMAGE_WIDTH = this.image.width;
+            this.IMAGE_ORIGIN_HEIGHT = this.IMAGE_HEIGHT = this.image.height;
+            this.fitZoom();
+        });
 
         this.canvas.addEventListener('contextmenu', (e) => {
             if (this.lock) return;
@@ -224,7 +213,6 @@ export default class CanvasSelect extends EventBus {
                     this.dataset.forEach((sp) => { sp.active = false; });
                     newShape.active = true;
                     this.dataset.push(newShape);
-                    this.emit('updated', newShape)
                     this.update();
                 } else if (this.activeShape) {
                     this.activeShape.active = false;
@@ -317,7 +305,6 @@ export default class CanvasSelect extends EventBus {
                     const y = Math.round(offsetY - this.originY / this.scale);
                     this.activeShape.coor.splice(1, 1, [x, y]);
                 }
-                this.emit('updated', this.activeShape)
                 this.update();
             } else if ([2, 4].includes(this.activeShape?.type) && (this.activeShape as Polygon)?.creating) {
                 // 多边形添加点
@@ -350,9 +337,8 @@ export default class CanvasSelect extends EventBus {
                     || (this.activeShape?.type === 4 && this.activeShape.coor.length > 1)
                 ) {
                     this.emit('add', this.activeShape);
-                    this.emit('updated', this.activeShape);
                     this.activeShape.creating = false;
-                    this.update(true);
+                    this.update();
                 }
             }
         });
@@ -377,70 +363,64 @@ export default class CanvasSelect extends EventBus {
      * @param url 图片链接
      */
     setImage(url: string) {
-        this.imageLoaded = false
         this.image.src = url
     }
     /**
      * 设置数据
      * @param data Array
      */
-    async setData(data: any[]) {
+    setData(data: any[]) {
         let initdata: any[] = []
-        try {
-            await this.canStart
-            data.forEach((item, index) => {
-                if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
-                    const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont, uuid } = item;
-                    const style = { strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont }
-                    let shape
-                    switch (type) {
-                        case 1:
-                            shape = new Rect(coor, index, label, style, uuid);
-                            break;
-                        case 2:
-                            shape = new Polygon(coor, index, label, style, uuid);
-                            break;
-                        case 3:
-                            shape = new Dot(coor, index, label, style, uuid);
-                            break;
-                        case 4:
-                            shape = new Line(coor, index, label, style, uuid);
-                            break;
-                        default:
-                            break;
-                    }
-                    initdata.push(shape);
-                } else {
-                    this.emit('error', `${item} in data must be an enumerable Object.`);
+        data.forEach((item, index) => {
+            if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
+                const { label, type, coor, strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont, uuid } = item;
+                const style = { strokeStyle, fillStyle, labelFillStyle, textFillStyle, labelFont }
+                let shape
+                switch (type) {
+                    case 1:
+                        shape = new Rect(coor, index, label, style, uuid);
+                        break;
+                    case 2:
+                        shape = new Polygon(coor, index, label, style, uuid);
+                        break;
+                    case 3:
+                        shape = new Dot(coor, index, label, style, uuid);
+                        break;
+                    case 4:
+                        shape = new Line(coor, index, label, style, uuid);
+                        break;
+                    default:
+                        break;
                 }
-            });
-            this.dataset = initdata
-            this.update();
-        } catch (error) {
-            this.emit('error', error);
-        }
+                initdata.push(shape);
+            } else {
+                this.emit('error', `${item} in data must be an enumerable Object.`);
+            }
+        });
+        this.dataset = initdata
+        this.update();
     }
     /**
      * 判断是否在标注实例上
      * @param mousePoint 点击位置
      * @returns 
      */
-    hitOnShape(mousePoint: Point): [number, Rect | Polygon | Dot] {
+    hitOnShape(mousePoint: Point): [number, Rect | Polygon | Dot | Line] {
         let hitShapeIndex = -1;
-        const hitShape = this.dataset.reduceRight((target, shape, i) => {
-            if (!target) {
-                if (
-                    (shape.type === 3 && this.isPointInCircle(mousePoint, shape.coor as Point, 3))
-                    || (shape.type === 1 && this.isPointInRect(mousePoint, (shape as Rect).coor))
-                    || (shape.type === 2 && this.isPointInPolygon(mousePoint, (shape as Polygon).coor))
-                    || (shape.type === 4 && this.isPointInLine(mousePoint, (shape as Line).coor))
-                ) {
-                    hitShapeIndex = i;
-                    target = shape;
-                }
+        let hitShape: Rect | Polygon | Dot | Line
+        for (let i = this.dataset.length - 1; i > -1; i--) {
+            const shape = this.dataset[i];
+            if (
+                (shape.type === 3 && this.isPointInCircle(mousePoint, shape.coor as Point, 3))
+                || (shape.type === 1 && this.isPointInRect(mousePoint, (shape as Rect).coor))
+                || (shape.type === 2 && this.isPointInPolygon(mousePoint, (shape as Polygon).coor))
+                || (shape.type === 4 && this.isPointInLine(mousePoint, (shape as Line).coor))
+            ) {
+                hitShapeIndex = i;
+                hitShape = shape;
+                break
             }
-            return target;
-        }, null);
+        }
         return [hitShapeIndex, hitShape];
     }
 
@@ -683,33 +663,37 @@ export default class CanvasSelect extends EventBus {
     /**
      * 更新画布
      */
-    update(a = false) {
-        this.ctx.save();
-        this.clear();
-        this.ctx.translate(this.originX, this.originY);
-        this.paintImage();
-        this.dataset.forEach((shape) => {
-            switch (shape.type) {
-                case 1:
-                    this.drawRect(shape as Rect);
-                    break;
-                case 2:
-                    this.drawPolygon(shape as Polygon);
-                    break;
-                case 3:
-                    this.drawDot(shape as Dot);
-                    break;
-                case 4:
-                    this.drawLine(shape as Line);
-                    break;
-                default:
-                    break;
+    update() {
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
+            this.ctx.save();
+            this.clear();
+            this.ctx.translate(this.originX, this.originY);
+            this.paintImage();
+            this.dataset.forEach((shape) => {
+                switch (shape.type) {
+                    case 1:
+                        this.drawRect(shape as Rect);
+                        break;
+                    case 2:
+                        this.drawPolygon(shape as Polygon);
+                        break;
+                    case 3:
+                        this.drawDot(shape as Dot);
+                        break;
+                    case 4:
+                        this.drawLine(shape as Line);
+                        break;
+                    default:
+                        break;
+                }
+            });
+            if (this.activeShape && [1, 2, 4].includes(this.activeShape?.type)) {
+                this.drawCtrlList(this.activeShape as Rect | Polygon | Line);
             }
+            this.ctx.restore();
+            this.emit('updated', this.dataset)
         });
-        if (this.activeShape && [1, 2, 4].includes(this.activeShape?.type)) {
-            this.drawCtrlList(this.activeShape as Rect | Polygon | Line);
-        }
-        this.ctx.restore();
     }
 
     /**

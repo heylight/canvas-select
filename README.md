@@ -152,6 +152,6 @@ instance.on('select', (info) => {
 | select   |   info   |   当前选中的数据   |
 | add      |   info   |   当前添加的数据   |
 | delete   |   info   |   当前删除的数据   |
-| updated  |   info   | 发生变化的形状数据 |
-| load     |    无    |    图片加载完成    |
+| updated  |  result  |   所有标注结果     |
+| load     |  imgsrc    |    图片加载完成    |
 | error    |  error   |      错误信息      |
