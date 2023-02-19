@@ -80,13 +80,15 @@ export default class CanvasSelect extends EventBus {
 
     timer: NodeJS.Timer;
 
+    alpha = true; // 这个选项可以帮助浏览器进行内部优化
+
     constructor(el: HTMLCanvasElement | string, imgSrc?: string) {
         super()
         const dpr = window.devicePixelRatio || 1
         const container = typeof el === 'string' ? document.querySelector(el) : el;
         if (container instanceof HTMLCanvasElement) {
             this.canvas = container;
-            this.ctx = this.canvas.getContext('2d');
+            this.ctx = this.canvas.getContext('2d', { alpha: this.alpha });
             this.WIDTH = this.canvas.width;
             this.HEIGHT = this.canvas.height;
             this.canvas.width = this.WIDTH * dpr

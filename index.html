@@ -37,21 +37,16 @@
   canvasSelect.strokeStyle = 'rgb(52,244,39)';
   window.c = canvasSelect;
   const option = []
-
-  for (let i = 0; i < 10; i++) {
+  const padding = 2
+  const rectW = 2
+  const WIDTH = 640 - rectW
+  const calcNum = (rectW + padding) * 60000
+  for (let i = 0; i < calcNum; i += (rectW + padding)) {
+    const x = i % WIDTH
+    const y = ((i - i % WIDTH) / WIDTH) * (rectW + padding)
     option.push({
-      // "label": "标签",
-      "coor": [
-        [
-          79,
-          282
-        ],
-        [
-          134,
-          329
-        ]
-      ],
-      "type": 1
+      coor: [[x, y], [x + rectW, y + rectW]],
+      type: 1
     })
   }
   canvasSelect.setData(option);

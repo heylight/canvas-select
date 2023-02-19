@@ -133,6 +133,7 @@ instance.on('select', (info) => {
 | labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
 | textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
+| alpha             | boolean  |        true          |                |     设置为false可以帮助浏览器进行内部优化    |
 
 ## 3、实例方法
 
