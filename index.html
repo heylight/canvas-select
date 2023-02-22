@@ -20,6 +20,7 @@
     <button onclick="change(2)">创建多边形</button>
     <button onclick="change(3)">创建点</button>
     <button onclick="change(4)">创建折线</button>
+    <button onclick="change(5)">创建圆形</button>
     <button onclick="change(0)">取消创建</button>
     <button onclick="zoom(true)">放大</button>
     <button onclick="zoom(false)">缩小</button>
@@ -28,64 +29,90 @@
   </div>
   <div>输出结果</div>
   <pre></pre>
-</body>
-<script src="./lib/canvas-select.min.js"></script>
-<script>
-  const output = document.querySelector('pre');
-  const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
-  // const canvasSelect = new CanvasSelect('.container', '/one.jpg');
-  canvasSelect.strokeStyle = 'rgb(52,244,39)';
-  window.c = canvasSelect;
-  const option = []
-  // const padding = 2
-  // const rectW = 2
-  // const WIDTH = 640 - rectW
-  // const calcNum = (rectW + padding) * 60000
-  // for (let i = 0; i < calcNum; i += (rectW + padding)) {
-  //   const x = i % WIDTH
-  //   const y = ((i - i % WIDTH) / WIDTH) * (rectW + padding)
-  //   option.push({
-  //     coor: [[x, y], [x + rectW, y + rectW]],
-  //     type: 1
-  //   })
-  // }
-  canvasSelect.setData(option);
-  // 选中
-  canvasSelect.on('load', (src) => {
-    console.log('图片加载完成', src);
-  });
-  // 添加
-  canvasSelect.on('add', (info) => {
-    console.log('当前添加', info)
-    window.info = info;
-  });
-  // 删除
-  canvasSelect.on('delete', (info) => {
-    console.log('当前删除', info)
-    window.info = info;
-  });
-  // 选中
-  canvasSelect.on('select', (info) => {
-    console.log('当前选中', info)
-    window.info = info;
-  });
-  canvasSelect.on('updated', (result) => {
-    console.log('标注结果', result)
-    // output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
-  });
 
-  function change(num) {
-    canvasSelect.createType = num;
-  }
-  function zoom(type) {
-    canvasSelect.setScale(type);
-  }
-  function fitting() {
-    canvasSelect.fitZoom();
-  }
-  function update() {
-    canvasSelect.update();
-  }
-</script>
+  <script src="./lib/canvas-select.min.js"></script>
+  <script>
+    const output = document.querySelector('pre');
+    const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
+    // const canvasSelect = new CanvasSelect('.container');
+    window.c = canvasSelect;
+    const option = []
+    // const padding = 2
+    // const rectW = 2
+    // const WIDTH = 640 - rectW
+    // const calcNum = (rectW + padding) * 60000
+    // for (let i = 0; i < calcNum; i += (rectW + padding)) {
+    //   const x = i % WIDTH
+    //   const y = ((i - i % WIDTH) / WIDTH) * (rectW + padding)
+    //   option.push({
+    //     coor: [[x, y], [x + rectW, y + rectW]],
+    //     type: 1
+    //   })
+    // }
+    // for (let i = 0; i < 20000; i++) {
+    //   option.push({
+    //     coor: [[200, 200], [400, 400]],
+    //     type: 1
+    //   })
+    // }
+    option.push({
+      label: 'name',
+      coor: [200, 200],
+      radius: 50,
+      type: 5
+    })
+    canvasSelect.setData(option);
+    // 选中
+    canvasSelect.on('load', (src) => {
+      console.log('图片加载完成', src);
+    });
+    // 添加
+    canvasSelect.on('add', (info) => {
+      console.log('当前添加', info)
+      window.info = info;
+    });
+    // 删除
+    canvasSelect.on('delete', (info) => {
+      console.log('当前删除', info)
+      window.info = info;
+    });
+    // 选中
+    canvasSelect.on('select', (info) => {
+      console.log('当前选中', canvasSelect.dataset)
+      window.info = info;
+    });
+    canvasSelect.on('updated', (result) => {
+      // console.log('标注结果', result)
+      // output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
+    });
+
+    function change(num) {
+      canvasSelect.createType = num;
+    }
+    function zoom(type) {
+      canvasSelect.setScale(type);
+    }
+    function fitting() {
+      canvasSelect.fitZoom();
+    }
+    function update() {
+      canvasSelect.update();
+    }
+  </script>
+  <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
+  <script>
+    const stats = new Stats();
+    // stats.showPanel(2); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild(stats.dom);
+    function animate() {
+      stats.begin();
+      // monitored code goes here
+      stats.end();
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+  </script>
+</body>
 
 </html>
