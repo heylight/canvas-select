@@ -41,12 +41,11 @@
         <button onclick="zoom(true)">放大</button>
         <button onclick="zoom(false)">缩小</button>
         <button onclick="fitting()">适配</button>
-        <button onclick="update()">更新</button>
       </div>
     </div>
     <div class="right">
       <div>output:</div>
-      <textarea id="output"></textarea>
+      <textarea id="output" onchange="changeData()"></textarea>
     </div>
   </div>
   <script src="./lib/canvas-select.min.js"></script>
@@ -164,12 +163,19 @@
     instance.on('updated', (result) => {
       // console.log('标注结果', result)
       const list = instance.dataset.map(x => ({
+        index: x.index,
         label: x.label,
         coor: x.coor,
         type: x.type,
         radius: x.radius,
         uuid: x.uuid,
+        strokeStyle: x.strokeStyle,
+        fillStyle: x.fillStyle,
+        labelFillStyle: x.labelFillStyle,
+        textFillStyle: x.textFillStyle,
+        labelFont: x.labelFont,
       }))
+      list.sort((a, b) => a.index - b.index)
       output.value = JSON.stringify(list, null, 2);
     });
 
@@ -182,8 +188,9 @@
     function fitting() {
       instance.fitZoom();
     }
-    function update() {
-      instance.update();
+    function changeData() {
+      const data = JSON.parse(output.value)
+      instance.setData(data)
     }
   </script>
   <!-- <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
