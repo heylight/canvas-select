@@ -701,17 +701,18 @@ export default class CanvasSelect extends EventBus {
      */
     drawLabel(point: Point, label = '', labelFillStyle = '', labelFont = '', textFillStyle = '') {
         if (label.length) {
+            this.ctx.font = labelFont || this.labelFont;
+            const textH = parseInt(this.ctx.font) + 6
             const newStr = label.length < this.labelMaxLen + 1 ? label : (`${label.slice(0, this.labelMaxLen)}...`);
             const text = this.ctx.measureText(newStr);
             const [x, y] = point.map((a) => a * this.scale);
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < (text.width + 4) / this.scale;
-            const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < 16 / this.scale;
+            const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < textH / this.scale;
             this.ctx.save();
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
-            this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - 15) : y + 1, text.width + 4, 16);
+            this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - textH + 3) : y + 1, text.width + 4, textH);
             this.ctx.fillStyle = textFillStyle || this.textFillStyle;
-            this.ctx.font = labelFont || this.labelFont;
-            this.ctx.fillText(newStr, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 4) : y + 12, 80);
+            this.ctx.fillText(newStr, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 3) : y + textH - 4, 180);
             this.ctx.restore();
         }
     }
