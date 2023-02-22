@@ -6,100 +6,188 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>canvas-select示例</title>
   <style>
+    .box {
+      display: flex;
+    }
+
     .container {
       background-color: #ccc;
+    }
+
+    .right {
+      margin-left: 20px;
+    }
+
+    #output {
+      height: 450px;
+      width: 400px;
     }
 
   </style>
 </head>
 
 <body>
-  <canvas width="640" height="427" class="container"></canvas>
-  <div>
-    <button onclick="change(1)">创建矩形</button>
-    <button onclick="change(2)">创建多边形</button>
-    <button onclick="change(3)">创建点</button>
-    <button onclick="change(4)">创建折线</button>
-    <button onclick="change(5)">创建圆形</button>
-    <button onclick="change(0)">取消创建</button>
-    <button onclick="zoom(true)">放大</button>
-    <button onclick="zoom(false)">缩小</button>
-    <button onclick="fitting()">适配</button>
-    <button onclick="update()">更新</button>
+  <div class="box">
+    <div class="left">
+      <canvas width="520" height="462" class="container"></canvas>
+      <div>
+        <button onclick="change(1)">创建矩形</button>
+        <button onclick="change(2)">创建多边形</button>
+        <button onclick="change(3)">创建点</button>
+        <button onclick="change(4)">创建折线</button>
+        <button onclick="change(5)">创建圆形</button>
+        <button onclick="change(0)">取消创建</button>
+        <br />
+        <button onclick="zoom(true)">放大</button>
+        <button onclick="zoom(false)">缩小</button>
+        <button onclick="fitting()">适配</button>
+        <button onclick="update()">更新</button>
+      </div>
+    </div>
+    <div class="right">
+      <div>output:</div>
+      <textarea id="output"></textarea>
+      <pre></pre>
+    </div>
   </div>
-  <div>输出结果</div>
-  <pre></pre>
-
   <script src="./lib/canvas-select.min.js"></script>
   <script>
-    const output = document.querySelector('pre');
-    const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
-    // const canvasSelect = new CanvasSelect('.container');
-    window.c = canvasSelect;
-    const option = []
-    // const padding = 2
-    // const rectW = 2
-    // const WIDTH = 640 - rectW
-    // const calcNum = (rectW + padding) * 60000
-    // for (let i = 0; i < calcNum; i += (rectW + padding)) {
-    //   const x = i % WIDTH
-    //   const y = ((i - i % WIDTH) / WIDTH) * (rectW + padding)
-    //   option.push({
-    //     coor: [[x, y], [x + rectW, y + rectW]],
-    //     type: 1
-    //   })
-    // }
-    // for (let i = 0; i < 20000; i++) {
-    //   option.push({
-    //     coor: [[200, 200], [400, 400]],
-    //     type: 1
-    //   })
-    // }
-    option.push({
-      label: 'name',
-      coor: [200, 200],
-      radius: 50,
-      type: 5
-    })
-    canvasSelect.setData(option);
+    const output = document.getElementById('output');
+    const instance = new CanvasSelect('.container', 'https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/onepiece.png');
+    window.c = instance;
+    const option = [
+      {
+        "label": "圆形",
+        "coor": [
+          369,
+          197
+        ],
+        "type": 5,
+        "radius": 38
+      },
+      {
+        "label": "折线",
+        "coor": [
+          [
+            470,
+            155
+          ],
+          [
+            503,
+            230
+          ],
+          [
+            506,
+            298
+          ]
+        ],
+        "type": 4
+      },
+      {
+        "label": "点",
+        "coor": [
+          345,
+          406
+        ],
+        "index": 2,
+        "type": 3
+      },
+      {
+        "label": "矩形",
+        "coor": [
+          [
+            184,
+            183
+          ],
+          [
+            275,
+            238
+          ]
+        ],
+        "type": 1
+      },
+      {
+        "label": "多边形",
+        "coor": [
+          [
+            135,
+            291
+          ],
+          [
+            129,
+            319
+          ],
+          [
+            146,
+            346
+          ],
+          [
+            174,
+            365
+          ],
+          [
+            214,
+            362
+          ],
+          [
+            196,
+            337
+          ],
+          [
+            161,
+            288
+          ]
+        ],
+        "type": 2
+      }
+    ]
+
+    instance.setData(option);
     // 选中
-    canvasSelect.on('load', (src) => {
+    instance.on('load', (src) => {
       console.log('图片加载完成', src);
     });
     // 添加
-    canvasSelect.on('add', (info) => {
+    instance.on('add', (info) => {
       console.log('当前添加', info)
       window.info = info;
     });
     // 删除
-    canvasSelect.on('delete', (info) => {
+    instance.on('delete', (info) => {
       console.log('当前删除', info)
       window.info = info;
     });
     // 选中
-    canvasSelect.on('select', (info) => {
-      console.log('当前选中', canvasSelect.dataset)
+    instance.on('select', (info) => {
+      console.log('当前选中', instance.dataset)
       window.info = info;
     });
-    canvasSelect.on('updated', (result) => {
+    instance.on('updated', (result) => {
       // console.log('标注结果', result)
-      // output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
+      const list = instance.dataset.map(x => ({
+        label: x.label,
+        coor: x.coor,
+        type: x.type,
+        radius: x.radius,
+        uuid: x.uuid,
+      }))
+      output.value = JSON.stringify(list, null, 2);
     });
 
     function change(num) {
-      canvasSelect.createType = num;
+      instance.createType = num;
     }
     function zoom(type) {
-      canvasSelect.setScale(type);
+      instance.setScale(type);
     }
     function fitting() {
-      canvasSelect.fitZoom();
+      instance.fitZoom();
     }
     function update() {
-      canvasSelect.update();
+      instance.update();
     }
   </script>
-  <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
+  <!-- <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
   <script>
     const stats = new Stats();
     // stats.showPanel(2); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -112,7 +200,7 @@
     }
     requestAnimationFrame(animate);
 
-  </script>
+  </script> -->
 </body>
 
 </html>

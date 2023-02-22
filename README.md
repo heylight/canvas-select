@@ -7,7 +7,7 @@
 
 查看示例[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/canvas-select.png)
+![图例](https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/demo.png)
 
 ## 简介
 
@@ -129,7 +129,7 @@ instance.on('select', (info) => {
 | MIN_WIDTH         | number  |         10          |                  |                 最小矩形宽度                 |
 | MIN_HEIGHT        | number  |         10          |                  |                 最小矩形高度                 |
 | MIN_RADIUS        | number  |         5           |                  |                 最小圆形半径               |
-| strokeStyle       | string  |      #78f152        |       支持       |                 形状边线颜色                 |
+| strokeStyle       | string  |       #0f0          |       支持       |                 形状边线颜色                 |
 | fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                 形状填充颜色                 |
 | activeStrokeStyle | string  |        #f00         |                  |              选中的形状边线颜色              |
 | activeFillStyle   | string  |        #f00         |                  |              选中的形状填充颜色              |

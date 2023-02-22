@@ -16,7 +16,7 @@ export default class CanvasSelect extends EventBus {
 
     MIN_RADIUS: number = 5
 
-    strokeStyle = '#78f152'
+    strokeStyle = '#0f0'
 
     fillStyle = 'rgba(0, 0, 255,0.1)'
 
