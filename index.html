@@ -47,7 +47,6 @@
     <div class="right">
       <div>output:</div>
       <textarea id="output"></textarea>
-      <pre></pre>
     </div>
   </div>
   <script src="./lib/canvas-select.min.js"></script>
@@ -159,7 +158,7 @@
     });
     // 选中
     instance.on('select', (info) => {
-      console.log('当前选中', instance.dataset)
+      console.log('当前选中', info)
       window.info = info;
     });
     instance.on('updated', (result) => {
