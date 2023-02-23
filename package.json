@@ -1,28 +1,33 @@
 {
   "name": "canvas-select",
-  "version": "2.4.0",
-  "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注、折线标注。",
+  "version": "2.5.0",
+  "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形。",
   "main": "lib/canvas-select.min.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "watch": "rollup -c -w",
     "build": "rollup -c",
-    "serve": "live-server",
+    "serve": "live-server --watch=./index.html,./lib --port=9999",
     "dev": "npm run watch & npm run serve"
   },
   "files": [
-    "/lib",
-    "/example.png"
+    "/lib"
   ],
   "keywords": [
     "canvas",
     "marker",
     "select",
+    "rect",
+    "polygon",
+    "dot",
+    "line",
+    "circle",
     "标注",
-    "矩形标注",
-    "多边形标注",
-    "点标注",
-    "折线标注"
+    "矩形",
+    "多边形",
+    "点",
+    "折线",
+    "圆"
   ],
   "author": "heylight",
   "license": "ISC",

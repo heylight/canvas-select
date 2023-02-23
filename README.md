@@ -1,17 +1,17 @@
 # canvas-select
 
-一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形标注、多边形标注、点标注、折线标注。
+一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形标注。
 
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 
 查看示例[demo](https://codepen.io/heylight/pen/VwbQLje)
 
-![图例](https://cdn.jsdelivr.net/npm/canvas-select@2.4.0-beta.7/example.png)
+![图例](https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/demo.png)
 
 ## 简介
 
-- 支持矩形标注、多边形标注、点标注、折线标注。
+- 支持矩形标注、多边形标注、点标注、折线标注、圆形标注。
 
 - 支持拖拽、缩放。
 
@@ -89,7 +89,7 @@ let option = [
   },
   {
     label: '折线标注',
-    type: 3, // 折线标注 （必填）
+    type: 4, // 折线标注 （必填）
     coor: [
       // 由2个以上点表示 (必填)
       [30, 150],
@@ -97,10 +97,16 @@ let option = [
       [50, 200],
     ],
   },
+    {
+    label: '圆形标注',
+    type: 5, // 折线标注 （必填）
+    coor: [800, 800],
+    radius:50
+  },
 ];
 // 加载数据
 instance.setData(option);
-// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注
+// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注
 instance.createType = 1;
 instance.on('select', (info) => {
   console.log('select', info);
@@ -117,12 +123,13 @@ instance.on('select', (info) => {
 
 | 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                     说明                     |
 | ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------: |
-| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 多边形，3 点标注，4 折线 |
+| createType        | boolean |          0          |                  | 0 不创建，1 创建矩形，2 多边形，3 点，4 折线，5圆 |
 | lock              | boolean |        false        |                  |                 锁定画布                 |
 | scrollZoom        | boolean |        true         |                  |                 滚动缩放                 |
 | MIN_WIDTH         | number  |         10          |                  |                 最小矩形宽度                 |
 | MIN_HEIGHT        | number  |         10          |                  |                 最小矩形高度                 |
-| strokeStyle       | string  |   rgb(0, 0, 255)    |       支持       |                 形状边线颜色                 |
+| MIN_RADIUS        | number  |         5           |                  |                 最小圆形半径               |
+| strokeStyle       | string  |       #0f0          |       支持       |                 形状边线颜色                 |
 | fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                 形状填充颜色                 |
 | activeStrokeStyle | string  |        #f00         |                  |              选中的形状边线颜色              |
 | activeFillStyle   | string  |        #f00         |                  |              选中的形状填充颜色              |
@@ -133,6 +140,7 @@ instance.on('select', (info) => {
 | labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
 | textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
+| alpha             | boolean  |        true          |                |     设置为false可以帮助浏览器进行内部优化    |
 
 ## 3、实例方法
 
@@ -149,9 +157,9 @@ instance.on('select', (info) => {
 
 | 事件名称 | 回调参数 |        说明        |
 | -------- | :------: | :----------------: |
-| select   |   info   |   当前选中的数据   |
-| add      |   info   |   当前添加的数据   |
-| delete   |   info   |   当前删除的数据   |
-| updated  |   info   | 发生变化的形状数据 |
-| load     |    无    |    图片加载完成    |
+| select   |   info   |     选中的数据   |
+| add      |   info   |     添加的数据   |
+| delete   |   info   |     删除的数据   |
+| updated  |  result  |   所有标注的结果     |
+| load     |  imgSrc  |    图片加载完成    |
 | error    |  error   |      错误信息      |

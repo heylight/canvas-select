@@ -6,68 +6,207 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>canvas-select示例</title>
   <style>
+    .box {
+      display: flex;
+    }
+
     .container {
       background-color: #ccc;
+    }
+
+    .right {
+      margin-left: 20px;
+    }
+
+    #output {
+      height: 450px;
+      width: 400px;
     }
 
   </style>
 </head>
 
 <body>
-  <canvas width="600" height="500" class="container"></canvas>
-  <div>
-    <button onclick="change(1)">创建矩形</button>
-    <button onclick="change(2)">创建多边形</button>
-    <button onclick="change(3)">创建点</button>
-    <button onclick="change(4)">创建折线</button>
-    <button onclick="change(0)">取消创建</button>
-    <button onclick="zoom(true)">放大</button>
-    <button onclick="zoom(false)">缩小</button>
-    <button onclick="fitting()">适配</button>
-    <button onclick="update()">更新</button>
+  <div class="box">
+    <div class="left">
+      <canvas width="520" height="462" class="container"></canvas>
+      <div>
+        <button onclick="change(1)">创建矩形</button>
+        <button onclick="change(2)">创建多边形</button>
+        <button onclick="change(3)">创建点</button>
+        <button onclick="change(4)">创建折线</button>
+        <button onclick="change(5)">创建圆形</button>
+        <button onclick="change(0)">取消创建</button>
+        <br />
+        <button onclick="zoom(true)">放大</button>
+        <button onclick="zoom(false)">缩小</button>
+        <button onclick="fitting()">适配</button>
+      </div>
+    </div>
+    <div class="right">
+      <div>output:</div>
+      <textarea id="output" onchange="changeData()"></textarea>
+    </div>
   </div>
-  <div>输出结果</div>
-  <pre></pre>
-</body>
-<script src="./lib/canvas-select.min.js"></script>
-<script>
-  const output = document.querySelector('pre');
-  // const canvasSelect = new CanvasSelect('.container', 'https://k.sinaimg.cn/n/tech/5_img/upload/491a5e34/768/w941h627/20220412/ed6c-87dce461cc99bc0ebdd967eedad17aed.jpg/w640slw.jpg');
-  const canvasSelect = new CanvasSelect('.container', '/one.jpg');
-  canvasSelect.strokeStyle = 'rgb(52,244,39)';
-  window.c = canvasSelect;
-  const option = []
-  // canvasSelect.on('load', () => {
-  //   canvasSelect.setData(option);
-  // });
-  canvasSelect.setData(option);
-  // 选中
-  canvasSelect.on('load', (info) => {
-    console.log('加载图片');
-  });
-  // 选中
-  canvasSelect.on('select', (info) => {
-    window.info = info;
-    canvasSelect.update
-  });
-  canvasSelect.on('updated', (info) => {
-    window.tiger = info;
-    output.innerHTML = JSON.stringify(canvasSelect.dataset, null, 2);
-  });
+  <script src="./lib/canvas-select.min.js"></script>
+  <script>
+    const output = document.getElementById('output');
+    const instance = new CanvasSelect('.container', 'https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/onepiece.png');
+    window.c = instance;
+    const option = [
+      {
+        "label": "圆形",
+        "coor": [
+          369,
+          197
+        ],
+        "type": 5,
+        "radius": 38
+      },
+      {
+        "label": "折线",
+        "coor": [
+          [
+            470,
+            155
+          ],
+          [
+            503,
+            230
+          ],
+          [
+            506,
+            298
+          ]
+        ],
+        "type": 4
+      },
+      {
+        "label": "点",
+        "coor": [
+          345,
+          406
+        ],
+        "index": 2,
+        "type": 3
+      },
+      {
+        "label": "矩形",
+        "coor": [
+          [
+            184,
+            183
+          ],
+          [
+            275,
+            238
+          ]
+        ],
+        "type": 1
+      },
+      {
+        "label": "多边形",
+        "coor": [
+          [
+            135,
+            291
+          ],
+          [
+            129,
+            319
+          ],
+          [
+            146,
+            346
+          ],
+          [
+            174,
+            365
+          ],
+          [
+            214,
+            362
+          ],
+          [
+            196,
+            337
+          ],
+          [
+            161,
+            288
+          ]
+        ],
+        "type": 2
+      }
+    ]
 
-  function change(num) {
-    canvasSelect.createType = num;
-    console.log(canvasSelect.createType);
-  }
-  function zoom(type) {
-    canvasSelect.setScale(type);
-  }
-  function fitting() {
-    canvasSelect.fitZoom();
-  }
-  function update() {
-    canvasSelect.update();
-  }
-</script>
+    instance.setData(option);
+    // 选中
+    instance.on('load', (src) => {
+      console.log('图片加载完成', src);
+    });
+    // 添加
+    instance.on('add', (info) => {
+      console.log('当前添加', info)
+      window.info = info;
+    });
+    // 删除
+    instance.on('delete', (info) => {
+      console.log('当前删除', info)
+      window.info = info;
+    });
+    // 选中
+    instance.on('select', (info) => {
+      console.log('当前选中', info)
+      window.info = info;
+    });
+    instance.on('updated', (result) => {
+      // console.log('标注结果', result)
+      const list = instance.dataset.map(x => ({
+        index: x.index,
+        label: x.label,
+        coor: x.coor,
+        type: x.type,
+        radius: x.radius,
+        uuid: x.uuid,
+        strokeStyle: x.strokeStyle,
+        fillStyle: x.fillStyle,
+        labelFillStyle: x.labelFillStyle,
+        textFillStyle: x.textFillStyle,
+        labelFont: x.labelFont,
+      }))
+      list.sort((a, b) => a.index - b.index)
+      output.value = JSON.stringify(list, null, 2);
+    });
+
+    function change(num) {
+      instance.createType = num;
+    }
+    function zoom(type) {
+      instance.setScale(type);
+    }
+    function fitting() {
+      instance.fitZoom();
+    }
+    function changeData() {
+      const data = JSON.parse(output.value)
+      instance.setData(data)
+    }
+  </script>
+  <!-- <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
+  <script>
+    const stats = new Stats();
+    // stats.showPanel(2); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild(stats.dom);
+    function animate() {
+      stats.begin();
+      // monitored code goes here
+      stats.end();
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+  </script> -->
+</body>
 
 </html>

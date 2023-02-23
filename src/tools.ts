@@ -1,8 +1,4 @@
-/**
- * 生成uuid
- * @returns
- */
-function createUuid(): string {
+export function createUuid(): string {
     const s: any[] = [];
     const hexDigits = '0123456789abcdef';
     for (let i = 0; i < 36; i++) {
@@ -16,4 +12,3 @@ function createUuid(): string {
     const uuid = s.join('');
     return uuid;
 }
-export { createUuid }
