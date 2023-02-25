@@ -37,7 +37,7 @@
 
 - 选中形状，`Backspace`删除。
 
-- 通过 `instance.dataset`或者监听`updated`事件查看标注结果。
+- 通过 `instance.dataset`或者监听`updated`事件回调参数查看标注结果。
 
 支持 UMD 模块规范
 
@@ -126,7 +126,8 @@ instance.on('select', (info) => {
 | labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
 | textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
 | labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
-| alpha             | boolean  |        true          |                |     设置为false可以帮助浏览器进行内部优化    |
+| alpha             | boolean  |        true        |                |     设置为false可以帮助浏览器进行内部优化    |
+| focusMode         | boolean  |        false       |                |     专注模式，开启后只有活动状态的标签会显示到画布中    |
 
 ## 3、实例方法
 
@@ -138,6 +139,8 @@ instance.on('select', (info) => {
 | fitZoom       |    无    |      适配图片到画布 （contain）       |
 | update        |    无    | 更新画布， 修改实例属性后要执行此方法 |
 | deleteByIndex |  number  |           根据索引删除形状            |
+| setFocusMode |  boolean  |           设置专注模式            |
+| on        |  string,function  |         监听事件         |
 
 ## 4、事件
 
