@@ -37,7 +37,7 @@
 
 - 选中形状，`Backspace`删除。
 
-- `通过 instance.dataset 查看标注结果`。
+- 通过 `instance.dataset`或者监听`updated`事件查看标注结果。
 
 支持 UMD 模块规范
 
@@ -63,46 +63,32 @@ const instance = new CanvasSelect('.container', '/one.jpg');
 // instance.setImage('/one.jpg')
 
 let option = [
-  {
-    label: '矩形标注', // label (非必填)
-    type: 1, // 矩形 （必填）
-    coor: [
-      // 矩形坐标，由2个点表示 (必填)
-      [10, 10],
-      [100, 100],
-    ],
-  },
-  {
-    label: '多边形标注',
-    type: 2, // 多边形 （必填）
-    coor: [
-      // 多边形坐标，由3个以上点表示 (必填)
-      [30, 150],
-      [120, 100],
-      [50, 200],
-    ],
-  },
-  {
-    label: '点标注',
-    type: 3, // 点标注 （必填）
-    coor: [800, 800],
-  },
-  {
-    label: '折线标注',
-    type: 4, // 折线标注 （必填）
-    coor: [
-      // 由2个以上点表示 (必填)
-      [30, 150],
-      [120, 100],
-      [50, 200],
-    ],
-  },
-    {
-    label: '圆形标注',
-    type: 5, // 折线标注 （必填）
-    coor: [800, 800],
-    radius:50
-  },
+      {
+        label: "矩形",
+        coor: [[184, 183], [275, 238]], // required
+        type: 1 // required
+      },
+      {
+        label: "多边形",
+        coor: [[135, 291], [129, 319], [146, 346], [174, 365], [214, 362], [196, 337], [161, 288]], // required
+        type: 2 // required
+      },
+      {
+        label: "点",
+        coor: [345, 406], // required
+        type: 3 // required
+      },
+      {
+        label: "折线",
+        coor: [[470, 155], [503, 230], [506, 298]], // required
+        type: 4 // required
+      },
+      {
+        label: "圆形",
+        coor: [369, 197], // required
+        radius: 38, // required
+        type: 5 // required
+      }
 ];
 // 加载数据
 instance.setData(option);
@@ -147,7 +133,7 @@ instance.on('select', (info) => {
 | 方法名称      | 参数类型 |                 说明                  |
 | ------------- | :------: | :-----------------------------------: |
 | setImage      |  string  |             添加/切换图片             |
-| setData       |  Array   |             加载初始数据              |
+| setData       |  Array\<Shape\> |    加载初始数据              |
 | setScale      | boolean  |     true 放大画布，false 缩小画布     |
 | fitZoom       |    无    |      适配图片到画布 （contain）       |
 | update        |    无    | 更新画布， 修改实例属性后要执行此方法 |
@@ -157,9 +143,9 @@ instance.on('select', (info) => {
 
 | 事件名称 | 回调参数 |        说明        |
 | -------- | :------: | :----------------: |
-| select   |   info   |     选中的数据   |
-| add      |   info   |     添加的数据   |
-| delete   |   info   |     删除的数据   |
-| updated  |  result  |   所有标注的结果     |
-| load     |  imgSrc  |    图片加载完成    |
-| error    |  error   |      错误信息      |
+| select   |   info 选中的数据  |   选择标注     |
+| add      |   info  添加的数据   |  添加     |
+| delete   |   info 删除的数据   | 删除      |
+| updated  |  result 全部标注结果  |   画布更新     |
+| load     |  img 图片链接 |    图片加载完成    |
+| warn    |  msg  警告信息 |      警告      |
