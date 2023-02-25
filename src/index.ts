@@ -85,8 +85,11 @@ export default class CanvasSelect extends EventBus {
     timer: NodeJS.Timer;
 
     alpha = true; // 这个选项可以帮助浏览器进行内部优化
-
-    constructor(el: HTMLCanvasElement | string, imgSrc?: string) {
+    /**
+     * @param el Valid CSS selector string, or DOM
+     * @param src image src
+     */
+    constructor(el: HTMLCanvasElement | string, src?: string) {
         super()
         const dpr = window.devicePixelRatio || 1
         const container = typeof el === 'string' ? document.querySelector(el) : el;
@@ -102,10 +105,10 @@ export default class CanvasSelect extends EventBus {
             this.offScreen = document.createElement('canvas');
             this.offScreen.width = this.WIDTH;
             this.offScreen.height = this.HEIGHT;
-            this.offScreenCtx = this.offScreen.getContext('2d');
+            this.offScreenCtx = this.offScreen.getContext('2d', { willReadFrequently: true });
             this.ctx.scale(dpr, dpr)
-            this.initScreen();
-            imgSrc && this.setImage(imgSrc);
+            this.initStage();
+            src && this.setImage(src);
         } else {
             console.warn('HTMLCanvasElement is required!');
         }
@@ -124,7 +127,7 @@ export default class CanvasSelect extends EventBus {
     /**
      * 初始化
      */
-    initScreen() {
+    initStage() {
         this.canvas.style.userSelect = 'none';
         this.image.addEventListener('load', () => {
             this.emit('load', this.image.src);
@@ -132,7 +135,6 @@ export default class CanvasSelect extends EventBus {
             this.IMAGE_ORIGIN_HEIGHT = this.IMAGE_HEIGHT = this.image.height;
             this.fitZoom();
         });
-
         this.canvas.addEventListener('contextmenu', (e) => {
             if (this.lock) return;
             e.preventDefault();
@@ -140,11 +142,10 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('mousewheel', (e: WheelEvent) => {
             if (this.lock || !this.scrollZoom) return;
             e.preventDefault();
-            this.setScale(e.deltaY < 0);
             const offsetX = Math.round(e.offsetX / this.scale);
             const offsetY = Math.round(e.offsetY / this.scale);
             this.movePoint = [offsetX, offsetY];
-            this.update()
+            this.setScale(e.deltaY < 0, [e.offsetX, e.offsetY]);
         });
         this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             if (this.lock) return;
@@ -184,7 +185,6 @@ export default class CanvasSelect extends EventBus {
                     }
                     this.update();
                 } else if (hitShapeIndex > -1) {
-                    this.emit('select', hitShape)
                     this.dataset.forEach((item, i) => {
                         item.active = i === hitShapeIndex;
                     });
@@ -200,6 +200,7 @@ export default class CanvasSelect extends EventBus {
                             this.remmber.push([offsetX - pt[0], offsetY - pt[1]]);
                         });
                     }
+                    this.emit('select', hitShape)
                     this.update();
                 } else if ([1, 2, 3, 4, 5].includes(this.createType) && this.isInBackground(e)) {
                     // 创建
@@ -253,7 +254,7 @@ export default class CanvasSelect extends EventBus {
                 this.originY = Math.round(e.offsetY - this.remmberOrigin[1]);
                 this.update();
             } else if (e.buttons === 1 && this.activeShape.type) {
-                if (this.ctrlIndex > -1 && this.isInBackground(e)) {
+                if (this.ctrlIndex > -1 && (this.isInBackground(e) || this.activeShape.type === 5)) {
                     const [[x, y]] = this.remmber;
                     // resize矩形
                     if (this.activeShape.type === 1) {
@@ -291,7 +292,7 @@ export default class CanvasSelect extends EventBus {
                         if ((a1 - a0) >= this.MIN_WIDTH && (b1 - b0) >= this.MIN_HEIGHT) {
                             this.activeShape.coor = coor;
                         } else {
-                            this.emit('error', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`);
+                            this.emit('warn', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`);
                         }
                     } else if ([2, 4].includes(this.activeShape.type)) {
                         const nx = Math.round(offsetX - this.originX / this.scale)
@@ -352,7 +353,7 @@ export default class CanvasSelect extends EventBus {
                         const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                         if (Math.abs(x0 - x1) < this.MIN_WIDTH || Math.abs(y0 - y1) < this.MIN_HEIGHT) {
                             this.dataset.pop();
-                            this.emit('error', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than ${this.MIN_HEIGHT}`);
+                            this.emit('warn', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than ${this.MIN_HEIGHT}`);
                         } else {
                             this.activeShape.coor = [[Math.min(x0, x1), Math.min(y0, y1)], [Math.max(x0, x1), Math.max(y0, y1)]];
                             this.activeShape.creating = false;
@@ -361,7 +362,7 @@ export default class CanvasSelect extends EventBus {
                     } else if (this.activeShape.type === 5) {
                         if (this.activeShape.radius < this.MIN_RADIUS) {
                             this.dataset.pop();
-                            this.emit('error', `Radius cannot be less than ${this.MIN_WIDTH}`);
+                            this.emit('warn', `Radius cannot be less than ${this.MIN_WIDTH}`);
                         } else {
                             this.activeShape.creating = false;
                             this.emit('add', this.activeShape);
@@ -411,37 +412,39 @@ export default class CanvasSelect extends EventBus {
      * @param data Array
      */
     setData(data: AllShape[]) {
-        let initdata: AllShape[] = []
-        data.forEach((item, index) => {
-            if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
-                let shape: AllShape
-                switch (item.type) {
-                    case 1:
-                        shape = new Rect(item, index);
-                        break;
-                    case 2:
-                        shape = new Polygon(item, index);
-                        break;
-                    case 3:
-                        shape = new Dot(item, index);
-                        break;
-                    case 4:
-                        shape = new Line(item, index);
-                        break;
-                    case 5:
-                        shape = new Circle(item, index);
-                        break;
-                    default:
-                        this.emit('warn', 'Invalid shape', item)
-                        break;
+        setTimeout(() => {
+            let initdata: AllShape[] = []
+            data.forEach((item, index) => {
+                if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
+                    let shape: AllShape
+                    switch (item.type) {
+                        case 1:
+                            shape = new Rect(item, index);
+                            break;
+                        case 2:
+                            shape = new Polygon(item, index);
+                            break;
+                        case 3:
+                            shape = new Dot(item, index);
+                            break;
+                        case 4:
+                            shape = new Line(item, index);
+                            break;
+                        case 5:
+                            shape = new Circle(item, index);
+                            break;
+                        default:
+                            console.warn('Invalid shape', item)
+                            break;
+                    }
+                    [1, 2, 3, 4, 5].includes(item.type) && initdata.push(shape);
+                } else {
+                    console.warn('Shape must be an enumerable Object.', item)
                 }
-                initdata.push(shape);
-            } else {
-                this.emit('error', `${item} in data must be an enumerable Object.`);
-            }
+            });
+            this.dataset = initdata
+            this.update();
         });
-        this.dataset = initdata
-        this.update();
     }
     /**
      * 判断是否在标注实例上
@@ -474,10 +477,10 @@ export default class CanvasSelect extends EventBus {
      * @returns 布尔值
      */
     isInBackground(e: MouseEvent): boolean {
-        const offsetX = e.offsetX / this.scale;
-        const offsetY = e.offsetY / this.scale;
-        return offsetX >= this.originX / this.scale && offsetY >= this.originY / this.scale
-            && offsetX <= this.originX / this.scale + this.IMAGE_ORIGIN_WIDTH && offsetY <= this.originY / this.scale + this.IMAGE_ORIGIN_HEIGHT;
+        return e.offsetX >= this.originX
+            && e.offsetY >= this.originY
+            && e.offsetX <= this.originX + this.IMAGE_ORIGIN_WIDTH * this.scale
+            && e.offsetY <= this.originY + this.IMAGE_ORIGIN_HEIGHT * this.scale;
     }
     /**
      * 判断是否在矩形内
@@ -488,7 +491,10 @@ export default class CanvasSelect extends EventBus {
     isPointInRect(point: Point, coor: Point[]): boolean {
         const [x, y] = point;
         const [[x0, y0], [x1, y1]] = coor.map((a) => a.map((b) => b * this.scale));
-        return x0 + this.originX <= x && x <= x1 + this.originX && y0 + this.originY <= y && y <= y1 + this.originY;
+        return x0 + this.originX <= x
+            && x <= x1 + this.originX
+            && y0 + this.originY <= y
+            && y <= y1 + this.originY;
     }
     /**
      * 判断是否在多边形内
@@ -703,8 +709,8 @@ export default class CanvasSelect extends EventBus {
         if (label.length) {
             this.ctx.font = labelFont || this.labelFont;
             const textH = parseInt(this.ctx.font) + 6
-            const newStr = label.length < this.labelMaxLen + 1 ? label : (`${label.slice(0, this.labelMaxLen)}...`);
-            const text = this.ctx.measureText(newStr);
+            const newText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
+            const text = this.ctx.measureText(newText);
             const [x, y] = point.map((a) => a * this.scale);
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < (text.width + 4) / this.scale;
             const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < textH / this.scale;
@@ -712,20 +718,9 @@ export default class CanvasSelect extends EventBus {
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
             this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - textH + 3) : y + 1, text.width + 4, textH);
             this.ctx.fillStyle = textFillStyle || this.textFillStyle;
-            this.ctx.fillText(newStr, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 3) : y + textH - 4, 180);
+            this.ctx.fillText(newText, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 3) : y + textH - 4, 180);
             this.ctx.restore();
         }
-    }
-
-    /**
-     * 绘制背景图片
-     */
-    paintImage() {
-        this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
-    }
-
-    clear() {
-        this.ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
     }
 
     /**
@@ -735,9 +730,9 @@ export default class CanvasSelect extends EventBus {
         clearTimeout(this.timer)
         this.timer = setTimeout(() => {
             this.ctx.save();
-            this.clear();
+            this.ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
             this.ctx.translate(this.originX, this.originY);
-            this.paintImage();
+            this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
             this.dataset.forEach((shape) => {
                 switch (shape.type) {
                     case 1:
@@ -783,7 +778,7 @@ export default class CanvasSelect extends EventBus {
 
     /**
      * 计算缩放步长
-     * @param init 是否为init
+     * @param init 是否为初始
      */
     calcStep(init?: boolean) {
         if (init) {
@@ -798,17 +793,31 @@ export default class CanvasSelect extends EventBus {
 
     /**
      * 缩放
-     * @param type true放大，false，缩小
+     * @param type true放大5%，false缩小5%
+     * @param mousePoint 鼠标位置，可选
      */
-    setScale(type: boolean) {
+    setScale(type: boolean, mousePoint?: Point) {
         if (this.lock) return;
         if ((!type && this.IMAGE_WIDTH <= 20) || (type && this.IMAGE_WIDTH >= this.WIDTH * 100)) return;
         if (type) { this.scaleStep++; } else { this.scaleStep--; }
+        let realToLeft = 0
+        let realToRight = 0
+        if (mousePoint) {
+            realToLeft = (mousePoint[0] - this.originX) / this.scale
+            realToRight = (mousePoint[1] - this.originY) / this.scale
+        }
         const abs = Math.abs(this.scaleStep);
         const width = this.IMAGE_WIDTH;
         this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
         this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
-        this.stayPosition(this.IMAGE_WIDTH / width);
+        if (mousePoint) {
+            this.originX = mousePoint[0] - realToLeft * this.scale
+            this.originY = mousePoint[1] - realToRight * this.scale
+        } else {
+            const scale = this.IMAGE_WIDTH / width
+            this.originX = this.WIDTH / 2 - (this.WIDTH / 2 - this.originX) * scale;
+            this.originY = this.HEIGHT / 2 - (this.HEIGHT / 2 - this.originY) * scale;
+        }
         this.update();
     }
 
@@ -827,15 +836,6 @@ export default class CanvasSelect extends EventBus {
         this.originX = (this.WIDTH - this.IMAGE_WIDTH) / 2;
         this.originY = (this.HEIGHT - this.IMAGE_HEIGHT) / 2;
         this.update();
-    }
-
-    /**
-     * 保持缩放中心
-     * @param scale nummer
-     */
-    stayPosition(scale: number) {
-        this.originX = this.WIDTH / 2 - (this.WIDTH / 2 - this.originX) * scale;
-        this.originY = this.HEIGHT / 2 - (this.HEIGHT / 2 - this.originY) * scale;
     }
 }
 
