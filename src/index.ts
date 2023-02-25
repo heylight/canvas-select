@@ -85,6 +85,8 @@ export default class CanvasSelect extends EventBus {
     timer: NodeJS.Timer;
 
     alpha = true; // 这个选项可以帮助浏览器进行内部优化
+
+    focusMode = false; // 专注模式
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -124,6 +126,7 @@ export default class CanvasSelect extends EventBus {
         }
         return 1;
     }
+
     /**
      * 初始化
      */
@@ -463,6 +466,7 @@ export default class CanvasSelect extends EventBus {
                 || (shape.type === 2 && this.isPointInPolygon(mousePoint, (shape as Polygon).coor))
                 || (shape.type === 4 && this.isPointInLine(mousePoint, (shape as Line).coor))
             ) {
+                if (this.focusMode && !shape.active) continue;
                 hitShapeIndex = i;
                 hitShape = shape;
                 break
@@ -733,7 +737,8 @@ export default class CanvasSelect extends EventBus {
             this.ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
             this.ctx.translate(this.originX, this.originY);
             this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
-            this.dataset.forEach((shape) => {
+            let renderList = this.focusMode ? (this.activeShape.type ? [this.activeShape] : []) : this.dataset
+            renderList.forEach((shape) => {
                 switch (shape.type) {
                     case 1:
                         this.drawRect(shape as Rect);
@@ -836,6 +841,14 @@ export default class CanvasSelect extends EventBus {
         this.originX = (this.WIDTH - this.IMAGE_WIDTH) / 2;
         this.originY = (this.HEIGHT - this.IMAGE_HEIGHT) / 2;
         this.update();
+    }
+    /**
+     * 设置专注模式
+     * @param type {boolean}
+     */
+    setFocusMode(type: boolean) {
+        this.focusMode = type
+        this.update()
     }
 }
 
