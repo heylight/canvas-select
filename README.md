@@ -5,7 +5,7 @@
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 
-查看示例[demo](https://codepen.io/heylight/pen/VwbQLje)
+查看示例 👉 [demo](https://codepen.io/heylight/pen/VwbQLje)
 
 ![图例](https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/demo.png)
 
