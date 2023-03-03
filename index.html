@@ -41,6 +41,7 @@
         <button onclick="zoom(true)">放大</button>
         <button onclick="zoom(false)">缩小</button>
         <button onclick="fitting()">适配</button>
+        <button onclick="focusMode()">专注模式</button>
       </div>
     </div>
     <div class="right">
@@ -51,10 +52,10 @@
   <script src="./lib/canvas-select.min.js"></script>
   <script>
     const output = document.getElementById('output');
-    const instance = new CanvasSelect('.container', 'https://cdn.jsdelivr.net/npm/@heylight/cdn@%5E1/img/onepiece.png');
+    const instance = new CanvasSelect('.container', 'https://www.zhuhailiang.com/api/images/onepiece.png');
     // instance.focusMode = true
     window.c = instance;
-    const option = [
+    let option = [
       {
         label: "矩形",
         coor: [[184, 183], [275, 238]],
@@ -82,7 +83,11 @@
         type: 5
       },
     ]
-
+    // let list = []
+    // for (let i = 0; i < 1000; i++) {
+    //   list = list.concat(option)
+    // }
+    // console.log('number, list.length)
     instance.setData(option);
     // 选中
     instance.on('load', (src) => {
@@ -122,6 +127,9 @@
     }
     function fitting() {
       instance.fitZoom();
+    }
+    function focusMode() {
+      instance.setFocusMode(!instance.focusMode);
     }
     function changeData() {
       const data = JSON.parse(output.value)

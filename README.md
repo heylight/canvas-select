@@ -49,8 +49,6 @@
 npm i canvas-select --save
 ```
 
-注意: 画布尺寸不要使用css或者style定义
-
 ```html
 <canvas width="500" height="500" class="container"></canvas>
 ```
@@ -141,6 +139,7 @@ instance.on('select', (info) => {
 | deleteByIndex |  number  |           根据索引删除形状            |
 | setFocusMode |  boolean  |           设置专注模式            |
 | on        |  string,function  |         监听事件         |
+| destroy       |  无      |         销毁实例         |
 
 ## 4、事件
 
