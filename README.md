@@ -64,27 +64,27 @@ const instance = new CanvasSelect('.container', '/one.jpg');
 
 let option = [
       {
-        label: "矩形",
+        label: "rectangle",
         coor: [[184, 183], [275, 238]], // required
         type: 1 // required
       },
       {
-        label: "多边形",
+        label: "polygon",
         coor: [[135, 291], [129, 319], [146, 346], [174, 365], [214, 362], [196, 337], [161, 288]], // required
         type: 2 // required
       },
       {
-        label: "点",
+        label: "dot",
         coor: [345, 406], // required
         type: 3 // required
       },
       {
-        label: "折线",
+        label: "line",
         coor: [[470, 155], [503, 230], [506, 298]], // required
         type: 4 // required
       },
       {
-        label: "圆形",
+        label: "circle",
         coor: [369, 197], // required
         radius: 38, // required
         type: 5 // required
