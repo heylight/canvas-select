@@ -65,8 +65,8 @@ const instance = new CanvasSelect('.container', '/one.jpg');
 let option = [
       {
         label: "rectangle",
-        "labelFillStyle": "#f00",
-        "textFillStyle": "#fff",
+        labelFillStyle: "#f00",
+        textFillStyle: "#fff",
         coor: [[184, 183], [275, 238]], // required
         type: 1 // required
       },
