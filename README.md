@@ -2,6 +2,8 @@
 
 一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形标注。
 
+>A lightweight image annotation javascript library that supports rectangles, polygons, points, polylines, circles, and re-editing, making image annotation easier.
+
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 
