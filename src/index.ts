@@ -36,7 +36,7 @@ export default class CanvasSelect extends EventBus {
 
     textFillStyle = '#000'
 
-    labelMaxLen = 5
+    labelMaxLen = 10
 
     WIDTH: number
 
@@ -383,7 +383,7 @@ export default class CanvasSelect extends EventBus {
 
     }
     handelKeyup(e: KeyboardEvent) {
-        if (this.lock) return;
+        if (this.lock || document.activeElement !== document.body) return;
         if (this.activeShape.type) {
             if ([2, 4].includes(this.activeShape.type) && e.key === 'Escape') {
                 if (this.activeShape.coor.length > 1 && this.activeShape.creating) {

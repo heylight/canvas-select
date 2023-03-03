@@ -127,7 +127,7 @@ instance.on('select', (info) => {
 | labelFillStyle    | string  |        #fff         |       支持       |                label 填充颜色                |
 | labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
 | textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
-| labelMaxLen       | number  |          5          |                  | label 字符最大显示个数，超出字符将用...表示  |
+| labelMaxLen       | number  |          10          |                  | label 字符最大显示个数，超出字符将用...表示  |
 | alpha             | boolean  |        true        |                |     设置为false可以帮助浏览器进行内部优化    |
 | focusMode         | boolean  |        false       |                |     专注模式，开启后只有活动状态的标签会显示到画布中    |
 
