@@ -12,6 +12,8 @@
 
     .container {
       background-color: #ccc;
+      width: 500px;
+      height: 500px;
     }
 
     .right {
@@ -21,11 +23,6 @@
     #output {
       height: 450px;
       width: 400px;
-    }
-
-    canvas {
-      width: 500px;
-      height: 500px;
     }
 
   </style>
@@ -78,7 +75,7 @@
       },
       {
         label: "折线",
-        coor: [[470, 155], [503, 230], [506, 298]],
+        coor: [[470, 155], [490, 230], [493, 298]],
         type: 4
       },
       {
@@ -93,16 +90,12 @@
     //   list = list.concat(option)
     // }
     // console.log('number, list.length)
-    instance.setData(option);
-    // 选中
     instance.on('load', (src) => {
       console.log('图片加载完成', src);
+      instance.setData(option);
     });
     instance.on('warn', (msg) => {
       console.warn('warn', msg);
-    });
-    instance.on('error', (msg) => {
-      console.error('warn', msg);
     });
     // 添加
     instance.on('add', (info) => {
@@ -118,7 +111,7 @@
       console.log('当前选中', info)
     });
     instance.on('updated', (result) => {
-      // console.log('标注结果', result)
+      console.log('标注结果', result)
       const list = [...result]
       list.sort((a, b) => a.index - b.index)
       output.value = JSON.stringify(list, null, 2);
