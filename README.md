@@ -82,7 +82,7 @@ let option = [
       },
       {
         label: "line",
-        coor: [[470, 155], [503, 230], [506, 298]], // required
+        coor: [[470, 155], [490, 230], [493, 298]], // required
         type: 4 // required
       },
       {
