@@ -54,7 +54,7 @@ export default class CanvasSelect extends EventBus {
 
     remmber: number[][] // 记录锚点距离
 
-    movePoint: Point // 记录鼠标位置
+    mouse: Point // 记录鼠标位置
 
     remmberOrigin: number[] = [0, 0] // 记录背景图鼠标位移
 
@@ -136,16 +136,15 @@ export default class CanvasSelect extends EventBus {
     handleMousewheel(e: WheelEvent) {
         if (this.lock || !this.scrollZoom) return;
         e.preventDefault();
-        const offsetX = Math.round(e.offsetX / this.scale);
-        const offsetY = Math.round(e.offsetY / this.scale);
-        this.movePoint = [offsetX, offsetY];
-        this.setScale(e.deltaY < 0, [e.offsetX, e.offsetY]);
+        this.mouse = [e.offsetX, e.offsetY];
+        this.setScale(e.deltaY < 0, true);
     }
     handleMouseDown(e: MouseEvent) {
         if (this.lock) return;
         const offsetX = Math.round(e.offsetX / this.scale);
         const offsetY = Math.round(e.offsetY / this.scale);
         const mousePoint: Point = [e.offsetX, e.offsetY];
+        const mouse: Point = [e.offsetX, e.offsetY];
         if (e.buttons === 2) { // 鼠标右键
             this.remmberOrigin = [e.offsetX - this.originX, e.offsetY - this.originY];
         } else if (e.buttons === 1) { // 鼠标左键
@@ -240,8 +239,7 @@ export default class CanvasSelect extends EventBus {
         if (this.lock) return;
         const offsetX = Math.round(e.offsetX / this.scale);
         const offsetY = Math.round(e.offsetY / this.scale);
-        // 记录鼠标位置
-        this.movePoint = [offsetX, offsetY];
+        this.mouse = [e.offsetX, e.offsetY];
         if (e.buttons === 2 && e.which === 3) {
             // 拖动背景
             this.originX = Math.round(e.offsetX - this.remmberOrigin[0]);
@@ -369,7 +367,6 @@ export default class CanvasSelect extends EventBus {
 
     }
     handelDblclick(e: MouseEvent) {
-        console.log('双击')
         if (this.lock) return;
         if ([2, 4].includes(this.activeShape.type)) {
             if ((this.activeShape.type === 2 && this.activeShape.coor.length > 2)
@@ -404,8 +401,8 @@ export default class CanvasSelect extends EventBus {
     initStage() {
         const dpr = window.devicePixelRatio || 1
         this.ctx = this.canvas.getContext('2d', { alpha: this.alpha });
-        this.WIDTH = this.canvas.width;
-        this.HEIGHT = this.canvas.height;
+        this.WIDTH = this.canvas.clientWidth;
+        this.HEIGHT = this.canvas.clientHeight;
         this.canvas.width = this.WIDTH * dpr
         this.canvas.height = this.HEIGHT * dpr
         this.canvas.style.width = this.WIDTH + 'px'
@@ -625,7 +622,7 @@ export default class CanvasSelect extends EventBus {
             }
         });
         if (creating) {
-            const [x, y] = this.movePoint.map((a) => Math.round(a * this.scale));
+            const [x, y] = this.mouse || [];
             this.ctx.lineTo(x - this.originX, y - this.originY);
         } else if (coor.length > 2) {
             this.ctx.closePath();
@@ -689,7 +686,7 @@ export default class CanvasSelect extends EventBus {
             }
         });
         if (creating) {
-            const [x, y] = this.movePoint.map((a) => Math.round(a * this.scale));
+            const [x, y] = this.mouse || [];
             this.ctx.lineTo(x - this.originX, y - this.originY);
         }
         this.ctx.stroke();
@@ -820,25 +817,26 @@ export default class CanvasSelect extends EventBus {
     /**
      * 缩放
      * @param type true放大5%，false缩小5%
-     * @param mousePoint 鼠标位置，可选
+     * @param byMouse 启用鼠标位置，可选
      */
-    setScale(type: boolean, mousePoint?: Point) {
+    setScale(type: boolean, byMouse?: boolean) {
         if (this.lock) return;
         if ((!type && this.IMAGE_WIDTH <= 20) || (type && this.IMAGE_WIDTH >= this.WIDTH * 100)) return;
         if (type) { this.scaleStep++; } else { this.scaleStep--; }
         let realToLeft = 0
         let realToRight = 0
-        if (mousePoint) {
-            realToLeft = (mousePoint[0] - this.originX) / this.scale
-            realToRight = (mousePoint[1] - this.originY) / this.scale
+        const [x, y] = this.mouse || []
+        if (byMouse) {
+            realToLeft = (x - this.originX) / this.scale
+            realToRight = (y - this.originY) / this.scale
         }
         const abs = Math.abs(this.scaleStep);
         const width = this.IMAGE_WIDTH;
         this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
         this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
-        if (mousePoint) {
-            this.originX = mousePoint[0] - realToLeft * this.scale
-            this.originY = mousePoint[1] - realToRight * this.scale
+        if (byMouse) {
+            this.originX = x - realToLeft * this.scale
+            this.originY = y - realToRight * this.scale
         } else {
             const scale = this.IMAGE_WIDTH / width
             this.originX = this.WIDTH / 2 - (this.WIDTH / 2 - this.originX) * scale;

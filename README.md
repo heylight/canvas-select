@@ -52,7 +52,7 @@ npm i canvas-select --save
 ```
 
 ```html
-<canvas width="500" height="500" class="container"></canvas>
+<canvas class="container"></canvas>
 ```
 
 ```js
