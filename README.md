@@ -59,7 +59,7 @@ npm install canvas-select --save
 <canvas class="container"></canvas>
 ```
 
-```js
+```ts
 interface CanvasSelectProps{
    el:string|HTMLCanvasElement; // css选择器或者HTMLCanvasElement
    src:string; // 图片链接
