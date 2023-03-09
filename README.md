@@ -25,13 +25,17 @@
 
 - 每个形状有唯一 uuid，没有则自动生成。
 
-## 1、使用
+## 使用
 
-- 设置 instance.createType 指定需要创建形状类型。
+- 设置 instance.createType 指定需要创建形状类型，不创建时需要设置为0。
 
 - 创建矩形时，按住鼠标左键拖动完成创建。
 
-- 创建多边形时，鼠标左键单击添加点，双击闭合完成创建，`Escape`退出创建，`Backspace`退一步删除选择点。
+- 创建多边形或折线时，鼠标左键单击添加点，双击完成创建，`Escape`退出创建，`Backspace`退一步删除选择点。
+
+- 创建点时，鼠标左键点击完成创建。
+
+- 创建圆时，按住鼠标左键拖动完成创建。
 
 - 按住鼠标右键拖动画布。
 
@@ -48,19 +52,22 @@
 ```
 
 ```bash
-npm i canvas-select --save
+npm install canvas-select --save
 ```
 
 ```html
 <canvas class="container"></canvas>
 ```
 
-```js
-// 构造函数CanvasSelect 参数1表示canvas dom节点，可选参数2表示需要标注的图片链接
+```ts
+interface CanvasSelectProps{
+   el:string|HTMLCanvasElement; // css选择器或者HTMLCanvasElement
+   src:string; // 图片链接
+}
 const instance = new CanvasSelect('.container', '/one.jpg');
 // or
 // const instance = new CanvasSelect('.container');
-// instance.setImage('/one.jpg')
+// instance.setImage('/one.jpg');
 
 let option = [
       {
@@ -105,7 +112,7 @@ instance.on('select', (info) => {
 });
 ```
 
-## 2、实例属性
+## 实例属性
 
 对任意属性的修改都需要调用`instance.update()`更新视图
 
@@ -131,7 +138,7 @@ instance.on('select', (info) => {
 | alpha             | boolean  |        true        |                |     设置为false可以帮助浏览器进行内部优化    |
 | focusMode         | boolean  |        false       |                |     专注模式，开启后只有活动状态的标签会显示到画布中    |
 
-## 3、实例方法
+## 实例方法
 
 | 方法名称      | 参数类型 |                 说明                  |
 | ------------- | :------: | :-----------------------------------: |
@@ -145,7 +152,7 @@ instance.on('select', (info) => {
 | on        |  string,function  |         监听事件         |
 | destroy       |  无      |         销毁实例         |
 
-## 4、事件
+## 事件
 
 | 事件名称 | 回调参数 |        说明        |
 | -------- | :------: | :----------------: |
