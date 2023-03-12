@@ -3,17 +3,23 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
   <title>canvas-select示例</title>
   <style>
-    .box {
-      display: flex;
+    * {
+      margin: 0;
+      padding: 0;
     }
+
+    /* .box {
+      display: flex;
+    } */
 
     .container {
       background-color: #ccc;
-      width: 500px;
-      height: 500px;
+      width: 100%;
+      max-width: 400px;
+      height: 400px;
     }
 
     .right {
@@ -46,16 +52,18 @@
         <button onclick="focusMode()">专注模式</button>
       </div>
     </div>
-    <div class="right">
+    <!-- <div class="right">
       <div>output:</div>
       <textarea id="output" onchange="changeData()"></textarea>
-    </div>
+    </div> -->
   </div>
   <script src="./lib/canvas-select.min.js"></script>
   <script>
+    // alert(document.body.clientWidth)
     const output = document.getElementById('output');
     const instance = new CanvasSelect('.container', 'https://www.zhuhailiang.com/api/images/onepiece.png');
     // instance.focusMode = true
+    instance.ctrlRadius = navigator.userAgent.includes('Mobile') ? 6 : 3
     window.c = instance;
     let option = [
       {
@@ -112,9 +120,9 @@
     });
     instance.on('updated', (result) => {
       console.log('标注结果', result)
-      const list = [...result]
-      list.sort((a, b) => a.index - b.index)
-      output.value = JSON.stringify(list, null, 2);
+      // const list = [...result]
+      // list.sort((a, b) => a.index - b.index)
+      // output.value = JSON.stringify(list, null, 2);
     });
 
     function change(num) {

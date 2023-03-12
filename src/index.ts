@@ -85,9 +85,19 @@ export default class CanvasSelect extends EventBus {
 
     timer: NodeJS.Timer;
 
+    dblTouch = 300; // 最小touch双击时间
+
+    dblTouchStore = 0; // touch双击时间
+
     alpha = true; // 这个选项可以帮助浏览器进行内部优化
 
     focusMode = false; // 专注模式
+
+    evt: MouseEvent | TouchEvent | KeyboardEvent
+
+    scaleTouchStore = 0
+
+    isTouch2 = false
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -132,6 +142,36 @@ export default class CanvasSelect extends EventBus {
         return Math.max(this.IMAGE_ORIGIN_WIDTH, this.IMAGE_ORIGIN_HEIGHT)
     }
 
+    /**
+     * 合成事件
+     * @param e 
+     * @returns 
+     */
+    mergeEvent(e: TouchEvent | MouseEvent) {
+        let mouseX = 0
+        let mouseY = 0
+        let mouseCX = 0
+        let mouseCY = 0
+        let isMobile = false
+        if (e instanceof TouchEvent) {
+            let { clientX, clientY } = e.touches[0]
+            let target = e.target as HTMLCanvasElement
+            const { left, top } = target.getBoundingClientRect()
+            mouseX = Math.round(clientX - left)
+            mouseY = Math.round(clientY - top)
+            if (e.touches.length === 2) {
+                let { clientX: clientX1 = 0, clientY: clientY1 = 0 } = e.touches[1] || {}
+                mouseCX = Math.round(Math.abs((clientX1 - clientX) / 2 + clientX) - left)
+                mouseCY = Math.round(Math.abs((clientY1 - clientY) / 2 + clientY) - top)
+            }
+            isMobile = true
+        } else {
+            mouseX = e.offsetX
+            mouseY = e.offsetY
+        }
+        return { ...e, mouseX, mouseY, mouseCX, mouseCY, isMobile }
+    }
+
     handleLoad() {
         this.emit('load', this.image.src);
         this.IMAGE_ORIGIN_WIDTH = this.IMAGE_WIDTH = this.image.width;
@@ -139,23 +179,29 @@ export default class CanvasSelect extends EventBus {
         this.fitZoom();
     }
     handleContextmenu(e: MouseEvent) {
-        if (this.lock) return;
         e.preventDefault();
+        this.evt = e
+        if (this.lock) return;
     }
     handleMousewheel(e: WheelEvent) {
+        e.stopPropagation();
+        this.evt = e
         if (this.lock || !this.scrollZoom) return;
-        e.preventDefault();
-        this.mouse = [e.offsetX, e.offsetY];
+        const { mouseX, mouseY } = this.mergeEvent(e)
+        this.mouse = [mouseX, mouseY];
         this.setScale(e.deltaY < 0, true);
     }
-    handleMouseDown(e: MouseEvent) {
+    handleMouseDown(e: MouseEvent | TouchEvent) {
+        e.stopPropagation();
+        this.evt = e
         if (this.lock) return;
-        const offsetX = Math.round(e.offsetX / this.scale);
-        const offsetY = Math.round(e.offsetY / this.scale);
-        this.mouse = [e.offsetX, e.offsetY];
-        if (e.buttons === 2) { // 鼠标右键
-            this.remmberOrigin = [e.offsetX - this.originX, e.offsetY - this.originY];
-        } else if (e.buttons === 1) { // 鼠标左键
+        const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e)
+        const isMobile = e instanceof TouchEvent
+        const offsetX = Math.round(mouseX / this.scale);
+        const offsetY = Math.round(mouseY / this.scale);
+        this.mouse = isMobile && e.touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        this.remmberOrigin = [mouseX - this.originX, mouseY - this.originY];
+        if ((!isMobile && e.buttons === 1) || (isMobile && e.touches.length === 1)) { // 鼠标左键
             const ctrls = this.activeShape.ctrlsData || [];
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
             if (this.ctrlIndex > -1) { // 点击到控制点
@@ -229,17 +275,16 @@ export default class CanvasSelect extends EventBus {
             }
         }
     }
-    handelMouseMove(e: MouseEvent) {
+    handelMouseMove(e: MouseEvent | TouchEvent) {
+        e.stopPropagation();
+        this.evt = e
         if (this.lock) return;
-        const offsetX = Math.round(e.offsetX / this.scale);
-        const offsetY = Math.round(e.offsetY / this.scale);
-        this.mouse = [e.offsetX, e.offsetY];
-        if (e.buttons === 2 && e.which === 3) {
-            // 拖动背景
-            this.originX = Math.round(e.offsetX - this.remmberOrigin[0]);
-            this.originY = Math.round(e.offsetY - this.remmberOrigin[1]);
-            this.update();
-        } else if (e.buttons === 1 && this.activeShape.type) {
+        const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e)
+        const isMobile = e instanceof TouchEvent
+        const offsetX = Math.round(mouseX / this.scale);
+        const offsetY = Math.round(mouseY / this.scale);
+        this.mouse = isMobile && e.touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        if (((!isMobile && e.buttons === 1) || (isMobile && e.touches.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && (this.isInBackground(e) || this.activeShape.type === 5)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
@@ -327,11 +372,36 @@ export default class CanvasSelect extends EventBus {
         } else if ([2, 4].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
+        } else if ((!isMobile && e.buttons === 2 && e.which === 3) || (isMobile && e.touches.length === 1 && !this.isTouch2)) {
+            // 拖动背景
+            this.originX = Math.round(mouseX - this.remmberOrigin[0]);
+            this.originY = Math.round(mouseY - this.remmberOrigin[1]);
+            this.update();
+        } else if (isMobile && e.touches.length === 2) {
+            this.isTouch2 = true
+            const touch0 = e.touches[0]
+            const touch1 = e.touches[1]
+            const cur = this.scaleTouchStore
+            this.scaleTouchStore = Math.abs((touch1.clientX - touch0.clientX) * (touch1.clientY - touch0.clientY))
+            this.setScale(this.scaleTouchStore > cur, true);
+
         }
 
     }
-    handelMouseUp(e: MouseEvent) {
+    handelMouseUp(e: MouseEvent | TouchEvent) {
+        e.stopPropagation();
+        this.evt = e
         if (this.lock) return;
+        if (e instanceof TouchEvent) {
+            if (e.touches.length === 0) {
+                this.isTouch2 = false
+            }
+            if ((Date.now() - this.dblTouchStore) < this.dblTouch) {
+                this.handelDblclick(e)
+                return
+            }
+            this.dblTouchStore = Date.now()
+        }
         this.remmber = [];
         if (this.activeShape.type) {
             this.activeShape.dragging = false;
@@ -359,7 +429,9 @@ export default class CanvasSelect extends EventBus {
             }
         }
     }
-    handelDblclick(e: MouseEvent) {
+    handelDblclick(e: MouseEvent | TouchEvent) {
+        e.stopPropagation();
+        this.evt = e
         if (this.lock) return;
         if ([2, 4].includes(this.activeShape.type)) {
             if ((this.activeShape.type === 2 && this.activeShape.coor.length > 2)
@@ -372,6 +444,8 @@ export default class CanvasSelect extends EventBus {
         }
     }
     handelKeyup(e: KeyboardEvent) {
+        e.stopPropagation();
+        this.evt = e
         if (this.lock || document.activeElement !== document.body) return;
         if (this.activeShape.type) {
             if ([2, 4].includes(this.activeShape.type) && e.key === 'Escape') {
@@ -404,13 +478,15 @@ export default class CanvasSelect extends EventBus {
         this.offScreenCtx = this.offScreen.getContext('2d', { willReadFrequently: true });
         this.ctx.scale(dpr, dpr)
         this.image.addEventListener('load', this.handleLoad);
+        this.canvas.addEventListener('touchstart', this.handleMouseDown);
+        this.canvas.addEventListener('touchmove', this.handelMouseMove);
+        this.canvas.addEventListener('touchend', this.handelMouseUp);
         this.canvas.addEventListener('contextmenu', this.handleContextmenu);
         this.canvas.addEventListener('mousewheel', this.handleMousewheel);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
         this.canvas.addEventListener('mousemove', this.handelMouseMove);
         this.canvas.addEventListener('mouseup', this.handelMouseUp);
         this.canvas.addEventListener('dblclick', this.handelDblclick);
-        document.body.addEventListener('keyup', this.handelKeyup);
     }
     /**
      * 添加/切换图片
@@ -489,11 +565,12 @@ export default class CanvasSelect extends EventBus {
      * @param e MouseEvent
      * @returns 布尔值
      */
-    isInBackground(e: MouseEvent): boolean {
-        return e.offsetX >= this.originX
-            && e.offsetY >= this.originY
-            && e.offsetX <= this.originX + this.IMAGE_ORIGIN_WIDTH * this.scale
-            && e.offsetY <= this.originY + this.IMAGE_ORIGIN_HEIGHT * this.scale;
+    isInBackground(e: MouseEvent | TouchEvent): boolean {
+        const { mouseX, mouseY } = this.mergeEvent(e)
+        return mouseX >= this.originX
+            && mouseY >= this.originY
+            && mouseX <= this.originX + this.IMAGE_ORIGIN_WIDTH * this.scale
+            && mouseY <= this.originY + this.IMAGE_ORIGIN_HEIGHT * this.scale;
     }
     /**
      * 判断是否在矩形内
@@ -811,9 +888,9 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
-     * 缩放
+     * 缩放 
      * @param type true放大5%，false缩小5%
-     * @param byMouse 启用鼠标位置，可选
+     * @param center 缩放中心 center|mouse
      * @param pure 不绘制
      */
     setScale(type: boolean, byMouse = false, pure = false) {
@@ -823,7 +900,7 @@ export default class CanvasSelect extends EventBus {
         let realToLeft = 0
         let realToRight = 0
         const [x, y] = this.mouse || []
-        if (byMouse) {
+        if (!byMouse) {
             realToLeft = (x - this.originX) / this.scale
             realToRight = (y - this.originY) / this.scale
         }
@@ -831,7 +908,7 @@ export default class CanvasSelect extends EventBus {
         const width = this.IMAGE_WIDTH;
         this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
         this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
-        if (byMouse) {
+        if (!byMouse) {
             this.originX = x - realToLeft * this.scale
             this.originY = y - realToRight * this.scale
         } else {
@@ -874,8 +951,11 @@ export default class CanvasSelect extends EventBus {
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu)
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel)
         this.canvas.removeEventListener('mousedown', this.handleMouseDown)
+        this.canvas.removeEventListener('touchend', this.handleMouseDown)
         this.canvas.removeEventListener('mousemove', this.handelMouseMove)
+        this.canvas.removeEventListener('touchmove', this.handelMouseMove)
         this.canvas.removeEventListener('mouseup', this.handelMouseUp)
+        this.canvas.removeEventListener('touchend', this.handelMouseUp)
         this.canvas.removeEventListener('dblclick', this.handelDblclick)
         document.body.removeEventListener('keyup', this.handelKeyup)
         this.canvas.width = this.WIDTH
