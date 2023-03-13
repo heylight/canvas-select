@@ -487,6 +487,7 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('mousemove', this.handelMouseMove);
         this.canvas.addEventListener('mouseup', this.handelMouseUp);
         this.canvas.addEventListener('dblclick', this.handelDblclick);
+        document.body.addEventListener('keyup', this.handelKeyup)
     }
     /**
      * 添加/切换图片
