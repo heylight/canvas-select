@@ -901,7 +901,7 @@ export default class CanvasSelect extends EventBus {
         let realToLeft = 0
         let realToRight = 0
         const [x, y] = this.mouse || []
-        if (!byMouse) {
+        if (byMouse) {
             realToLeft = (x - this.originX) / this.scale
             realToRight = (y - this.originY) / this.scale
         }
@@ -909,7 +909,7 @@ export default class CanvasSelect extends EventBus {
         const width = this.IMAGE_WIDTH;
         this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
         this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
-        if (!byMouse) {
+        if (byMouse) {
             this.originX = x - realToLeft * this.scale
             this.originY = y - realToRight * this.scale
         } else {
