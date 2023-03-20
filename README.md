@@ -133,8 +133,9 @@ instance.on('select', (info) => {
 | ctrlStrokeStyle   | string  |        #000         |                  |                控制点边线颜色                |
 | ctrlFillStyle     | string  |        #fff         |                  |                控制点填充颜色                |
 | ctrlRadius        | number  |          3          |                  |                  控制点半径                  |
+| hide              | boolean  |       false        |       支持       |                是否在画布中显示指定标注         |
 | labelFillStyle    | string  |        #fff         |       支持       |                label 填充颜色                |
-| labelFont         | string  |   10px sans-serif   |       支持       |                label  字体               |
+| labelFont         | string  |   10px sans-serif   |       支持       |                label  字体                  |
 | textFillStyle     | string  |        #000         |       支持       |                label 文字颜色                |
 | labelMaxLen       | number  |          10          |                  | label 字符最大显示个数，超出字符将用...表示  |
 | alpha             | boolean  |        true        |                |     设置为false可以帮助浏览器进行内部优化    |

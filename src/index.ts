@@ -827,7 +827,9 @@ export default class CanvasSelect extends EventBus {
                 this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
             }
             let renderList = this.focusMode ? (this.activeShape.type ? [this.activeShape] : []) : this.dataset
-            renderList.forEach((shape) => {
+            for (let i = 0; i < renderList.length; i++) {
+                const shape = renderList[i];
+                if (shape.hide) continue;
                 switch (shape.type) {
                     case 1:
                         this.drawRect(shape as Rect);
@@ -847,8 +849,8 @@ export default class CanvasSelect extends EventBus {
                     default:
                         break;
                 }
-            });
-            if ([1, 2, 4, 5].includes(this.activeShape.type)) {
+            }
+            if ([1, 2, 4, 5].includes(this.activeShape.type) && !this.activeShape.hide) {
                 this.drawCtrlList(this.activeShape);
             }
             this.ctx.restore();
