@@ -2,6 +2,7 @@ import sourcemaps from 'rollup-plugin-sourcemaps';
 import babel from '@rollup/plugin-babel';
 import typescript from 'rollup-plugin-typescript2';
 import { terser } from 'rollup-plugin-terser';
+import json from '@rollup/plugin-json';
 
 export default {
   input: 'src/index.ts',
@@ -17,5 +18,6 @@ export default {
     typescript(),
     babel({ babelHelpers: 'bundled' }),
     terser(),
+    json(),
   ],
 };

@@ -4,11 +4,14 @@ import Dot from './shape/Dot';
 import EventBus from './EventBus';
 import Line from './shape/Line';
 import Circle from './shape/Circle';
+import pkg from '../package.json'
 
 type Point = [number, number]
 type AllShape = Rect | Polygon | Dot | Line | Circle
 
 export default class CanvasSelect extends EventBus {
+    version = pkg.version
+
     lock: boolean = false // 只读模式
 
     MIN_WIDTH = 10
@@ -373,6 +376,7 @@ export default class CanvasSelect extends EventBus {
             // 多边形添加点
             this.update();
         } else if ((!isMobile && e.buttons === 2 && e.which === 3) || (isMobile && e.touches.length === 1 && !this.isTouch2)) {
+            console.info(e)
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);

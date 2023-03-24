@@ -10,6 +10,8 @@
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
     "declaration": true
   },
   "include": ["src/**/*"]
