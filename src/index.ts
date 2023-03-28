@@ -4,11 +4,14 @@ import Dot from './shape/Dot';
 import EventBus from './EventBus';
 import Line from './shape/Line';
 import Circle from './shape/Circle';
+import pkg from '../package.json'
 
 type Point = [number, number]
 type AllShape = Rect | Polygon | Dot | Line | Circle
 
 export default class CanvasSelect extends EventBus {
+    version = pkg.version
+
     lock: boolean = false // 只读模式
 
     MIN_WIDTH = 10
@@ -115,8 +118,9 @@ export default class CanvasSelect extends EventBus {
         const container = typeof el === 'string' ? document.querySelector(el) : el;
         if (container instanceof HTMLCanvasElement) {
             this.canvas = container;
-            this.canvas.style.userSelect = 'none';
-            this.initStage();
+            this.offScreen = document.createElement('canvas');
+            this.initSetting();
+            this.initEvents();
             src && this.setImage(src);
         } else {
             console.warn('HTMLCanvasElement is required!');
@@ -373,6 +377,7 @@ export default class CanvasSelect extends EventBus {
             // 多边形添加点
             this.update();
         } else if ((!isMobile && e.buttons === 2 && e.which === 3) || (isMobile && e.touches.length === 1 && !this.isTouch2)) {
+            console.info(e)
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
@@ -461,22 +466,27 @@ export default class CanvasSelect extends EventBus {
         }
     }
     /**
-     * 初始化
+     * 初始化配置
      */
-    initStage() {
+    initSetting() {
         const dpr = window.devicePixelRatio || 1
-        this.ctx = this.canvas.getContext('2d', { alpha: this.alpha });
+        this.canvas.style.userSelect = 'none';
+        this.ctx = this.ctx || this.canvas.getContext('2d', { alpha: this.alpha });
         this.WIDTH = this.canvas.clientWidth;
         this.HEIGHT = this.canvas.clientHeight;
         this.canvas.width = this.WIDTH * dpr
         this.canvas.height = this.HEIGHT * dpr
         this.canvas.style.width = this.WIDTH + 'px'
         this.canvas.style.height = this.HEIGHT + 'px'
-        this.offScreen = document.createElement('canvas');
         this.offScreen.width = this.WIDTH;
         this.offScreen.height = this.HEIGHT;
-        this.offScreenCtx = this.offScreen.getContext('2d', { willReadFrequently: true });
+        this.offScreenCtx = this.offScreenCtx || this.offScreen.getContext('2d', { willReadFrequently: true });
         this.ctx.scale(dpr, dpr)
+    }
+    /**
+     * 初始化事件
+     */
+    initEvents() {
         this.image.addEventListener('load', this.handleLoad);
         this.canvas.addEventListener('touchstart', this.handleMouseDown);
         this.canvas.addEventListener('touchmove', this.handelMouseMove);
@@ -948,7 +958,9 @@ export default class CanvasSelect extends EventBus {
         this.focusMode = type
         this.update()
     }
-
+    /**
+     * 销毁
+     */
     destroy() {
         this.image.removeEventListener('load', this.handleLoad)
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu)
@@ -966,6 +978,17 @@ export default class CanvasSelect extends EventBus {
         this.canvas.style.width = null
         this.canvas.style.height = null
         this.canvas.style.userSelect = null
+    }
+    /**
+     * 重新设置画布大小
+     */
+    resize() {
+        this.canvas.width = null
+        this.canvas.height = null
+        this.canvas.style.width = null
+        this.canvas.style.height = null
+        this.initSetting()
+        this.update()
     }
 }
 
