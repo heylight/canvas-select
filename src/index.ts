@@ -34,6 +34,8 @@ export default class CanvasSelect extends EventBus {
 
     ctrlRadius = 3
 
+    hideLabel = false
+
     labelFillStyle = '#fff'
 
     labelFont = '10px sans-serif'
@@ -273,6 +275,7 @@ export default class CanvasSelect extends EventBus {
                         this.emit('select', hitShape)
                     } else {
                         this.activeShape.active = false;
+                        this.dataset.sort((a, b) => a.index - b.index)
                     }
                 }
                 this.update();
@@ -670,7 +673,7 @@ export default class CanvasSelect extends EventBus {
      */
     drawRect(shape: Rect) {
         if (shape.coor.length !== 2) return;
-        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
+        const { strokeStyle, fillStyle, active, creating, coor } = shape
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.fillStyle;
@@ -680,14 +683,14 @@ export default class CanvasSelect extends EventBus {
         this.ctx.strokeRect(x0, y0, w, h);
         if (!creating) this.ctx.fillRect(x0, y0, w, h);
         this.ctx.restore();
-        this.drawLabel(coor[0], label, labelFillStyle, labelFont, textFillStyle);
+        this.drawLabel(coor[0], shape);
     }
     /**
      * 绘制多边形
      * @param shape 标注实例
      */
     drawPolygon(shape: Polygon) {
-        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, creating, coor, label } = shape
+        const { strokeStyle, fillStyle, active, creating, coor } = shape
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.fillStyle;
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
@@ -709,14 +712,14 @@ export default class CanvasSelect extends EventBus {
         this.ctx.fill();
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(coor[0], label, labelFillStyle, labelFont, textFillStyle);
+        this.drawLabel(coor[0], shape);
     }
     /**
      * 绘制点
      * @param shape 标注实例
      */
     drawDot(shape: Dot) {
-        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, coor, label } = shape
+        const { strokeStyle, fillStyle, active, coor } = shape
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.ctrlFillStyle;
@@ -727,14 +730,14 @@ export default class CanvasSelect extends EventBus {
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(coor as Point, label, labelFillStyle, labelFont, textFillStyle);
+        this.drawLabel(coor as Point, shape);
     }
     /**
      * 绘制圆
      * @param shape 标注实例
      */
     drawCirle(shape: Circle) {
-        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, fillStyle, active, coor, label, creating, radius, ctrlsData } = shape
+        const { strokeStyle, fillStyle, active, coor, label, creating, radius, ctrlsData } = shape
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.fillStyle = fillStyle || this.fillStyle;
@@ -745,14 +748,14 @@ export default class CanvasSelect extends EventBus {
         this.ctx.arc(x, y, radius * this.scale, 0, 2 * Math.PI, true);
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(ctrlsData[0] as Point, label, labelFillStyle, labelFont, textFillStyle);
+        this.drawLabel(ctrlsData[0] as Point, shape);
     }
     /**
      * 绘制折线
      * @param shape 标注实例
      */
     drawLine(shape: Line) {
-        const { labelFillStyle, textFillStyle, labelFont, strokeStyle, active, creating, coor, label } = shape
+        const { strokeStyle, active, creating, coor } = shape
         this.ctx.save();
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
@@ -770,7 +773,7 @@ export default class CanvasSelect extends EventBus {
         }
         this.ctx.stroke();
         this.ctx.restore();
-        this.drawLabel(coor[0], label, labelFillStyle, labelFont, textFillStyle);
+        this.drawLabel(coor[0], shape);
     }
     /**
      * 绘制控制点
@@ -806,8 +809,9 @@ export default class CanvasSelect extends EventBus {
      * @param point 位置
      * @param label 文本
      */
-    drawLabel(point: Point, label = '', labelFillStyle = '', labelFont = '', textFillStyle = '') {
-        if (label.length) {
+    drawLabel(point: Point, shape: AllShape) {
+        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', hideLabel = false } = shape
+        if (label.length && !(hideLabel || this.hideLabel)) {
             this.ctx.font = labelFont || this.labelFont;
             const textH = parseInt(this.ctx.font) + 6
             const newText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
