@@ -45,9 +45,9 @@
     "tslib": "^2.4.0",
     "typescript": "^4.6.4"
   },
-  "homepage": "https://github.com/heylight/canvas-select",
+  "homepage": "https://github.com/ap2095/canvas-select",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/heylight/canvas-select.git"
+    "url": "git+https://github.com/ap2095/canvas-select.git"
   }
 }
