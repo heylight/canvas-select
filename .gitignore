@@ -3,3 +3,4 @@ node_modules
 yarn.lock
 /lib
 ./onepiece.png
+package-lock.json
