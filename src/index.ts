@@ -112,6 +112,8 @@ export default class CanvasSelect extends EventBus {
 
   allowPanning = false;
 
+  RemoveSelectionOnKey: string = "Backspace";
+
   /**
    * @param el Valid CSS selector string, or DOM
    * @param src image src
@@ -582,7 +584,7 @@ export default class CanvasSelect extends EventBus {
           this.deleteByIndex(this.activeShape.index);
         }
         this.update();
-      } else if (e.key === "Backspace") {
+      } else if (e.key === this.RemoveSelectionOnKey) {
         this.deleteByIndex(this.activeShape.index);
       }
     }
