@@ -5,9 +5,11 @@ import EventBus from "./EventBus";
 import Line from "./shape/Line";
 import Circle from "./shape/Circle";
 import pkg from "../package.json";
+import Shape from "./shape/Shape";
+import Connectivity from "./shape/Connectivity";
 
 type Point = [number, number];
-type AllShape = Rect | Polygon | Dot | Line | Circle;
+type AllShape = Rect | Polygon | Dot | Line | Circle | Connectivity;
 
 export default class CanvasSelect extends EventBus {
   version = pkg.version;
@@ -113,6 +115,12 @@ export default class CanvasSelect extends EventBus {
   allowPanning = false;
 
   RemoveSelectionOnKey: string = "Backspace";
+
+  rectangleConnectivity: Point[] = [];
+
+  parentRectangleConnectivity: Shape = null;
+
+  childRectangleConnectivity: Shape = null;
 
   /**
    * @param el Valid CSS selector string, or DOM
@@ -252,13 +260,14 @@ export default class CanvasSelect extends EventBus {
       } else if (this.isInBackground(e)) {
         if (this.activeShape.creating) {
           // 创建中
-          if ([2, 4].includes(this.activeShape.type)) {
+          if ([2, 4, 6].includes(this.activeShape.type)) {
             const [x, y] =
               this.activeShape.coor[this.activeShape.coor.length - 1];
             if (x !== offsetX && y !== offsetY) {
               const nx = Math.round(offsetX - this.originX / this.scale);
               const ny = Math.round(offsetY - this.originY / this.scale);
               this.activeShape.coor.push([nx, ny]);
+              if (this.activeShape.type === 6) this.createConnectivity();
             }
           }
         } else if (this.createType > 0) {
@@ -266,7 +275,6 @@ export default class CanvasSelect extends EventBus {
           let newShape;
           const nx = Math.round(offsetX - this.originX / this.scale);
           const ny = Math.round(offsetY - this.originY / this.scale);
-          console.log("nx", nx, "ny", ny);
           const curPoint: Point = [nx, ny];
           switch (this.createType) {
             case 1:
@@ -291,6 +299,14 @@ export default class CanvasSelect extends EventBus {
             case 5:
               newShape = new Circle({ coor: curPoint }, this.dataset.length);
               newShape.creating = true;
+              break;
+            case 6:
+              newShape = new Connectivity(
+                { coor: [curPoint] },
+                this.dataset.length
+              );
+              newShape.creating = true;
+              this.parentRectangleConnectivity = this.findReactengle();
               break;
             default:
               break;
@@ -331,7 +347,6 @@ export default class CanvasSelect extends EventBus {
   }
   handelMouseMove(e: MouseEvent | TouchEvent) {
     e.stopPropagation();
-    // Temo Code
     if (this.isDragging && this.allowPanning) {
       this.originX += (e as MouseEvent).clientX - this.dragStartX;
       this.originY += (e as MouseEvent).clientY - this.dragStartY;
@@ -425,7 +440,7 @@ export default class CanvasSelect extends EventBus {
                 `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`
               );
             }
-          } else if ([2, 4].includes(this.activeShape.type)) {
+          } else if ([2, 4, 6].includes(this.activeShape.type)) {
             const nx = Math.round(offsetX - this.originX / this.scale);
             const ny = Math.round(offsetY - this.originY / this.scale);
             const newPoint = [nx, ny];
@@ -472,7 +487,7 @@ export default class CanvasSelect extends EventBus {
         }
         this.update();
       } else if (
-        [2, 4].includes(this.activeShape.type) &&
+        [2, 4, 6].includes(this.activeShape.type) &&
         this.activeShape.creating
       ) {
         // 多边形添加点
@@ -496,7 +511,6 @@ export default class CanvasSelect extends EventBus {
         this.setScale(this.scaleTouchStore > cur, true);
       }
     }
-    // End
   }
   handelMouseUp(e: MouseEvent | TouchEvent) {
     e.stopPropagation();
@@ -577,7 +591,7 @@ export default class CanvasSelect extends EventBus {
     this.evt = e;
     if (this.lock || document.activeElement !== document.body) return;
     if (this.activeShape.type) {
-      if ([2, 4].includes(this.activeShape.type) && e.key === "Escape") {
+      if ([2, 4, 6].includes(this.activeShape.type) && e.key === "Escape") {
         if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
           this.activeShape.coor.pop();
         } else {
@@ -589,6 +603,116 @@ export default class CanvasSelect extends EventBus {
       }
     }
   }
+
+  /**
+   * Find reactangle for connectivity between the rectangle
+   */
+  private findReactengle(): Rect {
+    for (let i = this.dataset.length - 1; i > -1; i--) {
+      const shape = this.dataset[i];
+      const [x, y] = this.mouse;
+      if (shape.type === 1) {
+        const [[x0, y0], [x1, y1]] = (shape as Rect).coor.map((a) =>
+          a.map((b: any) => b * this.scale)
+        );
+        if (
+          x0 + this.originX - 5 <= x &&
+          x <= x1 + this.originX + 5 &&
+          y0 + this.originY - 5 <= y &&
+          y <= y1 + this.originY + 5
+        ) {
+          return shape as Rect;
+        }
+      }
+    }
+  }
+
+  /**
+   * Connect rectangle with each other
+   */
+  private createConnectivity() {
+    if (this.activeShape.type === 6) {
+      let verfyCombination: boolean;
+      // let verfyChildCombination = [];
+      this.emit("add", this.activeShape);
+      this.activeShape.creating = false;
+
+      this.childRectangleConnectivity = this.findReactengle();
+      this.rectangleConnectivity.push([
+        this.parentRectangleConnectivity.index,
+        this.childRectangleConnectivity.index,
+      ]);
+
+      console.log("ABCD", this.rectangleConnectivity[0]);
+
+      // const verfyCombination = this.rectangleConnectivity.filter(
+      //   ([e1, e2]) =>
+      //     (e1 === this.parentRectangleConnectivity?.index ||
+      //       e1 === this.childRectangleConnectivity?.index) &&
+      //     (e2 === this.parentRectangleConnectivity?.index ||
+      //       e2 === this.childRectangleConnectivity?.index)
+      // );
+
+      verfyCombination = this.isArrayInArray(
+        this.parentRectangleConnectivity.rectangleConnectivity,
+        this.childRectangleConnectivity.rectangleConnectivity,
+        this.rectangleConnectivity[0]
+      );
+
+      // verfyChildCombination = this.isArrayInArray(
+      //   this.childRectangleConnectivity.rectangleConnectivity,
+      //   this.rectangleConnectivity[0]
+      // );
+
+      console.log("vc", verfyCombination);
+      if (!verfyCombination) {
+        this.parentRectangleConnectivity.rectangleConnectivity.push([
+          this.parentRectangleConnectivity.index,
+          this.childRectangleConnectivity.index,
+        ]);
+        this.childRectangleConnectivity.rectangleConnectivity.push([
+          this.parentRectangleConnectivity.index,
+          this.childRectangleConnectivity.index,
+        ]);
+        this.rectangleConnectivity = [];
+      } else {
+        this.deleteByIndex(this.activeShape.index);
+      }
+    }
+    this.update();
+  }
+
+  private isArrayInArray(parentArr: any, childArr: any, comp: any) {
+    if (parentArr?.length === 0 && childArr?.length === 0) return false;
+
+    let [x1, y1] = comp[0];
+
+    console.log("comp", comp[0]);
+    console.log("parentArr", parentArr);
+    console.log("childArr", childArr);
+    let parentCheck = parentArr.filter(([e1, e2]: [number, number]) => {
+      console.log(e1, x1, y1);
+      console.log(e1 === x1 || e1 === y1);
+      if ((e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)) return [e1, e2];
+    });
+    console.log("parentCheck", parentCheck);
+
+    let childCheck = childArr.filter(
+      ([e1, e2]: [number, number]) =>
+        (e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)
+    );
+    console.log("childCheck", childCheck);
+    // const item_as_string = JSON.stringify(item);
+
+    // const contains = arr.some((ele: any) => {
+    //   return JSON.stringify(ele) === item_as_string;
+    // });
+    let contains = false;
+    if (parentCheck?.length > 0 || childCheck?.length > 0) contains = true;
+
+    return contains;
+  }
+
   /**
    * 初始化配置
    */
@@ -658,11 +782,14 @@ export default class CanvasSelect extends EventBus {
             case 5:
               shape = new Circle(item, index);
               break;
+            case 6:
+              shape = new Connectivity(item, index);
+              break;
             default:
               console.warn("Invalid shape", item);
               break;
           }
-          [1, 2, 3, 4, 5].includes(item.type) && initdata.push(shape);
+          [1, 2, 3, 4, 5, 6].includes(item.type) && initdata.push(shape);
         } else {
           console.warn("Shape must be an enumerable Object.", item);
         }
@@ -698,8 +825,8 @@ export default class CanvasSelect extends EventBus {
           this.isPointInRect(mousePoint, (shape as Rect).coor)) ||
         (shape.type === 2 &&
           this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) ||
-        (shape.type === 4 &&
-          this.isPointInLine(mousePoint, (shape as Line).coor))
+        ((shape.type === 4 || shape.type === 6) &&
+          this.isPointInLine(mousePoint, (shape as Line | Connectivity).coor))
       ) {
         if (this.focusMode && !shape.active) continue;
         hitShapeIndex = i;
@@ -717,19 +844,7 @@ export default class CanvasSelect extends EventBus {
    */
   isInBackground(e: MouseEvent | TouchEvent): boolean {
     const { mouseX, mouseY } = this.mergeEvent(e);
-    console.log("orx", this.originX);
-    console.log("orY", this.originY);
-    console.log("mouseX", mouseX);
-    console.log("r1", mouseX >= this.originX);
-    console.log("r2", mouseY >= this.originY);
-    console.log(
-      "r3",
-      mouseX <= this.originX + this.IMAGE_ORIGIN_WIDTH * this.scale
-    );
-    console.log(
-      "r4",
-      mouseY <= this.originY + this.IMAGE_ORIGIN_HEIGHT * this.scale
-    );
+
     return (
       mouseX >= this.originX &&
       mouseY >= this.originY &&
@@ -941,7 +1056,7 @@ export default class CanvasSelect extends EventBus {
    * 绘制折线
    * @param shape 标注实例
    */
-  drawLine(shape: Line) {
+  drawLine(shape: Line | Connectivity) {
     const { strokeStyle, active, creating, coor } = shape;
     this.ctx.save();
     this.ctx.strokeStyle =
@@ -985,7 +1100,7 @@ export default class CanvasSelect extends EventBus {
    * 绘制控制点列表
    * @param shape 标注实例
    */
-  drawCtrlList(shape: Rect | Polygon | Line) {
+  drawCtrlList(shape: Rect | Polygon | Line | Connectivity) {
     shape.ctrlsData.forEach((point, i) => {
       if (shape.type === 5) {
         if (i === 1) this.drawCtrl(point);
@@ -1075,7 +1190,8 @@ export default class CanvasSelect extends EventBus {
             this.drawDot(shape as Dot);
             break;
           case 4:
-            this.drawLine(shape as Line);
+          case 6:
+            this.drawLine(shape as Line | Connectivity);
             break;
           case 5:
             this.drawCirle(shape as Circle);
@@ -1085,7 +1201,7 @@ export default class CanvasSelect extends EventBus {
         }
       }
       if (
-        [1, 2, 4, 5].includes(this.activeShape.type) &&
+        [1, 2, 4, 5, 6].includes(this.activeShape.type) &&
         !this.activeShape.hide
       ) {
         this.drawCtrlList(this.activeShape);

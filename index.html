@@ -45,6 +45,7 @@
           <button onclick="change(3)">create point</button>
           <button onclick="change(4)">create polyline</button>
           <button onclick="change(5)">create circle</button>
+          <button onclick="change(6)">create connectivity</button>
           <button onclick="change(0)">cancel creation</button>
           <br />
           <button onclick="zoom(true)">Zoom In</button>
@@ -73,7 +74,7 @@
       window.c = instance;
       let option = [
         {
-          label: "矩形",
+          label: "ABC",
           coor: [
             [184, 183],
             [275, 238],
@@ -81,7 +82,20 @@
           type: 1,
         },
         {
-          label: "多边形",
+          label: "DEF",
+          hideLabel: false,
+          coor: [
+            [258, 88],
+            [359, 146],
+          ],
+          active: false,
+          creating: false,
+          dragging: false,
+          uuid: "1998d731-64c5-4b20-a230-9945fb816208",
+          type: 1,
+        },
+        {
+          label: "GHI",
           coor: [
             [135, 291],
             [129, 319],
@@ -114,11 +128,7 @@
           type: 5,
         },
       ];
-      // let list = []
-      // for (let i = 0; i < 1000; i++) {
-      //   list = list.concat(option)
-      // }
-      // console.log('number, list.length)
+
       instance.on("load", (src) => {
         instance.setData(option);
       });
@@ -132,8 +142,9 @@
       // 选中
       instance.on("select", (info) => {});
       instance.on("updated", (result) => {
-        // const list = [...result]
-        // list.sort((a, b) => a.index - b.index)
+        const list = [...result];
+        list.sort((a, b) => a.index - b.index);
+        // console.log(list);
         // output.value = JSON.stringify(list, null, 2);
       });
 
