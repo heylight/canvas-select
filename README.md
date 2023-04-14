@@ -2,8 +2,11 @@
 
 > A lightweight image annotation javascript library that supports rectangles, polygons, points, polylines, circles, and re-editing, making image annotation easier.
 
+# What's New?
+
 > It's include zoom with panning.
 > You can also pass shortcut key to delete annotate data.
+> User can also make connectivity between ractangles.
 
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)

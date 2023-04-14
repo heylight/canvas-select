@@ -633,47 +633,34 @@ export default class CanvasSelect extends EventBus {
   private createConnectivity() {
     if (this.activeShape.type === 6) {
       let verfyCombination: boolean;
-      // let verfyChildCombination = [];
       this.emit("add", this.activeShape);
       this.activeShape.creating = false;
 
       this.childRectangleConnectivity = this.findReactengle();
-      this.rectangleConnectivity.push([
-        this.parentRectangleConnectivity.index,
-        this.childRectangleConnectivity.index,
-      ]);
 
-      console.log("ABCD", this.rectangleConnectivity[0]);
-
-      // const verfyCombination = this.rectangleConnectivity.filter(
-      //   ([e1, e2]) =>
-      //     (e1 === this.parentRectangleConnectivity?.index ||
-      //       e1 === this.childRectangleConnectivity?.index) &&
-      //     (e2 === this.parentRectangleConnectivity?.index ||
-      //       e2 === this.childRectangleConnectivity?.index)
-      // );
-
-      verfyCombination = this.isArrayInArray(
-        this.parentRectangleConnectivity.rectangleConnectivity,
-        this.childRectangleConnectivity.rectangleConnectivity,
-        this.rectangleConnectivity[0]
-      );
-
-      // verfyChildCombination = this.isArrayInArray(
-      //   this.childRectangleConnectivity.rectangleConnectivity,
-      //   this.rectangleConnectivity[0]
-      // );
-
-      console.log("vc", verfyCombination);
-      if (!verfyCombination) {
-        this.parentRectangleConnectivity.rectangleConnectivity.push([
+      if (this.parentRectangleConnectivity && this.childRectangleConnectivity) {
+        this.rectangleConnectivity.push([
           this.parentRectangleConnectivity.index,
           this.childRectangleConnectivity.index,
         ]);
-        this.childRectangleConnectivity.rectangleConnectivity.push([
-          this.parentRectangleConnectivity.index,
-          this.childRectangleConnectivity.index,
-        ]);
+        verfyCombination = this.isArrayInArray(
+          this.parentRectangleConnectivity.rectangleConnectivity,
+          this.childRectangleConnectivity.rectangleConnectivity,
+          this.rectangleConnectivity[0]
+        );
+
+        if (!verfyCombination) {
+          this.parentRectangleConnectivity.rectangleConnectivity.push([
+            this.parentRectangleConnectivity.index,
+            this.childRectangleConnectivity.index,
+          ]);
+          this.childRectangleConnectivity.rectangleConnectivity.push([
+            this.parentRectangleConnectivity.index,
+            this.childRectangleConnectivity.index,
+          ]);
+        } else {
+          this.deleteByIndex(this.activeShape.index);
+        }
         this.rectangleConnectivity = [];
       } else {
         this.deleteByIndex(this.activeShape.index);
@@ -684,29 +671,16 @@ export default class CanvasSelect extends EventBus {
 
   private isArrayInArray(parentArr: any, childArr: any, comp: any) {
     if (parentArr?.length === 0 && childArr?.length === 0) return false;
-
-    let [x1, y1] = comp[0];
-
-    console.log("comp", comp[0]);
-    console.log("parentArr", parentArr);
-    console.log("childArr", childArr);
+    let [x1, y1] = comp;
     let parentCheck = parentArr.filter(([e1, e2]: [number, number]) => {
-      console.log(e1, x1, y1);
-      console.log(e1 === x1 || e1 === y1);
       if ((e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)) return [e1, e2];
     });
-    console.log("parentCheck", parentCheck);
 
     let childCheck = childArr.filter(
       ([e1, e2]: [number, number]) =>
         (e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)
     );
-    console.log("childCheck", childCheck);
-    // const item_as_string = JSON.stringify(item);
 
-    // const contains = arr.some((ele: any) => {
-    //   return JSON.stringify(ele) === item_as_string;
-    // });
     let contains = false;
     if (parentCheck?.length > 0 || childCheck?.length > 0) contains = true;
 
