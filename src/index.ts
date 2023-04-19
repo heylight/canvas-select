@@ -380,7 +380,6 @@ export default class CanvasSelect extends EventBus {
             // 多边形添加点
             this.update();
         } else if ((!isMobile && e.buttons === 2 && e.which === 3) || (isMobile && e.touches.length === 1 && !this.isTouch2)) {
-            console.info(e)
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
