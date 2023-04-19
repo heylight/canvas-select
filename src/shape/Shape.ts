@@ -6,7 +6,7 @@ interface ShapeProp {
 }
 export default class Shape {
     public label: string = ''
-    public hideLabel = false
+    public hideLabel: boolean
     public coor: any[] = []
     public strokeStyle: string
     public fillStyle: string
