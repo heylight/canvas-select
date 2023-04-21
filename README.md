@@ -62,10 +62,9 @@ npm install canvas-select --save
 ```
 
 ```ts
-interface CanvasSelectProps {
-  el: string | HTMLCanvasElement; // css选择器或者HTMLCanvasElement
-  src: string; // 图片链接
-}
+// 构造器
+// 第一个参数为css选择器或者HTMLCanvasElement
+// 第二个参数为图片链接
 const instance = new CanvasSelect(".container", "/one.jpg");
 // or
 // const instance = new CanvasSelect('.container');
