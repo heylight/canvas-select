@@ -1038,6 +1038,7 @@ export default class CanvasSelect extends EventBus {
   drawLine(shape: Line | Connectivity) {
     const { strokeStyle, active, creating, coor } = shape;
     this.ctx.save();
+    this.ctx.lineWidth = this.LineWidth;
     this.ctx.strokeStyle =
       active || creating
         ? this.activeStrokeStyle
