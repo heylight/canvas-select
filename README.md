@@ -8,6 +8,7 @@
 > You can also pass shortcut key to delete annotate data.
 > User can also make connectivity between ractangles.
 > User can show/hide annotation labels
+> User can set border width for rectangle.
 
 [![NPM version](https://img.shields.io/npm/v/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
 [![NPM downloads](http://img.shields.io/npm/dm/canvas-select.svg?style=flat)](https://npmjs.org/package/canvas-select)
