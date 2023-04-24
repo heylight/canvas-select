@@ -124,6 +124,8 @@ export default class CanvasSelect extends EventBus {
 
   hideAnnotateLabels = false;
 
+  LineWidth = 1.5;
+
   /**
    * @param el Valid CSS selector string, or DOM
    * @param src image src
@@ -941,6 +943,7 @@ export default class CanvasSelect extends EventBus {
         : strokeStyle || this.strokeStyle;
     const w = x1 - x0;
     const h = y1 - y0;
+    this.ctx.lineWidth = this.LineWidth;
     this.ctx.strokeRect(x0, y0, w, h);
     if (!creating) this.ctx.fillRect(x0, y0, w, h);
     this.ctx.restore();
