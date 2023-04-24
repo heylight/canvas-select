@@ -122,6 +122,8 @@ export default class CanvasSelect extends EventBus {
 
   childRectangleConnectivity: Shape = null;
 
+  hideAnnotateLabels = false;
+
   /**
    * @param el Valid CSS selector string, or DOM
    * @param src image src
@@ -942,7 +944,7 @@ export default class CanvasSelect extends EventBus {
     this.ctx.strokeRect(x0, y0, w, h);
     if (!creating) this.ctx.fillRect(x0, y0, w, h);
     this.ctx.restore();
-    this.drawLabel(coor[0], shape);
+    if (!this.hideAnnotateLabels) this.drawLabel(coor[0], shape);
   }
   /**
    * 绘制多边形
@@ -974,7 +976,7 @@ export default class CanvasSelect extends EventBus {
     this.ctx.fill();
     this.ctx.stroke();
     this.ctx.restore();
-    this.drawLabel(coor[0], shape);
+    if (!this.hideAnnotateLabels) this.drawLabel(coor[0], shape);
   }
   /**
    * 绘制点
@@ -994,7 +996,7 @@ export default class CanvasSelect extends EventBus {
     this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
     this.ctx.stroke();
     this.ctx.restore();
-    this.drawLabel(coor as Point, shape);
+    if (!this.hideAnnotateLabels) this.drawLabel(coor as Point, shape);
   }
   /**
    * 绘制圆
@@ -1024,7 +1026,7 @@ export default class CanvasSelect extends EventBus {
     this.ctx.arc(x, y, radius * this.scale, 0, 2 * Math.PI, true);
     this.ctx.stroke();
     this.ctx.restore();
-    this.drawLabel(ctrlsData[0] as Point, shape);
+    if (!this.hideAnnotateLabels) this.drawLabel(ctrlsData[0] as Point, shape);
   }
   /**
    * 绘制折线
@@ -1052,7 +1054,7 @@ export default class CanvasSelect extends EventBus {
     }
     this.ctx.stroke();
     this.ctx.restore();
-    this.drawLabel(coor[0], shape);
+    if (!this.hideAnnotateLabels) this.drawLabel(coor[0], shape);
   }
   /**
    * 绘制控制点
