@@ -227,7 +227,8 @@ export default class CanvasSelect extends EventBus {
     if (this.lock || !this.scrollZoom) return;
     const { mouseX, mouseY } = this.mergeEvent(e);
     this.mouse = [mouseX, mouseY];
-    this.setScale(e.deltaY < 0, true);
+    // this.setScale(e.deltaY < 0, true);
+    this.setScale(e.deltaY < 0);
   }
   handleMouseDown(e: MouseEvent | TouchEvent) {
     e.stopPropagation();
@@ -1234,7 +1235,9 @@ export default class CanvasSelect extends EventBus {
   setScale(type: boolean, byMouse = false, pure = false) {
     if (this.lock) return;
     if (
-      (!type && this.imageMin <= 50) ||
+      (!type &&
+        this.IMAGE_WIDTH <= this.WIDTH &&
+        this.IMAGE_HEIGHT <= this.HEIGHT) ||
       (type && this.IMAGE_WIDTH >= this.imageOriginMax * 10)
     )
       return;
