@@ -20,8 +20,8 @@
       .container {
         background-color: #ccc;
         width: 100%;
-        max-width: 400px;
-        height: 400px;
+        /* max-width: 400px; */
+        height: 700px;
       }
 
       .right {
@@ -38,7 +38,18 @@
   <body>
     <div class="box">
       <div class="left">
-        <canvas class="container"></canvas>
+        <div
+          id="wrapper"
+          style="
+            position: relative;
+            width: 720px;
+            height: 720px;
+            overflow: auto;
+          "
+        >
+          <canvas class="container"></canvas>
+        </div>
+
         <div>
           <button onclick="change(1)">create rectangle</button>
           <button onclick="change(2)">create polygon</button>
@@ -67,7 +78,7 @@
       const output = document.getElementById("output");
       const instance = new CanvasSelect(
         ".container",
-        "https://www.zhuhailiang.com/api/images/onepiece.png"
+        "./src/assets/images/cv.png"
       );
       // instance.focusMode = true
       instance.ctrlRadius = navigator.userAgent.includes("Mobile") ? 6 : 3;
