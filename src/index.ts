@@ -740,9 +740,7 @@ export default class CanvasSelect extends EventBus {
     this.canvas.addEventListener("mouseup", this.handelMouseUp);
     this.canvas.addEventListener("dblclick", this.handelDblclick);
     document.body.addEventListener("keyup", this.handelKeyup);
-    document
-      .getElementById(this.WrapperId)
-      .addEventListener("scroll", this.handleScroll);
+    this.canvas.parentElement.addEventListener("scroll", this.handleScroll);
   }
   /**
    * 添加/切换图片
@@ -1393,9 +1391,7 @@ export default class CanvasSelect extends EventBus {
     this.canvas.removeEventListener("touchend", this.handelMouseUp);
     this.canvas.removeEventListener("dblclick", this.handelDblclick);
     document.body.removeEventListener("keyup", this.handelKeyup);
-    document
-      .getElementById(this.WrapperId)
-      .removeEventListener("scroll", this.handleScroll);
+    this.canvas.parentElement.removeEventListener("scroll", this.handleScroll);
     this.canvas.width = this.WIDTH;
     this.canvas.height = this.HEIGHT;
     this.canvas.style.width = null;
