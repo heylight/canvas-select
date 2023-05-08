@@ -132,30 +132,31 @@ instance.on("select", (info) => {
 
 对任意属性的修改都需要调用`instance.update()`更新视图
 
-| 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                        说明                        |
-| ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------------: |
+| 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                           说明                           |
+| ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------------------: |
 | createType        | boolean |          0          |                  | 0 不创建(拖拽)，1 创建矩形，2 多边形，3 点，4 折线，5 圆 |
-| lock              | boolean |        false        |                  |                      锁定画布                      |
-| scrollZoom        | boolean |        true         |                  |                      滚动缩放                      |
-| MIN_WIDTH         | number  |         10          |                  |                    最小矩形宽度                    |
-| MIN_HEIGHT        | number  |         10          |                  |                    最小矩形高度                    |
-| MIN_RADIUS        | number  |          5          |                  |                    最小圆形半径                    |
-| strokeStyle       | string  |        #0f0         |       支持       |                    形状边线颜色                    |
-| fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                    形状填充颜色                    |
-| activeStrokeStyle | string  |        #f00         |                  |                 选中的形状边线颜色                 |
-| activeFillStyle   | string  |        #f00         |                  |                 选中的形状填充颜色                 |
-| ctrlStrokeStyle   | string  |        #000         |                  |                   控制点边线颜色                   |
-| ctrlFillStyle     | string  |        #fff         |                  |                   控制点填充颜色                   |
-| ctrlRadius        | number  |          3          |                  |                     控制点半径                     |
-| hide              | boolean |        false        |       支持       |              是否在画布中显示指定标注              |
-| label             | string  |         无          |                  |                      标签名称                      |
-| hideLabel         | string  |        false        |       支持       |                  是否隐藏标签名称                  |
-| labelFillStyle    | string  |        #fff         |       支持       |                   label 填充颜色                   |
-| labelFont         | string  |   10px sans-serif   |       支持       |                     label 字体                     |
-| textFillStyle     | string  |        #000         |       支持       |                   label 文字颜色                   |
-| labelMaxLen       | number  |         10          |                  |    label 字符最大显示个数，超出字符将用...表示     |
-| alpha             | boolean |        true         |                  |      设置为 false 可以帮助浏览器进行内部优化       |
-| focusMode         | boolean |        false        |                  |  专注模式，开启后只有活动状态的标签会显示到画布中  |
+| lock              | boolean |        false        |                  |                         锁定画布                         |
+| scrollZoom        | boolean |        true         |                  |                         滚动缩放                         |
+| MIN_WIDTH         | number  |         10          |                  |                       最小矩形宽度                       |
+| MIN_HEIGHT        | number  |         10          |                  |                       最小矩形高度                       |
+| MIN_RADIUS        | number  |          5          |                  |                       最小圆形半径                       |
+| strokeStyle       | string  |        #0f0         |       支持       |                       形状边线颜色                       |
+| lineWidth         | string  | rgba(0, 0, 255,0.1) |       支持       |                       形状边线宽度                       |
+| fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                       形状填充颜色                       |
+| activeStrokeStyle | string  |        #f00         |                  |                    选中的形状边线颜色                    |
+| activeFillStyle   | string  |        #f00         |                  |                    选中的形状填充颜色                    |
+| ctrlStrokeStyle   | string  |        #000         |                  |                      控制点边线颜色                      |
+| ctrlFillStyle     | string  |        #fff         |                  |                      控制点填充颜色                      |
+| ctrlRadius        | number  |          3          |                  |                        控制点半径                        |
+| hide              | boolean |        false        |       支持       |                 是否在画布中显示指定标注                 |
+| label             | string  |         无          |                  |                         标签名称                         |
+| hideLabel         | string  |        false        |       支持       |                     是否隐藏标签名称                     |
+| labelFillStyle    | string  |        #fff         |       支持       |                      label 填充颜色                      |
+| labelFont         | string  |   10px sans-serif   |       支持       |                        label 字体                        |
+| textFillStyle     | string  |        #000         |       支持       |                      label 文字颜色                      |
+| labelMaxLen       | number  |         10          |                  |       label 字符最大显示个数，超出字符将用...表示        |
+| alpha             | boolean |        true         |                  |         设置为 false 可以帮助浏览器进行内部优化          |
+| focusMode         | boolean |        false        |                  |     专注模式，开启后只有活动状态的标签会显示到画布中     |
 
 ## 实例方法
 

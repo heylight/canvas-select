@@ -15,6 +15,8 @@ export default class Shape {
     public strokeStyle: string
     /** 填充颜色 */
     public fillStyle: string
+    /** 边线宽度 */
+    public lineWidth: number
     /** 标签填充颜色 */
     public labelFillStyle: string
     /** 标签文字颜色 */

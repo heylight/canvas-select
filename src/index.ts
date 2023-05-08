@@ -24,6 +24,8 @@ export default class CanvasSelect extends EventBus {
     strokeStyle = '#0f0'
     /** 填充颜色 */
     fillStyle = 'rgba(0, 0, 255,0.1)'
+    /** 边线宽度 */
+    lineWidth = 1
     /** 当前选中的标注边线颜色 */
     activeStrokeStyle = '#f00'
     /** 当前选中的标注填充颜色 */
@@ -670,15 +672,16 @@ export default class CanvasSelect extends EventBus {
      */
     drawRect(shape: Rect) {
         if (shape.coor.length !== 2) return;
-        const { strokeStyle, fillStyle, active, creating, coor } = shape
+        const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
+        this.ctx.lineWidth = lineWidth || this.lineWidth
         this.ctx.fillStyle = fillStyle || this.fillStyle;
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         const w = x1 - x0;
         const h = y1 - y0;
-        this.ctx.strokeRect(x0, y0, w, h);
         if (!creating) this.ctx.fillRect(x0, y0, w, h);
+        this.ctx.strokeRect(x0, y0, w, h);
         this.ctx.restore();
         this.drawLabel(coor[0], shape);
     }
@@ -687,8 +690,10 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawPolygon(shape: Polygon) {
-        const { strokeStyle, fillStyle, active, creating, coor } = shape
+        const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape
         this.ctx.save();
+        this.ctx.lineJoin = "round"
+        this.ctx.lineWidth = lineWidth || this.lineWidth
         this.ctx.fillStyle = fillStyle || this.fillStyle;
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
@@ -716,9 +721,10 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawDot(shape: Dot) {
-        const { strokeStyle, fillStyle, active, coor } = shape
+        const { strokeStyle, fillStyle, active, coor, lineWidth } = shape
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
+        this.ctx.lineWidth = lineWidth || this.lineWidth
         this.ctx.fillStyle = fillStyle || this.ctrlFillStyle;
         this.ctx.strokeStyle = active ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
@@ -734,9 +740,10 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawCirle(shape: Circle) {
-        const { strokeStyle, fillStyle, active, coor, label, creating, radius, ctrlsData } = shape
+        const { strokeStyle, fillStyle, active, coor, label, creating, radius, ctrlsData, lineWidth } = shape
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
+        this.ctx.lineWidth = lineWidth || this.lineWidth
         this.ctx.fillStyle = fillStyle || this.fillStyle;
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
@@ -752,8 +759,10 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawLine(shape: Line) {
-        const { strokeStyle, active, creating, coor } = shape
+        const { strokeStyle, active, creating, coor, lineWidth } = shape
         this.ctx.save();
+        this.ctx.lineJoin = "round"
+        this.ctx.lineWidth = lineWidth || this.lineWidth
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
         coor.forEach((el: Point, i) => {
