@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "2.13.1",
+  "version": "2.13.2",
   "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形。",
   "main": "lib/canvas-select.min.js",
   "types": "lib/index.d.ts",
