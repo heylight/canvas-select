@@ -1,6 +1,6 @@
 {
   "name": "@ap25/canvas-select",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Annotate canvas data",
   "main": "lib/canvas-select.min.js",
   "types": "lib/src/index.d.ts",

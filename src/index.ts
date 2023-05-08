@@ -130,8 +130,6 @@ export default class CanvasSelect extends EventBus {
 
   ScrollTop = 0;
 
-  WrapperId = "wrapper"; // wrapper div ID
-
   /**
    * @param el Valid CSS selector string, or DOM
    * @param src image src
@@ -905,7 +903,8 @@ export default class CanvasSelect extends EventBus {
     const [x, y] = point;
     const [x0, y0] = center.map((a) => a * this.scale);
     const distance = Math.sqrt(
-      (x0 + this.originX - x) ** 2 + (y0 + this.originY - y) ** 2
+      (x0 + (this.originX + this.canvas.parentElement.scrollLeft) - x) ** 2 +
+        (y0 + (this.originY + this.canvas.parentElement.scrollTop) - y) ** 2
     );
     return distance <= r;
   }

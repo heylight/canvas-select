@@ -6,6 +6,7 @@
 
 > Improved zoom with panning.
 > Added scrollbar to scroll page after zoom.
+> Allow re-size rectangle.
 > You can also pass shortcut key to delete annotate data.
 > User can also make connectivity between ractangles.
 > User can show/hide annotation labels
