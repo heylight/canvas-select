@@ -141,7 +141,7 @@ instance.on("select", (info) => {
 | MIN_HEIGHT        | number  |         10          |                  |                       最小矩形高度                       |
 | MIN_RADIUS        | number  |          5          |                  |                       最小圆形半径                       |
 | strokeStyle       | string  |        #0f0         |       支持       |                       形状边线颜色                       |
-| lineWidth         | string  |          1          |       支持       |                       形状边线宽度                       |
+| lineWidth         | number  |          1          |       支持       |                       形状边线宽度                       |
 | fillStyle         | string  | rgba(0, 0, 255,0.1) |       支持       |                       形状填充颜色                       |
 | activeStrokeStyle | string  |        #f00         |                  |                    选中的形状边线颜色                    |
 | activeFillStyle   | string  |        #f00         |                  |                    选中的形状填充颜色                    |
