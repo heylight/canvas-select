@@ -9,6 +9,10 @@ import Shape from "./shape/Shape";
 import Connectivity from "./shape/Connectivity";
 
 type Point = [number, number];
+export interface Point2 {
+  x: number;
+  y: number;
+}
 type AllShape = Rect | Polygon | Dot | Line | Circle | Connectivity;
 
 export default class CanvasSelect extends EventBus {
@@ -666,6 +670,26 @@ export default class CanvasSelect extends EventBus {
         );
 
         if (!verfyCombination) {
+          if (
+            !this.parentRectangleConnectivity.lineCoorIndex.includes(
+              this.activeShape.index
+            )
+          )
+            this.parentRectangleConnectivity.lineCoorIndex.push(
+              this.activeShape.index
+            );
+          if (
+            !this.childRectangleConnectivity.lineCoorIndex.includes(
+              this.activeShape.index
+            )
+          )
+            this.childRectangleConnectivity.lineCoorIndex.push(
+              this.activeShape.index
+            );
+          this.activeShape.rectangleConnectivity.push([
+            this.parentRectangleConnectivity.index,
+            this.childRectangleConnectivity.index,
+          ]);
           this.parentRectangleConnectivity.rectangleConnectivity.push([
             this.parentRectangleConnectivity.index,
             this.childRectangleConnectivity.index,
@@ -701,6 +725,73 @@ export default class CanvasSelect extends EventBus {
     if (parentCheck?.length > 0 || childCheck?.length > 0) contains = true;
 
     return contains;
+  }
+
+  private getDomRect(coor: Point[]) {
+    const [x1, y1] = coor[0];
+    const [x2, y2] = coor[1];
+    return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+  }
+
+  private drawShortestLine(
+    rect1: DOMRect,
+    rect2: DOMRect,
+    shape: Line | Connectivity
+  ) {
+    const closestMidpoints = this.getClosestMidpoints(rect1, rect2);
+
+    shape.coor[0] = [closestMidpoints[0].x, closestMidpoints[0].y];
+    shape.coor[1] = [closestMidpoints[1].x, closestMidpoints[1].y];
+
+    this.drawLine(shape as Line | Connectivity);
+
+    // this.parentRectangleConnectivity = this.childRectangleConnectivity = null;
+    // this.ctx.beginPath();
+    // this.ctx.moveTo(
+    //   closestMidpoints[0].x * this.scale,
+    //   closestMidpoints[0].y * this.scale
+    // );
+    // this.ctx.lineTo(
+    //   closestMidpoints[1].x * this.scale,
+    //   closestMidpoints[1].y * this.scale
+    // );
+    // this.ctx.strokeStyle = "#ba3f3f";
+    // this.ctx.stroke();
+  }
+
+  private getClosestMidpoints(rect1: DOMRect, rect2: DOMRect): Point2[] {
+    const midpoints1 = this.getMidpoints(rect1);
+    const midpoints2 = this.getMidpoints(rect2);
+    let closestDistance = Infinity;
+    let closestMidpoints: Point2[] = [];
+    for (let i = 0; i < midpoints1.length; i++) {
+      for (let j = 0; j < midpoints2.length; j++) {
+        const distance = this.getDistance(midpoints1[i], midpoints2[j]);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestMidpoints = [midpoints1[i], midpoints2[j]];
+        }
+      }
+    }
+    return closestMidpoints;
+  }
+
+  private getMidpoints(rect: DOMRect): Point2[] {
+    const { x, y, width, height } = rect;
+    const midX = x + width / 2;
+    const midY = y + height / 2;
+    return [
+      { x, y: midY },
+      { x: x + width, y: midY },
+      { x: midX, y },
+      { x: midX, y: y + height },
+    ];
+  }
+
+  private getDistance(point1: Point2, point2: Point2): number {
+    const dx = point2.x - point1.x;
+    const dy = point2.y - point1.y;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
   /**
@@ -1195,7 +1286,42 @@ export default class CanvasSelect extends EventBus {
             break;
           case 4:
           case 6:
-            this.drawLine(shape as Line | Connectivity);
+            if (
+              !this.activeShape.creating &&
+              shape.rectangleConnectivity.length > 0
+            ) {
+              this.parentRectangleConnectivity = this.dataset.find(
+                (i) => i.index === shape.rectangleConnectivity[0][0]
+              );
+              this.childRectangleConnectivity = this.dataset.find(
+                (i) => i.index === shape.rectangleConnectivity[0][1]
+              );
+
+              let rect1: any = this.getDomRect(
+                this.parentRectangleConnectivity.coor
+              );
+              let rect2: any = this.getDomRect(
+                this.childRectangleConnectivity.coor
+              );
+              this.drawShortestLine(rect1, rect2, shape);
+            } else {
+              this.drawLine(shape as Line | Connectivity);
+            }
+            // if (
+            //   !this.activeShape.creating &&
+            //   this.parentRectangleConnectivity?.lineCoorIndex === shape.index &&
+            //   this.childRectangleConnectivity?.lineCoorIndex === shape.index
+            // ) {
+            //   let rect1: any = this.getDomRect(
+            //     this.parentRectangleConnectivity.coor
+            //   );
+            //   let rect2: any = this.getDomRect(
+            //     this.childRectangleConnectivity.coor
+            //   );
+            //   this.drawShortestLine(rect1, rect2, shape);
+            // } else {
+            //   this.drawLine(shape as Line | Connectivity);
+            // }
             break;
           case 5:
             this.drawCirle(shape as Circle);
@@ -1221,12 +1347,102 @@ export default class CanvasSelect extends EventBus {
    */
   deleteByIndex(index: number) {
     const num = this.dataset.findIndex((x) => x.index === index);
+    const removedDatasetsIndex = [num];
+    const connectivityArray =
+      this.dataset[num].rectangleConnectivity.length > 0
+        ? this.dataset[num].rectangleConnectivity
+        : [];
+
+    // Remove all the connectivity relative to the delete doc.
+    if (connectivityArray.length > 0) {
+      for (let i = 0; i < connectivityArray.length; i++) {
+        const [x, y] = connectivityArray[i].map((el: Point) => el);
+        if (this.dataset[num].type === 6) {
+          const parentEl = this.dataset.find(
+            (el) => el.index === x
+          ).rectangleConnectivity;
+          const childEl = this.dataset.find(
+            (el) => el.index === y
+          ).rectangleConnectivity;
+          parentEl.forEach((element: Point, i: number) => {
+            if (element[0] === x && element[1] === y) {
+              parentEl.splice(i, 1);
+            }
+          });
+          childEl.forEach((element: Point, i: number) => {
+            if (element[0] === x && element[1] === y) {
+              childEl.splice(i, 1);
+            }
+          });
+        } else {
+          this.dataset.forEach((item, dataIndex) => {
+            if ((item.rectangleConnectivity?.length > 0, dataIndex !== num)) {
+              item.rectangleConnectivity.forEach((rec: Point, i: number) => {
+                if (rec[0] === x && rec[1] === y) {
+                  item.rectangleConnectivity.splice(i, 1);
+                }
+              });
+            }
+          });
+
+          if (this.dataset[num]?.lineCoorIndex.length > 0) {
+            const listofLineIndex = this.dataset[num].lineCoorIndex;
+
+            listofLineIndex.forEach((el: number, i: number) => {
+              removedDatasetsIndex.push(
+                this.dataset.findIndex((item) => item.index === el)
+              );
+              this.dataset.forEach((item, $i) => {
+                if (item.lineCoorIndex?.length > 0 && $i !== num) {
+                  if (item.lineCoorIndex.findIndex((e) => e === el) !== -1)
+                    item.lineCoorIndex.splice(
+                      item.lineCoorIndex.findIndex((e) => e === el),
+                      1
+                    );
+                }
+              });
+            });
+          }
+        }
+      }
+    }
+
+    // END
     if (num > -1) {
       this.emit("delete", this.dataset[num]);
-      this.dataset.splice(num, 1);
-      this.dataset.forEach((item, i) => {
+      const newArray = this.dataset.filter(
+        (item, index) => !removedDatasetsIndex.includes(index)
+      );
+      newArray.forEach((item, i) => {
+        let oldIndex = item.index;
+        let newIndex = i;
+        const isLine = item.lineCoorIndex.length === 0;
+        newArray.forEach((item$, i$) => {
+          if (item$.rectangleConnectivity?.length > 0) {
+            item$.rectangleConnectivity = item$.rectangleConnectivity.map(
+              (conn: Point) => {
+                let [x, y] = conn.map((el) => el);
+                if (x === oldIndex) {
+                  x = newIndex;
+                }
+                if (y === oldIndex) {
+                  y = newIndex;
+                }
+                conn = [x, y];
+                return conn;
+              }
+            );
+          }
+          if (item$.lineCoorIndex?.length > 0 && isLine) {
+            item$.lineCoorIndex = item$.lineCoorIndex.map((elm: number) => {
+              if (elm === oldIndex) elm = newIndex;
+              return elm;
+            });
+          }
+        });
         item.index = i;
       });
+      this.dataset = newArray;
       this.update();
     }
   }

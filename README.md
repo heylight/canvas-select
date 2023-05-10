@@ -9,6 +9,7 @@
 > Allow re-size rectangle.
 > You can also pass shortcut key to delete annotate data.
 > User can also make connectivity between ractangles.
+> Connected line will automatically adjust.
 > User can show/hide annotation labels
 > Allow custom line width.
 

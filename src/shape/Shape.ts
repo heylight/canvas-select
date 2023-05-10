@@ -9,6 +9,7 @@ export default class Shape {
   public hideLabel = false;
   public coor: any[] = [];
   public rectangleConnectivity: any = [];
+  public lineCoorIndex: any[] = [];
   public strokeStyle: string;
   public fillStyle: string;
   public labelFillStyle: string;
