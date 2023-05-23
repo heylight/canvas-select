@@ -1006,33 +1006,32 @@ export default class CanvasSelect extends EventBus {
    * @returns 布尔值
    */
   isPointInLine(point: Point, coor: Point[]): boolean {
-    this.offScreenCtx.save();
-    this.offScreenCtx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
-    this.offScreenCtx.translate(
-      this.originX + this.canvas.parentElement.scrollLeft,
-      this.originY + this.canvas.parentElement.scrollTop
-    );
-    this.offScreenCtx.lineWidth = 5;
-    this.offScreenCtx.beginPath();
-    coor.forEach((pt, i) => {
-      const [x, y] = pt.map((a) => Math.round(a * this.scale));
-      if (i === 0) {
-        this.offScreenCtx.moveTo(x, y);
-      } else {
-        this.offScreenCtx.lineTo(x, y);
-      }
-    });
-    this.offScreenCtx.stroke();
     const areaData = this.offScreenCtx.getImageData(
       0,
       0,
       this.WIDTH,
       this.HEIGHT
     );
-    const index = (point[1] - 1) * this.WIDTH * 4 + point[0] * 4;
-    this.offScreenCtx.restore();
-    return areaData.data[index + 3] !== 0;
+    if (coor.length === 2) {
+      let [x1, y1] = coor[0];
+      let [x2, y2] = coor[1];
+      x1 *= this.scale;
+      x2 *= this.scale;
+      y1 *= this.scale;
+      y2 *= this.scale;
+      let [x, y] = point;
+      return this.isPointOnLine(x, y, x1, y1, x2, y2);
+    }
   }
+
+  isPointOnLine(x: any, y: any, x1: any, y1: any, x2: any, y2: any) {
+    // Calculate the slope (m) and y-intercept (b) of the line
+    var m = (y2 - y1) / (x2 - x1);
+    var b = y1 - m * x1;
+    // Check if the point satisfies the equation of the line (y = mx + b)
+    return Math.abs(y - (m * x + b)) <= 8;
+  }
+
   /**
    * 绘制矩形
    * @param shape 标注实例
