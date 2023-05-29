@@ -910,7 +910,7 @@ export default class CanvasSelect extends EventBus {
         ((shape.type === 4 || shape.type === 6) &&
           this.isPointInLine(mousePoint, (shape as Line | Connectivity).coor))
       ) {
-        if (this.focusMode && !shape.active) continue;
+        // if (this.focusMode && !shape.active) continue;
         hitShapeIndex = i;
         hitShape = shape;
         break;
@@ -999,6 +999,7 @@ export default class CanvasSelect extends EventBus {
     );
     return distance <= r;
   }
+
   /**
    * 判断是否在折线内
    * @param point 坐标
@@ -1006,12 +1007,6 @@ export default class CanvasSelect extends EventBus {
    * @returns 布尔值
    */
   isPointInLine(point: Point, coor: Point[]): boolean {
-    const areaData = this.offScreenCtx.getImageData(
-      0,
-      0,
-      this.WIDTH,
-      this.HEIGHT
-    );
     if (coor.length === 2) {
       let [x1, y1] = coor[0];
       let [x2, y2] = coor[1];
@@ -1024,12 +1019,65 @@ export default class CanvasSelect extends EventBus {
     }
   }
 
+  /**
+
+Checks if a given point lies on a line segment defined by two points.
+@param {number} x - The x-coordinate of the point to be checked.
+@param {number} y - The y-coordinate of the point to be checked.
+@param {number} x1 - The x-coordinate of the first point defining the line segment.
+@param {number} y1 - The y-coordinate of the first point defining the line segment.
+@param {number} x2 - The x-coordinate of the second point defining the line segment.
+@param {number} y2 - The y-coordinate of the second point defining the line segment.
+@returns {boolean} Returns true if the point lies on the line segment, false otherwise.
+*/
   isPointOnLine(x: any, y: any, x1: any, y1: any, x2: any, y2: any) {
-    // Calculate the slope (m) and y-intercept (b) of the line
-    var m = (y2 - y1) / (x2 - x1);
-    var b = y1 - m * x1;
-    // Check if the point satisfies the equation of the line (y = mx + b)
-    return Math.abs(y - (m * x + b)) <= 8;
+    // Calculate a buffer to add a small margin of error
+    const buffer = 5 / Math.max(this.scale, 1);
+    // Call the circleLineIntersect method to check if the point lies on the line segment
+    return this.circleLineIntersect(x1, y1, x2, y2, x, y, buffer);
+  }
+
+  /**
+
+Determines if a given circle intersects with a line segment defined by two points.
+@param {number} x1 - The x-coordinate of the first point defining the line segment.
+@param {number} y1 - The y-coordinate of the first point defining the line segment.
+@param {number} x2 - The x-coordinate of the second point defining the line segment.
+@param {number} y2 - The y-coordinate of the second point defining the line segment.
+@param {number} cx - The x-coordinate of the center of the circle.
+@param {number} cy - The y-coordinate of the center of the circle.
+@param {number} r - The radius of the circle.
+@returns {boolean} Returns true if the circle intersects with the line segment, false otherwise.
+*/
+  circleLineIntersect(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    cx: number,
+    cy: number,
+    r: number
+  ): boolean {
+    // Calculate the vector components of the line segment
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    // Calculate the squared length of the line segment
+    const len2 = dx * dx + dy * dy;
+    // Calculate the parameter 'u' to determine the closest point on the line segment to the circle's center
+    const u = ((cx - x1) * dx + (cy - y1) * dy) / len2;
+
+    // If 'u' is outside the range [0, 1], the closest point is outside the line segment
+    if (u < 0 || u > 1) {
+      return false;
+    }
+
+    // Calculate the coordinates of the closest point on the line segment to the circle's center
+    const closestX = x1 + u * dx;
+    const closestY = y1 + u * dy;
+    // Calculate the squared distance between the closest point and the circle's center
+    const dist = (closestX - cx) ** 2 + (closestY - cy) ** 2;
+    // Check if the squared distance is less than or equal to the squared radius
+    return dist <= r;
   }
 
   /**
