@@ -147,6 +147,7 @@ export default class CanvasSelect extends EventBus {
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handelMouseMove = this.handelMouseMove.bind(this);
     this.handelMouseUp = this.handelMouseUp.bind(this);
+    this.handelLeave = this.handelLeave.bind(this);
     this.handelDblclick = this.handelDblclick.bind(this);
     this.handelKeyup = this.handelKeyup.bind(this);
     const container = typeof el === "string" ? document.querySelector(el) : el;
@@ -224,6 +225,14 @@ export default class CanvasSelect extends EventBus {
     this.IMAGE_ORIGIN_WIDTH = this.IMAGE_WIDTH = this.image.width;
     this.IMAGE_ORIGIN_HEIGHT = this.IMAGE_HEIGHT = this.image.height;
     this.fitZoom();
+  }
+  /**
+  Handles the "leave" event triggered by a user action.
+  @param {Event} e - The event object associated with the "leave" event.
+  */
+  handelLeave(e: any) {
+    e.preventDefault();
+    this.isDragging = false;
   }
   handleScroll(e: any) {
     this.originX = e.target.scrollLeft * -1;
@@ -517,9 +526,9 @@ export default class CanvasSelect extends EventBus {
         (isMobile && e.touches.length === 1 && !this.isTouch2)
       ) {
         // 拖动背景
-        this.originX = Math.round(mouseX - this.remmberOrigin[0]);
-        this.originY = Math.round(mouseY - this.remmberOrigin[1]);
-        this.update();
+        // this.originX = Math.round(mouseX - this.remmberOrigin[0]);
+        // this.originY = Math.round(mouseY - this.remmberOrigin[1]);
+        // this.update();
       } else if (isMobile && e.touches.length === 2) {
         this.isTouch2 = true;
         const touch0 = e.touches[0];
@@ -872,6 +881,7 @@ export default class CanvasSelect extends EventBus {
     this.canvas.addEventListener("mousedown", this.handleMouseDown);
     this.canvas.addEventListener("mousemove", this.handelMouseMove);
     this.canvas.addEventListener("mouseup", this.handelMouseUp);
+    this.canvas.addEventListener("mouseleave", this.handelLeave);
     this.canvas.addEventListener("dblclick", this.handelDblclick);
     document.body.addEventListener("keyup", this.handelKeyup);
     this.canvas.parentElement.addEventListener("scroll", this.handleScroll);
@@ -1695,6 +1705,7 @@ Determines if a given circle intersects with a line segment defined by two point
     this.canvas.removeEventListener("mousemove", this.handelMouseMove);
     this.canvas.removeEventListener("touchmove", this.handelMouseMove);
     this.canvas.removeEventListener("mouseup", this.handelMouseUp);
+    this.canvas.removeEventListener("mouseleave", this.handelLeave);
     this.canvas.removeEventListener("touchend", this.handelMouseUp);
     this.canvas.removeEventListener("dblclick", this.handelDblclick);
     document.body.removeEventListener("keyup", this.handelKeyup);
