@@ -104,6 +104,7 @@ export default class CanvasSelect extends EventBus {
     scaleTouchStore = 0
     /** 当前是否为双指触控 */
     isTouch2 = false
+    isMobile = navigator.userAgent.indexOf('Mobile') > -1
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -158,24 +159,22 @@ export default class CanvasSelect extends EventBus {
         let mouseY = 0
         let mouseCX = 0
         let mouseCY = 0
-        let isMobile = false
-        if (e instanceof TouchEvent) {
-            let { clientX, clientY } = e.touches[0]
+        if (this.isMobile) {
+            let { clientX, clientY } = (e as TouchEvent).touches[0]
             let target = e.target as HTMLCanvasElement
             const { left, top } = target.getBoundingClientRect()
             mouseX = Math.round(clientX - left)
             mouseY = Math.round(clientY - top)
-            if (e.touches.length === 2) {
-                let { clientX: clientX1 = 0, clientY: clientY1 = 0 } = e.touches[1] || {}
+            if ((e as TouchEvent).touches.length === 2) {
+                let { clientX: clientX1 = 0, clientY: clientY1 = 0 } = (e as TouchEvent).touches[1] || {}
                 mouseCX = Math.round(Math.abs((clientX1 - clientX) / 2 + clientX) - left)
                 mouseCY = Math.round(Math.abs((clientY1 - clientY) / 2 + clientY) - top)
             }
-            isMobile = true
         } else {
-            mouseX = e.offsetX
-            mouseY = e.offsetY
+            mouseX = (e as MouseEvent).offsetX
+            mouseY = (e as MouseEvent).offsetY
         }
-        return { ...e, mouseX, mouseY, mouseCX, mouseCY, isMobile }
+        return { ...e, mouseX, mouseY, mouseCX, mouseCY }
     }
 
     handleLoad() {
@@ -202,12 +201,11 @@ export default class CanvasSelect extends EventBus {
         this.evt = e
         if (this.lock) return;
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e)
-        const isMobile = e instanceof TouchEvent
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
-        this.mouse = isMobile && e.touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        this.mouse = this.isMobile && (e as TouchEvent).touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         this.remmberOrigin = [mouseX - this.originX, mouseY - this.originY];
-        if ((!isMobile && e.buttons === 1) || (isMobile && e.touches.length === 1)) { // 鼠标左键
+        if ((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) { // 鼠标左键
             const ctrls = this.activeShape.ctrlsData || [];
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
             if (this.ctrlIndex > -1) { // 点击到控制点
@@ -287,11 +285,10 @@ export default class CanvasSelect extends EventBus {
         this.evt = e
         if (this.lock) return;
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e)
-        const isMobile = e instanceof TouchEvent
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
-        this.mouse = isMobile && e.touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
-        if (((!isMobile && e.buttons === 1) || (isMobile && e.touches.length === 1)) && this.activeShape.type) {
+        this.mouse = this.isMobile && (e as TouchEvent).touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && (this.isInBackground(e) || this.activeShape.type === 5)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
@@ -379,15 +376,15 @@ export default class CanvasSelect extends EventBus {
         } else if ([2, 4].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
-        } else if ((!isMobile && e.buttons === 2 && e.which === 3) || (isMobile && e.touches.length === 1 && !this.isTouch2)) {
+        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches.length === 1 && !this.isTouch2)) {
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
             this.update();
-        } else if (isMobile && e.touches.length === 2) {
+        } else if (this.isMobile && (e as TouchEvent).touches.length === 2) {
             this.isTouch2 = true
-            const touch0 = e.touches[0]
-            const touch1 = e.touches[1]
+            const touch0 = (e as TouchEvent).touches[0]
+            const touch1 = (e as TouchEvent).touches[1]
             const cur = this.scaleTouchStore
             this.scaleTouchStore = Math.abs((touch1.clientX - touch0.clientX) * (touch1.clientY - touch0.clientY))
             this.setScale(this.scaleTouchStore > cur, true);
@@ -399,8 +396,8 @@ export default class CanvasSelect extends EventBus {
         e.stopPropagation();
         this.evt = e
         if (this.lock) return;
-        if (e instanceof TouchEvent) {
-            if (e.touches.length === 0) {
+        if (this.isMobile) {
+            if ((e as TouchEvent).touches.length === 0) {
                 this.isTouch2 = false
             }
             if ((Date.now() - this.dblTouchStore) < this.dblTouch) {
