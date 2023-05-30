@@ -648,83 +648,128 @@ export default class CanvasSelect extends EventBus {
   }
 
   /**
-   * Connect rectangle with each other
-   */
+  Creates connectivity between rectangles in a graphical application.
+  The method is specific to the context of an object or class it belongs to.
+  */
   private createConnectivity() {
-    if (this.activeShape.type === 6) {
-      let verfyCombination: boolean;
-      this.emit("add", this.activeShape);
-      this.activeShape.creating = false;
+    // Check if the active shape is not of type 6 (a specific type)
+    if (this.activeShape.type !== 6) {
+      this.update();
+      return;
+    }
 
-      this.childRectangleConnectivity = this.findReactengle();
+    // Emit an "add" event with the active shape
+    this.emit("add", this.activeShape);
 
-      if (this.parentRectangleConnectivity && this.childRectangleConnectivity) {
-        this.rectangleConnectivity.push([
-          this.parentRectangleConnectivity.index,
-          this.childRectangleConnectivity.index,
-        ]);
-        verfyCombination = this.isArrayInArray(
+    // Set the 'creating' flag of the active shape to false
+    this.activeShape.creating = false;
+
+    // Find the child rectangle connectivity by invoking 'findReactengle' method
+    this.childRectangleConnectivity = this.findReactengle();
+
+    // Check if both parent and child rectangle connectivity exist and have different indices
+    if (
+      this.parentRectangleConnectivity &&
+      this.childRectangleConnectivity &&
+      this.parentRectangleConnectivity.index !==
+        this.childRectangleConnectivity.index
+    ) {
+      // Push the indices of parent and child rectangle connectivity to the rectangleConnectivity array
+      this.rectangleConnectivity.push([
+        this.parentRectangleConnectivity.index,
+        this.childRectangleConnectivity.index,
+      ]);
+
+      // Check if the parent and child rectangle connectivity are not already present in the lineCoorIndex array
+      if (
+        !this.isArrayInArray(
           this.parentRectangleConnectivity.rectangleConnectivity,
           this.childRectangleConnectivity.rectangleConnectivity,
           this.rectangleConnectivity[0]
+        )
+      ) {
+        // Push the active shape's index to the lineCoorIndex arrays of both parent and child rectangle connectivity
+        this.parentRectangleConnectivity.lineCoorIndex.push(
+          this.activeShape.index
+        );
+        this.childRectangleConnectivity.lineCoorIndex.push(
+          this.activeShape.index
         );
 
-        if (!verfyCombination) {
-          if (
-            !this.parentRectangleConnectivity.lineCoorIndex.includes(
-              this.activeShape.index
-            )
-          )
-            this.parentRectangleConnectivity.lineCoorIndex.push(
-              this.activeShape.index
-            );
-          if (
-            !this.childRectangleConnectivity.lineCoorIndex.includes(
-              this.activeShape.index
-            )
-          )
-            this.childRectangleConnectivity.lineCoorIndex.push(
-              this.activeShape.index
-            );
-          this.activeShape.rectangleConnectivity.push([
-            this.parentRectangleConnectivity.index,
-            this.childRectangleConnectivity.index,
-          ]);
-          this.parentRectangleConnectivity.rectangleConnectivity.push([
-            this.parentRectangleConnectivity.index,
-            this.childRectangleConnectivity.index,
-          ]);
-          this.childRectangleConnectivity.rectangleConnectivity.push([
-            this.parentRectangleConnectivity.index,
-            this.childRectangleConnectivity.index,
-          ]);
-        } else {
-          this.deleteByIndex(this.activeShape.index);
-        }
-        this.rectangleConnectivity = [];
+        // Push the rectangle connectivity between parent and child to the rectangleConnectivity arrays of both rectangles
+        this.activeShape.rectangleConnectivity.push([
+          this.parentRectangleConnectivity.index,
+          this.childRectangleConnectivity.index,
+        ]);
+        this.parentRectangleConnectivity.rectangleConnectivity.push([
+          this.parentRectangleConnectivity.index,
+          this.childRectangleConnectivity.index,
+        ]);
+        this.childRectangleConnectivity.rectangleConnectivity.push([
+          this.parentRectangleConnectivity.index,
+          this.childRectangleConnectivity.index,
+        ]);
       } else {
-        this.deleteByIndex(this.activeShape.index);
+        // If the connectivity already exists, find the index of the active shape in the dataset
+        const num = this.dataset.findIndex(
+          (x) => x.index === this.activeShape.index
+        );
+        if (num > -1) {
+          // Emit a "delete" event for the corresponding dataset entry and remove it from the dataset
+          this.emit("delete", this.dataset[num]);
+          this.dataset.splice(num, 1);
+        }
+      }
+
+      // Reset the rectangleConnectivity array
+      this.rectangleConnectivity = [];
+    } else {
+      // If either the parent or child rectangle connectivity is missing or they have the same index
+      const num = this.dataset.findIndex(
+        (x) => x.index === this.activeShape.index
+      );
+      if (num > -1) {
+        // Emit a "delete" event for the corresponding dataset entry and remove it from the dataset
+        this.emit("delete", this.dataset[num]);
+        this.dataset.splice(num, 1);
       }
     }
+
+    // Perform an update
     this.update();
   }
 
-  private isArrayInArray(parentArr: any, childArr: any, comp: any) {
-    if (parentArr?.length === 0 && childArr?.length === 0) return false;
-    let [x1, y1] = comp;
-    let parentCheck = parentArr.filter(([e1, e2]: [number, number]) => {
-      if ((e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)) return [e1, e2];
-    });
+  /**
 
-    let childCheck = childArr.filter(
+  Checks if a given array is contained within another array, considering specific element comparisons.
+  @param {any[]} parentArr - The parent array to be checked.
+  @param {any[]} childArr - The child array to be checked.
+  @param {any[]} comp - The array to be compared for existence within the parent and child arrays.
+  @returns {boolean} Returns true if the comp array is found within either the parent or child arrays, false otherwise.
+  */
+  private isArrayInArray(parentArr: any, childArr: any, comp: any) {
+    // Check if both parent and child arrays are empty
+    if (!parentArr.length && !childArr.length) {
+      return false;
+    }
+
+    // Extract the values from the comp array
+    const [x1, y1] = comp;
+
+    // Check if the comp array exists in the parent array
+    const parentCheck = parentArr.some(
       ([e1, e2]: [number, number]) =>
         (e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)
     );
 
-    let contains = false;
-    if (parentCheck?.length > 0 || childCheck?.length > 0) contains = true;
+    // Check if the comp array exists in the child array
+    const childCheck = childArr.some(
+      ([e1, e2]: [number, number]) =>
+        (e1 === x1 || e1 === y1) && (e2 === x1 || e2 === y1)
+    );
 
-    return contains;
+    // Return true if the comp array is found in either the parent or child arrays
+    return parentCheck || childCheck;
   }
 
   private getDomRect(coor: Point[]) {
