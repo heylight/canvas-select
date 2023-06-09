@@ -243,13 +243,25 @@ export default class CanvasSelect extends EventBus {
     this.evt = e;
     if (this.lock) return;
   }
+  /**
+   * Handles the mousewheel event and performs zooming functionality.
+   * @param e The WheelEvent object representing the mousewheel event.
+   * @returns void
+   */
   handleMousewheel(e: WheelEvent) {
+    // Check if the lock flag is true, scrollZoom is disabled, or the Ctrl key is not pressed, and return early
+    if (this.lock || !this.scrollZoom || !e.ctrlKey) return;
+
+    e.preventDefault();
     e.stopPropagation();
-    this.evt = e;
-    if (this.lock || !this.scrollZoom) return;
+
+    // Retrieve the mouse coordinates relative to the component using the mergeEvent function
     const { mouseX, mouseY } = this.mergeEvent(e);
+
+    // Update the mouse coordinates in the component's state
     this.mouse = [mouseX, mouseY];
-    // this.setScale(e.deltaY < 0, true);
+
+    // Set the scale based on the direction of the mousewheel scroll
     this.setScale(e.deltaY < 0);
   }
   handleMouseDown(e: MouseEvent | TouchEvent) {
@@ -878,6 +890,7 @@ export default class CanvasSelect extends EventBus {
     this.canvas.addEventListener("touchend", this.handelMouseUp);
     this.canvas.addEventListener("contextmenu", this.handleContextmenu);
     this.canvas.addEventListener("mousewheel", this.handleMousewheel);
+    this.canvas.addEventListener("wheel", this.handleMousewheel);
     this.canvas.addEventListener("mousedown", this.handleMouseDown);
     this.canvas.addEventListener("mousemove", this.handelMouseMove);
     this.canvas.addEventListener("mouseup", this.handelMouseUp);
@@ -1700,6 +1713,7 @@ Determines if a given circle intersects with a line segment defined by two point
     this.image.removeEventListener("load", this.handleLoad);
     this.canvas.removeEventListener("contextmenu", this.handleContextmenu);
     this.canvas.removeEventListener("mousewheel", this.handleMousewheel);
+    this.canvas.removeEventListener("wheel", this.handleMousewheel);
     this.canvas.removeEventListener("mousedown", this.handleMouseDown);
     this.canvas.removeEventListener("touchend", this.handleMouseDown);
     this.canvas.removeEventListener("mousemove", this.handelMouseMove);
