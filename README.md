@@ -4,6 +4,7 @@
 
 # What's New?
 
+> Now user can scroll top to bottom and left to right (Key: shift + mousewheel) and also zoom-in/out using key: ctrl + mousewheel.
 > Improved zoom with panning.
 > Added scrollbar to scroll page after zoom.
 > Allow re-size rectangle.
