@@ -824,9 +824,21 @@ export default class CanvasSelect extends EventBus {
             const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < textH / this.scale;
             this.ctx.save();
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
-            this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - textH + 3) : y + 1, text.width + 4, textH);
+            // this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - textH + 3) : y + 1, text.width + 4, textH);
+            this.ctx.fillRect(
+              toleft ? x - text.width - 3 : x + 1,
+              y - textH,
+              text.width + 4,
+              textH
+            );
             this.ctx.fillStyle = textFillStyle || this.textFillStyle;
-            this.ctx.fillText(newText, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 3) : y + textH - 4, 180);
+            // this.ctx.fillText(newText, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 3) : y + textH - 4, 180);
+            this.ctx.fillText(
+              newText,
+              toleft ? x - text.width - 2 : x + 2,
+              y - 3,
+              180
+            );
             this.ctx.restore();
         }
     }
