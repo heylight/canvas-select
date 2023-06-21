@@ -150,7 +150,8 @@ instance.on("select", (info) => {
 | ctrlRadius        | number  |          3          |                  |                        控制点半径                        |
 | hide              | boolean |        false        |       支持       |                 是否在画布中显示指定标注                 |
 | label             | string  |         无          |                  |                         标签名称                         |
-| hideLabel         | string  |        false        |       支持       |                     是否隐藏标签名称                     |
+| hideLabel         | boolea  |        false        |       支持       |                     是否隐藏标签名称                     |
+| labelUp           | boolean |        false        |       支持       |                     label 是否在上方                     |
 | labelFillStyle    | string  |        #fff         |       支持       |                      label 填充颜色                      |
 | labelFont         | string  |   10px sans-serif   |       支持       |                        label 字体                        |
 | textFillStyle     | string  |        #000         |       支持       |                      label 文字颜色                      |
