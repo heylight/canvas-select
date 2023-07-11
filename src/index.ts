@@ -105,6 +105,8 @@ export default class CanvasSelect extends EventBus {
     /** 当前是否为双指触控 */
     isTouch2 = false
     isMobile = navigator.userAgent.indexOf('Mobile') > -1
+    /** 向上展示label */
+    labelUp = false
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -813,20 +815,30 @@ export default class CanvasSelect extends EventBus {
      * @param label 文本
      */
     drawLabel(point: Point, shape: AllShape) {
-        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', hideLabel = false } = shape
-        if (label.length && !(hideLabel || this.hideLabel)) {
+        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', hideLabel, labelUp, lineWidth } = shape
+        const isHideLabel = typeof hideLabel === 'boolean' ? hideLabel : this.hideLabel;
+        const isLabelUp = typeof labelUp === 'boolean' ? labelUp : this.labelUp;
+        const currLineWidth = lineWidth || this.lineWidth;
+
+        if (label.length && !isHideLabel) {
             this.ctx.font = labelFont || this.labelFont;
-            const textH = parseInt(this.ctx.font) + 6
+            const textPaddingLeft = 4;
+            const textPaddingTop = 4;
             const newText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
             const text = this.ctx.measureText(newText);
+            const font = parseInt(this.ctx.font) - 4;
+            const labelWidth = text.width + textPaddingLeft * 2;
+            const labelHeight = font + textPaddingTop * 2;
             const [x, y] = point.map((a) => a * this.scale);
-            const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < (text.width + 4) / this.scale;
-            const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < textH / this.scale;
+            const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < labelWidth / this.scale;
+            const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < labelHeight / this.scale;
+            const toTop2 = point[1] > labelHeight / this.scale;
+            const isup = isLabelUp ? toTop2 : toTop
             this.ctx.save();
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
-            this.ctx.fillRect(toleft ? (x - text.width - 3) : (x + 1), toTop ? (y - textH + 3) : y + 1, text.width + 4, textH);
+            this.ctx.fillRect(toleft ? (x - text.width - textPaddingLeft - currLineWidth / 2) : (x + currLineWidth / 2), isup ? (y - labelHeight - currLineWidth / 2) : (y + currLineWidth / 2), labelWidth, labelHeight);
             this.ctx.fillStyle = textFillStyle || this.textFillStyle;
-            this.ctx.fillText(newText, toleft ? (x - text.width - 2) : (x + 2), toTop ? (y - 3) : y + textH - 4, 180);
+            this.ctx.fillText(newText, toleft ? (x - text.width) : (x + textPaddingLeft + currLineWidth / 2), isup ? (y - labelHeight + font + textPaddingTop) : (y + font + textPaddingTop + currLineWidth / 2), 180);
             this.ctx.restore();
         }
     }
