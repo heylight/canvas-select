@@ -927,7 +927,8 @@ export default class CanvasSelect extends EventBus {
      */
     setScale(type: boolean, byMouse = false, pure = false) {
         if (this.lock) return;
-        if ((!type && this.imageMin <= 50) || (type && this.IMAGE_WIDTH >= this.imageOriginMax * 10)) return;
+        const limitSize = Math.min(this.imageMin, 50)
+        if ((!type && this.imageMin < limitSize) || (type && this.IMAGE_WIDTH > this.imageOriginMax * 10)) return;
         if (type) { this.scaleStep++; } else { this.scaleStep--; }
         let realToLeft = 0
         let realToRight = 0
