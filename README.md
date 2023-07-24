@@ -117,7 +117,7 @@ let option = [
 ];
 // 加载数据
 instance.setData(option);
-// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注
+// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注，-1禁止拖拽形状标注
 instance.createType = 1;
 instance.on("select", (info) => {
   console.log("select", info);
