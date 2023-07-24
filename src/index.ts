@@ -260,7 +260,9 @@ export default class CanvasSelect extends EventBus {
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
                     if (hitShapeIndex > -1) {
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
-                        hitShape.dragging = true;
+                        if(this.createType != -1){
+                            hitShape.dragging = true;
+                        }
                         this.dataset.splice(hitShapeIndex, 1);
                         this.dataset.push(hitShape);
                         this.remmber = [];
