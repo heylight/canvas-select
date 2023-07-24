@@ -278,6 +278,9 @@ export default class CanvasSelect extends EventBus {
                     } else {
                         this.activeShape.active = false;
                         this.dataset.sort((a, b) => a.index - b.index)
+                        if(this.createType == -1){
+                            this.emit('select', null)
+                        }
                     }
                 }
                 this.update();
