@@ -518,6 +518,12 @@ export default class CanvasSelect extends EventBus {
             let initdata: AllShape[] = []
             data.forEach((item, index) => {
                 if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
+
+                    // createType == -1，查看模式，不允许拖拽形状标注
+                    if(this.createType == -1){
+                        item.dragging = false
+                    }
+                    
                     let shape: AllShape
                     switch (item.type) {
                         case 1:
