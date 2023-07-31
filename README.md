@@ -117,7 +117,7 @@ let option = [
 ];
 // 加载数据
 instance.setData(option);
-// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注
+// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注，-1查看模式（禁止拖拽形状标注）
 instance.createType = 1;
 instance.on("select", (info) => {
   console.log("select", info);
@@ -134,7 +134,7 @@ instance.on("select", (info) => {
 
 | 属性名称          |  类型   |       默认值        | 单个形状属性修改 |                           说明                           |
 | ----------------- | :-----: | :-----------------: | :--------------: | :------------------------------------------------------: |
-| createType        | boolean |          0          |                  | 0 不创建(拖拽)，1 创建矩形，2 多边形，3 点，4 折线，5 圆 |
+| createType        | boolean |          0          |                  | 0 不创建(拖拽)，1 创建矩形，2 多边形，3 点，4 折线，5 圆，-1查看模式（禁止拖拽形状标注） |
 | lock              | boolean |        false        |                  |                         锁定画布                         |
 | scrollZoom        | boolean |        true         |                  |                         滚动缩放                         |
 | MIN_WIDTH         | number  |         10          |                  |                       最小矩形宽度                       |
