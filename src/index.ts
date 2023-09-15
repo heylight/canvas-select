@@ -260,7 +260,7 @@ export default class CanvasSelect extends EventBus {
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
                     if (hitShapeIndex > -1) {
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
-                        if(this.createType !== -1){
+                        if (this.createType !== -1) {
                             hitShape.dragging = true;
                         }
                         this.dataset.splice(hitShapeIndex, 1);
@@ -278,7 +278,7 @@ export default class CanvasSelect extends EventBus {
                     } else {
                         this.activeShape.active = false;
                         this.dataset.sort((a, b) => a.index - b.index)
-                        if(this.createType === -1){
+                        if (this.createType === -1) {
                             this.emit('select', null)
                         }
                     }
@@ -523,10 +523,10 @@ export default class CanvasSelect extends EventBus {
                 if (Object.prototype.toString.call(item).indexOf('Object') > -1) {
 
                     // createType == -1，查看模式，不允许拖拽形状标注
-                    if(this.createType === -1){
+                    if (this.createType === -1) {
                         item.dragging = false
                     }
-                    
+
                     let shape: AllShape
                     switch (item.type) {
                         case 1:
@@ -938,8 +938,7 @@ export default class CanvasSelect extends EventBus {
      */
     setScale(type: boolean, byMouse = false, pure = false) {
         if (this.lock) return;
-        const limitSize = Math.min(this.imageMin, 50)
-        if ((!type && this.imageMin < limitSize) || (type && this.IMAGE_WIDTH > this.imageOriginMax * 10)) return;
+        if ((!type && this.imageMin < 20) || (type && this.IMAGE_WIDTH > this.imageOriginMax * 100)) return;
         if (type) { this.scaleStep++; } else { this.scaleStep--; }
         let realToLeft = 0
         let realToRight = 0
