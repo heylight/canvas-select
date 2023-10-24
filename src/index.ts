@@ -330,9 +330,32 @@ export default class CanvasSelect extends EventBus {
                         default:
                             break;
                     }
-                    const [[a0, b0], [a1, b1]] = coor;
-                    if ((a1 - a0) >= this.MIN_WIDTH && (b1 - b0) >= this.MIN_HEIGHT) {
-                        this.activeShape.coor = coor;
+                    let [[a0, b0], [a1, b1]] = coor
+                    if (
+                      a0 < 0 ||
+                      a1 < 0 ||
+                      b0 < 0 ||
+                      b1 < 0 ||
+                      a1 > this.IMAGE_ORIGIN_WIDTH ||
+                      b1 > this.IMAGE_ORIGIN_HEIGHT
+                    ) {
+                      console.log('超出边界')
+                      //偶然触发 超出边界处理
+                      a0 < 0 && (a0 = 0)
+                      a1 < 0 && (a1 = 0)
+                      b0 < 0 && (b0 = 0)
+                      b1 < 0 && (b1 = 0)
+                      if (a1 > this.IMAGE_ORIGIN_WIDTH) {
+                        a1 = this.IMAGE_ORIGIN_WIDTH
+                      }
+                      if (b1 > this.IMAGE_ORIGIN_HEIGHT) {
+                        b1 = this.IMAGE_ORIGIN_HEIGHT
+                      }
+                    }
+
+                    if (a1 - a0 >= this.MIN_WIDTH && b1 - b0 >= this.MIN_HEIGHT) {
+                      this.activeShape.coor = [[a0, b0],[a1, b1]]
+                      
                     } else {
                         this.emit('warn', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`);
                     }
