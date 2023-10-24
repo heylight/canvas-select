@@ -398,7 +398,7 @@ export default class CanvasSelect extends EventBus {
             a1 > this.IMAGE_ORIGIN_WIDTH ||
             b1 > this.IMAGE_ORIGIN_HEIGHT
           ) {
-            console.log('超出边界');
+            console.log('超出边界')
             //偶然触发 超出边界处理
             a0 < 0 && (a0 = 0);
             a1 < 0 && (a1 = 0);
