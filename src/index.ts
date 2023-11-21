@@ -14,6 +14,8 @@ export default class CanvasSelect extends EventBus {
     version = pkg.version;
     /** 只读模式，画布不允许任何交互 */
     lock: boolean = false;
+    /** 只读模式，仅支持查看 */
+    readonly: boolean = false;
     /** 最小矩形宽度 */
     MIN_WIDTH = 10;
     /** 最小矩形高度 */
@@ -218,7 +220,7 @@ export default class CanvasSelect extends EventBus {
                 const [x0, y0] = ctrls[this.ctrlIndex];
                 this.remmber = [[offsetX - x0, offsetY - y0]];
             } else if (this.isInBackground(e)) {
-                if (this.activeShape.creating) { // 创建中
+                if (this.activeShape.creating && !this.readonly) { // 创建中
                     if ([2, 4].includes(this.activeShape.type)) {
                         const [x, y] = this.activeShape.coor[this.activeShape.coor.length - 1];
                         if (x !== offsetX && y !== offsetY) {
@@ -227,7 +229,7 @@ export default class CanvasSelect extends EventBus {
                             this.activeShape.coor.push([nx, ny]);
                         }
                     }
-                } else if (this.createType > 0) { // 开始创建
+                } else if (this.createType > 0 && !this.readonly) { // 开始创建
                     let newShape;
                     const nx = Math.round(offsetX - this.originX / this.scale);
                     const ny = Math.round(offsetY - this.originY / this.scale);
@@ -263,28 +265,26 @@ export default class CanvasSelect extends EventBus {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
                     if (hitShapeIndex > -1) {
+                        hitShape.dragging = true;
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
-                        if (this.createType !== -1) {
-                            hitShape.dragging = true;
-                        }
                         this.dataset.splice(hitShapeIndex, 1);
                         this.dataset.push(hitShape);
-                        this.remmber = [];
-                        if ([3, 5].includes(hitShape.type)) {
-                            const [x, y] = hitShape.coor;
-                            this.remmber = [[offsetX - x, offsetY - y]];
-                        } else {
-                            hitShape.coor.forEach((pt: any) => {
-                                this.remmber.push([offsetX - pt[0], offsetY - pt[1]]);
-                            });
+                        if (!this.readonly) {
+                            this.remmber = [];
+                            if ([3, 5].includes(hitShape.type)) {
+                                const [x, y] = hitShape.coor;
+                                this.remmber = [[offsetX - x, offsetY - y]];
+                            } else {
+                                hitShape.coor.forEach((pt: any) => {
+                                    this.remmber.push([offsetX - pt[0], offsetY - pt[1]]);
+                                });
+                            }
                         }
                         this.emit('select', hitShape);
                     } else {
                         this.activeShape.active = false;
                         this.dataset.sort((a, b) => a.index - b.index);
-                        if (this.createType === -1) {
-                            this.emit('select', null);
-                        }
+                        this.emit('select', null);
                     }
                 }
                 this.update();
@@ -344,7 +344,6 @@ export default class CanvasSelect extends EventBus {
                         a1 > this.IMAGE_ORIGIN_WIDTH ||
                         b1 > this.IMAGE_ORIGIN_HEIGHT
                     ) {
-                        console.log('超出边界');
                         // 偶然触发 超出边界处理
                         a0 < 0 && (a0 = 0);
                         a1 < 0 && (a1 = 0);
@@ -373,7 +372,7 @@ export default class CanvasSelect extends EventBus {
                     const newRadius = nx - this.activeShape.coor[0];
                     if (newRadius >= this.MIN_RADIUS) this.activeShape.radius = newRadius;
                 }
-            } else if (this.activeShape.dragging) { // 拖拽
+            } else if (this.activeShape.dragging && !this.readonly) { // 拖拽
                 let coor = [];
                 let noLimit = true;
                 const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
@@ -485,7 +484,7 @@ export default class CanvasSelect extends EventBus {
     handelKeyup(e: KeyboardEvent) {
         e.stopPropagation();
         this.evt = e;
-        if (this.lock || document.activeElement !== document.body) return;
+        if (this.lock || document.activeElement !== document.body || this.readonly) return;
         if (this.activeShape.type) {
             if ([2, 4].includes(this.activeShape.type) && e.key === 'Escape') {
                 if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
@@ -549,11 +548,6 @@ export default class CanvasSelect extends EventBus {
             const initdata: AllShape[] = [];
             data.forEach((item, index) => {
                 if (Object.prototype.toString.call(item).includes('Object')) {
-                    // createType == -1，查看模式，不允许拖拽形状标注
-                    if (this.createType === -1) {
-                        item.dragging = false;
-                    }
-
                     let shape: AllShape;
                     switch (item.type) {
                         case 1:
