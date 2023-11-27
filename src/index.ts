@@ -779,13 +779,13 @@ export default class CanvasSelect extends EventBus {
   }
 
   /**
-   * 判断是图形是否属于嵌套关系
-   * @param coor1 区域坐标
-   * @param coor2 区域坐标
+   * 判断是图形是否属于嵌套关系 (目前只支持矩形和多边形)
+   * @param shape1 标注实例
+   * @param shape2 标注实例
    * @returns 布尔值
    */
-  isNested(coor1: [], coor2: []): boolean {
-    return isNested(coor1, coor2);
+  isNested(shape1: Rect | Polygon, shape2: Rect | Polygon): boolean {
+    return isNested(shape1, shape2);
   }
 
   /**
