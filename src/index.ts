@@ -5,6 +5,7 @@ import EventBus from './EventBus';
 import Line from './shape/Line';
 import Circle from './shape/Circle';
 import pkg from '../package.json';
+import { isNested } from "./tools";
 
 export type Point = [number, number];
 export type AllShape = Rect | Polygon | Dot | Line | Circle;
@@ -700,6 +701,16 @@ export default class CanvasSelect extends EventBus {
         const index = (point[1] - 1) * this.WIDTH * 4 + point[0] * 4;
         this.offScreenCtx.restore();
         return areaData.data[index + 3] !== 0;
+    }
+
+    /**
+       * 判断是图形是否属于嵌套关系 (目前只支持矩形和多边形)
+       * @param shape1 标注实例
+       * @param shape2 标注实例
+       * @returns 布尔值
+       */
+    isNested(shape1: Rect | Polygon, shape2: Rect | Polygon): boolean {
+      return isNested(shape1, shape2);
     }
 
     /**
