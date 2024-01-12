@@ -529,7 +529,7 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('mousemove', this.handelMouseMove);
         this.canvas.addEventListener('mouseup', this.handelMouseUp);
         this.canvas.addEventListener('dblclick', this.handelDblclick);
-        document.body.addEventListener('keyup', this.handelKeyup);
+        document.body.addEventListener('keyup', this.handelKeyup, true);
     }
 
     /**
@@ -710,7 +710,7 @@ export default class CanvasSelect extends EventBus {
        * @returns 布尔值
        */
     isNested(shape1: Rect | Polygon, shape2: Rect | Polygon): boolean {
-      return isNested(shape1, shape2);
+        return isNested(shape1, shape2);
     }
 
     /**
@@ -1049,7 +1049,7 @@ export default class CanvasSelect extends EventBus {
         this.canvas.removeEventListener('mouseup', this.handelMouseUp);
         this.canvas.removeEventListener('touchend', this.handelMouseUp);
         this.canvas.removeEventListener('dblclick', this.handelDblclick);
-        document.body.removeEventListener('keyup', this.handelKeyup);
+        document.body.removeEventListener('keyup', this.handelKeyup, true);
         this.canvas.width = this.WIDTH;
         this.canvas.height = this.HEIGHT;
         this.canvas.style.width = null;
