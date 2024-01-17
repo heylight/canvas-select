@@ -188,6 +188,6 @@ instance.on("select", (info) => {
 
 ## 注意事项
 
-1. 不要再 canvas 标签上设置 style，推荐使用 css。
+1. 不要在 canvas 标签上设置 style，推荐使用 css。
 
 2. 如果使用框架，请在生命周期加载完成之后创建实例。
