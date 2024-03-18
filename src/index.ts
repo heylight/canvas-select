@@ -217,7 +217,7 @@ export default class CanvasSelect extends EventBus {
         if ((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) { // 鼠标左键
             const ctrls = this.activeShape.ctrlsData || [];
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
-            if (this.ctrlIndex > -1) { // 点击到控制点
+            if (this.ctrlIndex > -1 && !this.readonly) { // 点击到控制点
                 const [x0, y0] = ctrls[this.ctrlIndex];
                 this.remmber = [[offsetX - x0, offsetY - y0]];
             } else if (this.isInBackground(e)) {
@@ -302,7 +302,7 @@ export default class CanvasSelect extends EventBus {
         const offsetY = Math.round(mouseY / this.scale);
         this.mouse = this.isMobile && (e as TouchEvent).touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) && this.activeShape.type) {
-            if (this.ctrlIndex > -1 && (this.isInBackground(e) || this.activeShape.type === 5)) {
+            if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === 5)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
                 if (this.activeShape.type === 1) {
