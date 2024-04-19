@@ -9,7 +9,14 @@ import { isNested } from "./tools";
 
 export type Point = [number, number];
 export type AllShape = Rect | Polygon | Dot | Line | Circle;
-
+enum Shape {
+    None,
+    Rect,
+    Polygon,
+    Dot,
+    Line,
+    Circle
+}
 export default class CanvasSelect extends EventBus {
     /** 当前版本 */
     version = pkg.version;
@@ -70,7 +77,7 @@ export default class CanvasSelect extends EventBus {
     /** 记录背景图鼠标位移 */
     remmberOrigin: number[] = [0, 0];
     /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆 */
-    createType = 0; //
+    createType: Shape = Shape.None; //
     /** 控制点索引 */
     ctrlIndex = -1;
     /** 背景图片 */
@@ -110,6 +117,7 @@ export default class CanvasSelect extends EventBus {
     isMobile = navigator.userAgent.includes('Mobile');
     /** 向上展示label */
     labelUp = false;
+    private ctrlKey = false;
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -120,10 +128,11 @@ export default class CanvasSelect extends EventBus {
         this.handleContextmenu = this.handleContextmenu.bind(this);
         this.handleMousewheel = this.handleMousewheel.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
-        this.handelMouseMove = this.handelMouseMove.bind(this);
-        this.handelMouseUp = this.handelMouseUp.bind(this);
-        this.handelDblclick = this.handelDblclick.bind(this);
-        this.handelKeyup = this.handelKeyup.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
+        this.handleDblclick = this.handleDblclick.bind(this);
+        this.handleKeyup = this.handleKeyup.bind(this);
+        this.handleKeydown = this.handleKeydown.bind(this);
         const container = typeof el === 'string' ? document.querySelector(el) : el;
         if (container instanceof HTMLCanvasElement) {
             this.canvas = container;
@@ -160,7 +169,7 @@ export default class CanvasSelect extends EventBus {
     }
 
     /** 合成事件 */
-    mergeEvent(e: TouchEvent | MouseEvent) {
+    private mergeEvent(e: TouchEvent | MouseEvent) {
         let mouseX = 0;
         let mouseY = 0;
         let mouseCX = 0;
@@ -183,20 +192,20 @@ export default class CanvasSelect extends EventBus {
         return { ...e, mouseX, mouseY, mouseCX, mouseCY };
     }
 
-    handleLoad() {
+    private handleLoad() {
         this.emit('load', this.image.src);
         this.IMAGE_ORIGIN_WIDTH = this.IMAGE_WIDTH = this.image.width;
         this.IMAGE_ORIGIN_HEIGHT = this.IMAGE_HEIGHT = this.image.height;
         this.fitZoom();
     }
 
-    handleContextmenu(e: MouseEvent) {
+    private handleContextmenu(e: MouseEvent) {
         e.preventDefault();
         this.evt = e;
         if (this.lock) return;
     }
 
-    handleMousewheel(e: WheelEvent) {
+    private handleMousewheel(e: WheelEvent) {
         e.stopPropagation();
         this.evt = e;
         if (this.lock || !this.scrollZoom) return;
@@ -205,7 +214,7 @@ export default class CanvasSelect extends EventBus {
         this.setScale(e.deltaY < 0, true);
     }
 
-    handleMouseDown(e: MouseEvent | TouchEvent) {
+    private handleMouseDown(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         this.evt = e;
         if (this.lock) return;
@@ -219,10 +228,13 @@ export default class CanvasSelect extends EventBus {
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
             if (this.ctrlIndex > -1 && !this.readonly) { // 点击到控制点
                 const [x0, y0] = ctrls[this.ctrlIndex];
+                if (this.activeShape.type === Shape.Polygon && this.activeShape.coor.length > 2 && this.ctrlIndex === 0) {
+                    this.handleDblclick(e)
+                }
                 this.remmber = [[offsetX - x0, offsetY - y0]];
             } else if (this.isInBackground(e)) {
                 if (this.activeShape.creating && !this.readonly) { // 创建中
-                    if ([2, 4].includes(this.activeShape.type)) {
+                    if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
                         const [x, y] = this.activeShape.coor[this.activeShape.coor.length - 1];
                         if (x !== offsetX && y !== offsetY) {
                             const nx = Math.round(offsetX - this.originX / this.scale);
@@ -230,29 +242,29 @@ export default class CanvasSelect extends EventBus {
                             this.activeShape.coor.push([nx, ny]);
                         }
                     }
-                } else if (this.createType > 0 && !this.readonly) { // 开始创建
+                } else if (this.createType !== Shape.None && !this.readonly && !this.ctrlKey) { // 开始创建
                     let newShape;
                     const nx = Math.round(offsetX - this.originX / this.scale);
                     const ny = Math.round(offsetY - this.originY / this.scale);
                     const curPoint: Point = [nx, ny];
                     switch (this.createType) {
-                        case 1:
+                        case Shape.Rect:
                             newShape = new Rect({ coor: [curPoint, curPoint] }, this.dataset.length);
                             newShape.creating = true;
                             break;
-                        case 2:
+                        case Shape.Polygon:
                             newShape = new Polygon({ coor: [curPoint] }, this.dataset.length);
                             newShape.creating = true;
                             break;
-                        case 3:
+                        case Shape.Dot:
                             newShape = new Dot({ coor: curPoint }, this.dataset.length);
                             this.emit('add', newShape);
                             break;
-                        case 4:
+                        case Shape.Line:
                             newShape = new Line({ coor: [curPoint] }, this.dataset.length);
                             newShape.creating = true;
                             break;
-                        case 5:
+                        case Shape.Circle:
                             newShape = new Circle({ coor: curPoint }, this.dataset.length);
                             newShape.creating = true;
                             break;
@@ -272,7 +284,7 @@ export default class CanvasSelect extends EventBus {
                         this.dataset.push(hitShape);
                         if (!this.readonly) {
                             this.remmber = [];
-                            if ([3, 5].includes(hitShape.type)) {
+                            if ([Shape.Dot, Shape.Circle].includes(hitShape.type)) {
                                 const [x, y] = hitShape.coor;
                                 this.remmber = [[offsetX - x, offsetY - y]];
                             } else {
@@ -293,7 +305,7 @@ export default class CanvasSelect extends EventBus {
         }
     }
 
-    handelMouseMove(e: MouseEvent | TouchEvent) {
+    private handleMouseMove(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         this.evt = e;
         if (this.lock) return;
@@ -302,10 +314,10 @@ export default class CanvasSelect extends EventBus {
         const offsetY = Math.round(mouseY / this.scale);
         this.mouse = this.isMobile && (e as TouchEvent).touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) && this.activeShape.type) {
-            if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === 5)) {
+            if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
-                if (this.activeShape.type === 1) {
+                if (this.activeShape.type === Shape.Rect) {
                     const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                     let coor: Point[] = [];
                     switch (this.ctrlIndex) {
@@ -363,12 +375,12 @@ export default class CanvasSelect extends EventBus {
                     } else {
                         this.emit('warn', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`);
                     }
-                } else if ([2, 4].includes(this.activeShape.type)) {
+                } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
                     const nx = Math.round(offsetX - this.originX / this.scale);
                     const ny = Math.round(offsetY - this.originY / this.scale);
                     const newPoint = [nx, ny];
                     this.activeShape.coor.splice(this.ctrlIndex, 1, newPoint);
-                } else if (this.activeShape.type === 5) {
+                } else if (this.activeShape.type === Shape.Circle) {
                     const nx = Math.round(offsetX - this.originX / this.scale);
                     const newRadius = nx - this.activeShape.coor[0];
                     if (newRadius >= this.MIN_RADIUS) this.activeShape.radius = newRadius;
@@ -378,7 +390,7 @@ export default class CanvasSelect extends EventBus {
                 let noLimit = true;
                 const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
                 const h = this.IMAGE_ORIGIN_HEIGHT || this.HEIGHT;
-                if ([3, 5].includes(this.activeShape.type)) {
+                if ([Shape.Dot, Shape.Circle].includes(this.activeShape.type)) {
                     const [t1, t2] = this.remmber[0];
                     const x = offsetX - t1;
                     const y = offsetY - t2;
@@ -398,16 +410,16 @@ export default class CanvasSelect extends EventBus {
                 const x = Math.round(offsetX - this.originX / this.scale);
                 const y = Math.round(offsetY - this.originY / this.scale);
                 // 创建矩形
-                if (this.activeShape.type === 1) {
+                if (this.activeShape.type === Shape.Rect) {
                     this.activeShape.coor.splice(1, 1, [x, y]);
-                } else if (this.activeShape.type === 5) {
+                } else if (this.activeShape.type === Shape.Circle) {
                     const [x0, y0] = this.activeShape.coor;
                     const r = Math.sqrt((x0 - x) ** 2 + (y0 - y) ** 2);
                     this.activeShape.radius = r;
                 }
             }
             this.update();
-        } else if ([2, 4].includes(this.activeShape.type) && this.activeShape.creating) {
+        } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
         } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches.length === 1 && !this.isTouch2)) {
@@ -425,7 +437,7 @@ export default class CanvasSelect extends EventBus {
         }
     }
 
-    handelMouseUp(e: MouseEvent | TouchEvent) {
+    private handleMouseUp(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         this.evt = e;
         if (this.lock) return;
@@ -434,16 +446,16 @@ export default class CanvasSelect extends EventBus {
                 this.isTouch2 = false;
             }
             if ((Date.now() - this.dblTouchStore) < this.dblTouch) {
-                this.handelDblclick(e);
+                this.handleDblclick(e);
                 return;
             }
             this.dblTouchStore = Date.now();
         }
         this.remmber = [];
-        if (this.activeShape.type) {
+        if (this.activeShape.type !== Shape.None && !this.ctrlKey) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
-                if (this.activeShape.type === 1) {
+                if (this.activeShape.type === Shape.Rect) {
                     const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                     if (Math.abs(x0 - x1) < this.MIN_WIDTH || Math.abs(y0 - y1) < this.MIN_HEIGHT) {
                         this.dataset.pop();
@@ -453,7 +465,7 @@ export default class CanvasSelect extends EventBus {
                         this.activeShape.creating = false;
                         this.emit('add', this.activeShape);
                     }
-                } else if (this.activeShape.type === 5) {
+                } else if (this.activeShape.type === Shape.Circle) {
                     if (this.activeShape.radius < this.MIN_RADIUS) {
                         this.dataset.pop();
                         this.emit('warn', `Radius cannot be less than ${this.MIN_WIDTH}`);
@@ -467,27 +479,34 @@ export default class CanvasSelect extends EventBus {
         }
     }
 
-    handelDblclick(e: MouseEvent | TouchEvent) {
+    private handleDblclick(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         this.evt = e;
         if (this.lock) return;
-        if ([2, 4].includes(this.activeShape.type)) {
-            if ((this.activeShape.type === 2 && this.activeShape.coor.length > 2) ||
-                (this.activeShape.type === 4 && this.activeShape.coor.length > 1)
-            ) {
+        if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
+            const canPolygon = this.activeShape.type === Shape.Polygon && this.activeShape.coor.length > 2
+            const canLine = this.activeShape.type === Shape.Line && this.activeShape.coor.length > 1
+            if (canPolygon || canLine) {
                 this.emit('add', this.activeShape);
                 this.activeShape.creating = false;
                 this.update();
             }
         }
     }
+    private handleKeydown(e: KeyboardEvent) {
+        if (e.key === 'Control') {
+            this.ctrlKey = true;
+        }
+    }
 
-    handelKeyup(e: KeyboardEvent) {
-        e.stopPropagation();
+    private handleKeyup(e: KeyboardEvent) {
+        if (e.key === 'Control') {
+            this.ctrlKey = false;
+        }
         this.evt = e;
         if (this.lock || document.activeElement !== document.body || this.readonly) return;
         if (this.activeShape.type) {
-            if ([2, 4].includes(this.activeShape.type) && e.key === 'Escape') {
+            if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && e.key === 'Escape') {
                 if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
                     this.activeShape.coor.pop();
                 } else {
@@ -521,15 +540,16 @@ export default class CanvasSelect extends EventBus {
     initEvents() {
         this.image.addEventListener('load', this.handleLoad);
         this.canvas.addEventListener('touchstart', this.handleMouseDown);
-        this.canvas.addEventListener('touchmove', this.handelMouseMove);
-        this.canvas.addEventListener('touchend', this.handelMouseUp);
+        this.canvas.addEventListener('touchmove', this.handleMouseMove);
+        this.canvas.addEventListener('touchend', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.handleContextmenu);
         this.canvas.addEventListener('mousewheel', this.handleMousewheel);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
-        this.canvas.addEventListener('mousemove', this.handelMouseMove);
-        this.canvas.addEventListener('mouseup', this.handelMouseUp);
-        this.canvas.addEventListener('dblclick', this.handelDblclick);
-        document.body.addEventListener('keyup', this.handelKeyup, true);
+        this.canvas.addEventListener('mousemove', this.handleMouseMove);
+        this.canvas.addEventListener('mouseup', this.handleMouseUp);
+        this.canvas.addEventListener('dblclick', this.handleDblclick);
+        document.body.addEventListener('keydown', this.handleKeydown, true);
+        document.body.addEventListener('keyup', this.handleKeyup, true);
     }
 
     /**
@@ -551,26 +571,26 @@ export default class CanvasSelect extends EventBus {
                 if (Object.prototype.toString.call(item).includes('Object')) {
                     let shape: AllShape;
                     switch (item.type) {
-                        case 1:
+                        case Shape.Rect:
                             shape = new Rect(item, index);
                             break;
-                        case 2:
+                        case Shape.Polygon:
                             shape = new Polygon(item, index);
                             break;
-                        case 3:
+                        case Shape.Dot:
                             shape = new Dot(item, index);
                             break;
-                        case 4:
+                        case Shape.Line:
                             shape = new Line(item, index);
                             break;
-                        case 5:
+                        case Shape.Circle:
                             shape = new Circle(item, index);
                             break;
                         default:
                             console.warn('Invalid shape', item);
                             break;
                     }
-                    [1, 2, 3, 4, 5].includes(item.type) && initdata.push(shape);
+                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle].includes(item.type) && initdata.push(shape);
                 } else {
                     console.warn('Shape must be an enumerable Object.', item);
                 }
@@ -591,11 +611,11 @@ export default class CanvasSelect extends EventBus {
         for (let i = this.dataset.length - 1; i > -1; i--) {
             const shape = this.dataset[i];
             if (
-                (shape.type === 3 && this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius)) ||
-                (shape.type === 5 && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) ||
-                (shape.type === 1 && this.isPointInRect(mousePoint, (shape as Rect).coor)) ||
-                (shape.type === 2 && this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) ||
-                (shape.type === 4 && this.isPointInLine(mousePoint, (shape as Line).coor))
+                (shape.type === Shape.Dot && this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius)) ||
+                (shape.type === Shape.Circle && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) ||
+                (shape.type === Shape.Rect && this.isPointInRect(mousePoint, (shape as Rect).coor)) ||
+                (shape.type === Shape.Polygon && this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) ||
+                (shape.type === Shape.Line && this.isPointInLine(mousePoint, (shape as Line).coor))
             ) {
                 if (this.focusMode && !shape.active) continue;
                 hitShapeIndex = i;
@@ -857,7 +877,7 @@ export default class CanvasSelect extends EventBus {
      */
     drawCtrlList(shape: Rect | Polygon | Line) {
         shape.ctrlsData.forEach((point, i) => {
-            if (shape.type === 5) {
+            if (shape.type === Shape.Circle) {
                 if (i === 1) this.drawCtrl(point);
             } else {
                 this.drawCtrl(point);
@@ -916,26 +936,26 @@ export default class CanvasSelect extends EventBus {
                 const shape = renderList[i];
                 if (shape.hide) continue;
                 switch (shape.type) {
-                    case 1:
+                    case Shape.Rect:
                         this.drawRect(shape as Rect);
                         break;
-                    case 2:
+                    case Shape.Polygon:
                         this.drawPolygon(shape as Polygon);
                         break;
-                    case 3:
+                    case Shape.Dot:
                         this.drawDot(shape as Dot);
                         break;
-                    case 4:
+                    case Shape.Line:
                         this.drawLine(shape as Line);
                         break;
-                    case 5:
+                    case Shape.Circle:
                         this.drawCirle(shape as Circle);
                         break;
                     default:
                         break;
                 }
             }
-            if ([1, 2, 4, 5].includes(this.activeShape.type) && !this.activeShape.hide) {
+            if ([Shape.Rect, Shape.Polygon, Shape.Line, Shape.Circle].includes(this.activeShape.type) && !this.activeShape.hide) {
                 this.drawCtrlList(this.activeShape);
             }
             this.ctx.restore();
@@ -1044,12 +1064,13 @@ export default class CanvasSelect extends EventBus {
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel);
         this.canvas.removeEventListener('mousedown', this.handleMouseDown);
         this.canvas.removeEventListener('touchend', this.handleMouseDown);
-        this.canvas.removeEventListener('mousemove', this.handelMouseMove);
-        this.canvas.removeEventListener('touchmove', this.handelMouseMove);
-        this.canvas.removeEventListener('mouseup', this.handelMouseUp);
-        this.canvas.removeEventListener('touchend', this.handelMouseUp);
-        this.canvas.removeEventListener('dblclick', this.handelDblclick);
-        document.body.removeEventListener('keyup', this.handelKeyup, true);
+        this.canvas.removeEventListener('mousemove', this.handleMouseMove);
+        this.canvas.removeEventListener('touchmove', this.handleMouseMove);
+        this.canvas.removeEventListener('mouseup', this.handleMouseUp);
+        this.canvas.removeEventListener('touchend', this.handleMouseUp);
+        this.canvas.removeEventListener('dblclick', this.handleDblclick);
+        document.body.removeEventListener('keydown', this.handleKeydown, true);
+        document.body.removeEventListener('keyup', this.handleKeyup, true);
         this.canvas.width = this.WIDTH;
         this.canvas.height = this.HEIGHT;
         this.canvas.style.width = null;
