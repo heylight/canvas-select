@@ -1,11 +1,12 @@
 {
   "name": "canvas-select",
-  "version": "2.20.0",
+  "version": "2.21.0",
   "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形。",
   "main": "lib/canvas-select.min.js",
   "types": "lib/src/index.d.ts",
+  "type": "module",
   "engines": {
-    "node": "^16||^14"
+    "node": ">=16.0.0"
   },
   "scripts": {
     "watch": "rollup -c -w",
@@ -35,18 +36,18 @@
   "author": "heylight",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.14.6",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-json": "^6.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.28.4",
-    "@typescript-eslint/parser": "^4.28.4",
-    "live-server": "^1.2.2",
-    "rollup": "^2.53.2",
+    "@babel/core": "^7.24.5",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-json": "^6.1.0",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
+    "live-server": "git+https://github.com/tapio/live-server.git#ad22544",
+    "rollup": "^4.17.2",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.30.0",
-    "tslib": "^2.4.0",
-    "typescript": "^4.6.4"
+    "rollup-plugin-typescript2": "^0.36.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.5"
   },
   "homepage": "https://github.com/heylight/canvas-select",
   "repository": {
