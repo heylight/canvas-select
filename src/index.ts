@@ -524,8 +524,8 @@ export default class CanvasSelect extends EventBus {
         const dpr = window.devicePixelRatio || 1;
         this.canvas.style.userSelect = 'none';
         this.ctx = this.ctx || this.canvas.getContext('2d', { alpha: this.alpha });
-        this.WIDTH = this.canvas.clientWidth;
-        this.HEIGHT = this.canvas.clientHeight;
+        this.WIDTH = Math.round(this.canvas.clientWidth);
+        this.HEIGHT = Math.round(this.canvas.clientHeight);
         this.canvas.width = this.WIDTH * dpr;
         this.canvas.height = this.HEIGHT * dpr;
         this.canvas.style.width = this.WIDTH + 'px';
