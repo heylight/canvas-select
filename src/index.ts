@@ -4,18 +4,20 @@ import Dot from './shape/Dot';
 import EventBus from './EventBus';
 import Line from './shape/Line';
 import Circle from './shape/Circle';
+import Grid from './shape/Grid';
 import pkg from '../package.json';
 import { isNested } from "./tools";
 
 export type Point = [number, number];
-export type AllShape = Rect | Polygon | Dot | Line | Circle;
+export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid;
 enum Shape {
     None,
     Rect,
     Polygon,
     Dot,
     Line,
-    Circle
+    Circle,
+    Grid
 }
 export default class CanvasSelect extends EventBus {
     /** 当前版本 */
@@ -33,13 +35,13 @@ export default class CanvasSelect extends EventBus {
     /** 边线颜色 */
     strokeStyle = '#0f0';
     /** 填充颜色 */
-    fillStyle = 'rgba(0, 0, 255,0.1)';
+    fillStyle = 'rgba(0, 0, 255, 0.1)';
     /** 边线宽度 */
     lineWidth = 1;
     /** 当前选中的标注边线颜色 */
     activeStrokeStyle = '#f00';
     /** 当前选中的标注填充颜色 */
-    activeFillStyle = 'rgba(255, 0, 0,0.1)';
+    activeFillStyle = 'rgba(255, 0, 0, 0.1)';
     /** 控制点边线颜色 */
     ctrlStrokeStyle = '#000';
     /** 控制点填充颜色 */
@@ -76,7 +78,7 @@ export default class CanvasSelect extends EventBus {
     mouse: Point;
     /** 记录背景图鼠标位移 */
     remmberOrigin: number[] = [0, 0];
-    /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆 */
+    /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
     createType: Shape = Shape.None; //
     /** 控制点索引 */
     ctrlIndex = -1;
@@ -268,6 +270,10 @@ export default class CanvasSelect extends EventBus {
                             newShape = new Circle({ coor: curPoint }, this.dataset.length);
                             newShape.creating = true;
                             break;
+                        case Shape.Grid:
+                            newShape = new Grid({ coor: [curPoint, curPoint] }, this.dataset.length);
+                            newShape.creating = true;
+                            break;
                         default:
                             break;
                     }
@@ -302,6 +308,19 @@ export default class CanvasSelect extends EventBus {
                 }
                 this.update();
             }
+        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2) || (this.isMobile && (e as TouchEvent).touches.length === 3)) { // 鼠标右键
+            if ([Shape.Grid].includes(this.activeShape.type) && this.activeShape.rightMenuEnable) {
+                const rowCol =  prompt('x 行 y 列 x,y', [this.activeShape.row, this.activeShape.col].join(','));
+                if (typeof rowCol === 'string') {
+                    const [row, col] = rowCol.split(',');
+                    if (/^[1-9]\d*$/.test(row) && /^[1-9]\d*$/.test(col)) {
+                        this.activeShape.row = Number(row);
+                        this.activeShape.col = Number(col);
+                        this.update();
+                    }
+                }
+
+            }
         }
     }
 
@@ -317,7 +336,7 @@ export default class CanvasSelect extends EventBus {
             if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
-                if (this.activeShape.type === Shape.Rect) {
+                if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
                     const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                     let coor: Point[] = [];
                     switch (this.ctrlIndex) {
@@ -410,7 +429,7 @@ export default class CanvasSelect extends EventBus {
                 const x = Math.round(offsetX - this.originX / this.scale);
                 const y = Math.round(offsetY - this.originY / this.scale);
                 // 创建矩形
-                if (this.activeShape.type === Shape.Rect) {
+                if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
                     this.activeShape.coor.splice(1, 1, [x, y]);
                 } else if (this.activeShape.type === Shape.Circle) {
                     const [x0, y0] = this.activeShape.coor;
@@ -455,7 +474,7 @@ export default class CanvasSelect extends EventBus {
         if (this.activeShape.type !== Shape.None && !this.ctrlKey) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
-                if (this.activeShape.type === Shape.Rect) {
+                if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
                     const [[x0, y0], [x1, y1]] = this.activeShape.coor;
                     if (Math.abs(x0 - x1) < this.MIN_WIDTH || Math.abs(y0 - y1) < this.MIN_HEIGHT) {
                         this.dataset.pop();
@@ -489,6 +508,21 @@ export default class CanvasSelect extends EventBus {
             if (canPolygon || canLine) {
                 this.emit('add', this.activeShape);
                 this.activeShape.creating = false;
+                this.update();
+            }
+        } else if ([Shape.Grid].includes(this.activeShape.type)) { // 双击切换网格分区选中状态
+            if (this.activeShape.active) {
+                this.activeShape.gridRects.forEach((rect: { coor: Point[]; index: number; }) => {
+                    if (this.isPointInRect(this.mouse, rect.coor)) {
+                        const thisIndex = this.activeShape.selected.findIndex((x: number) => rect.index === x)
+                        if (thisIndex > -1) {
+                            this.activeShape.selected.splice(thisIndex, 1);
+                        } else {
+                            this.activeShape.selected.push(rect.index);
+                        }
+                    }
+                    
+                });
                 this.update();
             }
         }
@@ -586,11 +620,14 @@ export default class CanvasSelect extends EventBus {
                         case Shape.Circle:
                             shape = new Circle(item, index);
                             break;
+                        case Shape.Grid:
+                            shape = new Grid(item, index);
+                            break;
                         default:
                             console.warn('Invalid shape', item);
                             break;
                     }
-                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle].includes(item.type) && initdata.push(shape);
+                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid].includes(item.type) && initdata.push(shape);
                 } else {
                     console.warn('Shape must be an enumerable Object.', item);
                 }
@@ -615,7 +652,8 @@ export default class CanvasSelect extends EventBus {
                 (shape.type === Shape.Circle && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) ||
                 (shape.type === Shape.Rect && this.isPointInRect(mousePoint, (shape as Rect).coor)) ||
                 (shape.type === Shape.Polygon && this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) ||
-                (shape.type === Shape.Line && this.isPointInLine(mousePoint, (shape as Line).coor))
+                (shape.type === Shape.Line && this.isPointInLine(mousePoint, (shape as Line).coor)) ||
+                (shape.type === Shape.Grid && this.isPointInRect(mousePoint, (shape as Grid).coor))
             ) {
                 if (this.focusMode && !shape.active) continue;
                 hitShapeIndex = i;
@@ -855,6 +893,30 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
+     * 绘制网格
+     * @param shape 标注实例
+     * @returns
+     */
+    drawGrid(shape: Grid) {
+        if (shape.coor.length !== 2) return;
+        const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
+        const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
+        this.ctx.save();
+        this.ctx.lineWidth = lineWidth || this.lineWidth;
+        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        shape.gridRects.forEach(rect => {
+            this.drawRect(rect)
+        });        
+        const w = x1 - x0;
+        const h = y1 - y0;
+        if (!creating) this.ctx.fillRect(x0, y0, w, h);
+        this.ctx.strokeRect(x0, y0, w, h);
+        this.ctx.restore();
+        this.drawLabel(coor[0], shape);
+    }
+
+    /**
      * 绘制控制点
      * @param point 坐标
      */
@@ -951,11 +1013,14 @@ export default class CanvasSelect extends EventBus {
                     case Shape.Circle:
                         this.drawCirle(shape as Circle);
                         break;
+                    case Shape.Grid:
+                        this.drawGrid(shape as Grid);
+                        break;
                     default:
                         break;
                 }
             }
-            if ([Shape.Rect, Shape.Polygon, Shape.Line, Shape.Circle].includes(this.activeShape.type) && !this.activeShape.hide) {
+            if ([Shape.Rect, Shape.Polygon, Shape.Line, Shape.Circle, Shape.Grid].includes(this.activeShape.type) && !this.activeShape.hide) {
                 this.drawCtrlList(this.activeShape);
             }
             this.ctx.restore();
