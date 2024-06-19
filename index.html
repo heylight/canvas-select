@@ -43,6 +43,7 @@
         <button onclick="change(3)">创建点</button>
         <button onclick="change(4)">创建折线</button>
         <button onclick="change(5)">创建圆形</button>
+        <button onclick="change(6)">创建网格</button>
         <button onclick="change(0)">取消创建</button>
         <br />
         <button onclick="zoom(true)">放大</button>
@@ -92,6 +93,14 @@
         radius: 38,
         type: 5
       },
+      {
+        label: "网格",
+        coor: [[419, 40], [539, 101]],
+        type: 6,
+        row: 3,
+        col: 2,
+        selected: [4]
+      },
     ]
     // let list = []
     // for (let i = 0; i < 1000; i++) {
@@ -123,6 +132,9 @@
       // const list = [...result]
       // list.sort((a, b) => a.index - b.index)
       // output.value = JSON.stringify(list, null, 2);
+    });
+    instance.on('contextmenu', () => {
+      console.log('右键')
     });
 
     function change(num) {
