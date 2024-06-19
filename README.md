@@ -132,7 +132,7 @@ let option = [
 ];
 // 加载数据
 instance.setData(option);
-// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注，5网格标注
+// 0 不创建(默认)，1创建矩形，2创建多边形，3点标注，4折线标注，5圆形标注，6网格标注
 instance.createType = 1;
 instance.on("select", (info) => {
   console.log("select", info);
@@ -174,9 +174,8 @@ instance.on("select", (info) => {
 | labelMaxLen           | number  |           10           |                  |           label 字符最大显示个数，超出字符将用...表示            |
 | alpha                 | boolean |          true          |                  |             设置为 false 可以帮助浏览器进行内部优化              |
 | focusMode             | boolean |         false          |                  |         专注模式，开启后只有活动状态的标签会显示到画布中         |
-| focusMode             | boolean |         false          |                  |         专注模式，开启后只有活动状态的标签会显示到画布中         |
 | gridMenuEnable        | boolean |          true          |                  |      网格标注是否开启 prompt 输入框，可以关闭使用自定义右键      |
-| gridSelectedFillStyle | string  | rgba(255, 255, 0, 0.6) |       支持       |      网格标注是否开启 prompt 输入框，可以关闭使用自定义右键      |
+| gridSelectedFillStyle | string  | rgba(255, 255, 0, 0.6) |       支持       |                    网格标注选中的形状填充颜色                    |
 
 ## 实例方法
 
