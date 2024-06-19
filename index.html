@@ -133,6 +133,9 @@
       // list.sort((a, b) => a.index - b.index)
       // output.value = JSON.stringify(list, null, 2);
     });
+    instance.on('contextmenu', () => {
+      console.log('右键')
+    });
 
     function change(num) {
       instance.createType = num;

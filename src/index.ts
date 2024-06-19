@@ -120,6 +120,10 @@ export default class CanvasSelect extends EventBus {
     /** 向上展示label */
     labelUp = false;
     private ctrlKey = false;
+    /** 网格右键菜单 */
+    gridMenuEnable = true;
+    /** 网格选中背景填充颜色 */
+    gridSelectedFillStyle = 'rgba(255, 255, 0, 0.6)';
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -308,9 +312,9 @@ export default class CanvasSelect extends EventBus {
                 }
                 this.update();
             }
-        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2) || (this.isMobile && (e as TouchEvent).touches.length === 3)) { // 鼠标右键
-            if ([Shape.Grid].includes(this.activeShape.type) && this.activeShape.rightMenuEnable) {
-                const rowCol =  prompt('x 行 y 列 x,y', [this.activeShape.row, this.activeShape.col].join(','));
+        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2) || (this.isMobile && (e as TouchEvent).touches.length === 3) && !this.readonly) { // 鼠标右键
+            if ([Shape.Grid].includes(this.activeShape.type) && this.gridMenuEnable) {
+                const rowCol = prompt('x 行 y 列 x,y', [this.activeShape.row, this.activeShape.col].join(','));
                 if (typeof rowCol === 'string') {
                     const [row, col] = rowCol.split(',');
                     if (/^[1-9]\d*$/.test(row) && /^[1-9]\d*$/.test(col)) {
@@ -321,6 +325,7 @@ export default class CanvasSelect extends EventBus {
                 }
 
             }
+            this.emit('contextmenu', e);
         }
     }
 
@@ -521,7 +526,6 @@ export default class CanvasSelect extends EventBus {
                             this.activeShape.selected.push(rect.index);
                         }
                     }
-                    
                 });
                 this.update();
             }
@@ -776,13 +780,13 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      * @returns
      */
-    drawRect(shape: Rect) {
+    drawRect(shape: Rect, sub?: Record<string, any>) {
         if (shape.coor.length !== 2) return;
         const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.fillStyle = sub?.isSelected ? sub?.selectedFillStyle : (fillStyle || this.fillStyle);
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         const w = x1 - x0;
         const h = y1 - y0;
@@ -905,9 +909,12 @@ export default class CanvasSelect extends EventBus {
         this.ctx.lineWidth = lineWidth || this.lineWidth;
         this.ctx.fillStyle = fillStyle || this.fillStyle;
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
-        shape.gridRects.forEach(rect => {
-            this.drawRect(rect)
-        });        
+        shape.gridRects.forEach((rect: Rect, m) => {
+            this.drawRect(rect, {
+                selectedFillStyle: shape.selectedFillStyle || this.gridSelectedFillStyle,
+                isSelected: shape.selected?.includes(m)
+            })
+        });
         const w = x1 - x0;
         const h = y1 - y0;
         if (!creating) this.ctx.fillRect(x0, y0, w, h);
