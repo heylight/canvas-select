@@ -20,4 +20,7 @@ export default {
     terser(),
     json(),
   ],
+  watch: {
+    exclude: 'node_modules/**'
+  }
 };
