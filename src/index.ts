@@ -119,7 +119,9 @@ export default class CanvasSelect extends EventBus {
     isMobile = navigator.userAgent.includes('Mobile');
     /** 向上展示label */
     labelUp = false;
-    private ctrlKey = false;
+    private isCtrlKey = false;
+    /** 自定义ctrl快捷键 KeyboardEvent.code */
+    ctrlCode = "ControlLeft";
     /** 网格右键菜单 */
     gridMenuEnable = true;
     /** 网格选中背景填充颜色 */
@@ -248,7 +250,7 @@ export default class CanvasSelect extends EventBus {
                             this.activeShape.coor.push([nx, ny]);
                         }
                     }
-                } else if (this.createType !== Shape.None && !this.readonly && !this.ctrlKey) { // 开始创建
+                } else if (this.createType !== Shape.None && !this.readonly && !this.isCtrlKey) { // 开始创建
                     let newShape;
                     const nx = Math.round(offsetX - this.originX / this.scale);
                     const ny = Math.round(offsetY - this.originY / this.scale);
@@ -476,7 +478,7 @@ export default class CanvasSelect extends EventBus {
             this.dblTouchStore = Date.now();
         }
         this.remmber = [];
-        if (this.activeShape.type !== Shape.None && !this.ctrlKey) {
+        if (this.activeShape.type !== Shape.None && !this.isCtrlKey) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
                 if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
@@ -532,14 +534,14 @@ export default class CanvasSelect extends EventBus {
         }
     }
     private handleKeydown(e: KeyboardEvent) {
-        if (e.key === 'Control') {
-            this.ctrlKey = true;
+        if (e.code === this.ctrlCode) {
+            this.isCtrlKey = true;
         }
     }
 
     private handleKeyup(e: KeyboardEvent) {
-        if (e.key === 'Control') {
-            this.ctrlKey = false;
+        if (e.code === this.ctrlCode) {
+            this.isCtrlKey = false;
         }
         this.evt = e;
         if (this.lock || document.activeElement !== document.body || this.readonly) return;
@@ -748,7 +750,7 @@ export default class CanvasSelect extends EventBus {
         this.offScreenCtx.save();
         this.offScreenCtx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
         this.offScreenCtx.translate(this.originX, this.originY);
-        this.offScreenCtx.lineWidth = 5;
+        this.offScreenCtx.lineWidth = this.lineWidth > 5 ? this.lineWidth : 5;
         this.offScreenCtx.beginPath();
         coor.forEach((pt, i) => {
             const [x, y] = pt.map((a) => Math.round(a * this.scale));
