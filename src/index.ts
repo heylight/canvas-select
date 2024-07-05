@@ -750,7 +750,7 @@ export default class CanvasSelect extends EventBus {
         this.offScreenCtx.save();
         this.offScreenCtx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
         this.offScreenCtx.translate(this.originX, this.originY);
-        this.offScreenCtx.lineWidth = 5;
+        this.offScreenCtx.lineWidth = this.lineWidth > 5 ? this.lineWidth : 5;
         this.offScreenCtx.beginPath();
         coor.forEach((pt, i) => {
             const [x, y] = pt.map((a) => Math.round(a * this.scale));
