@@ -584,6 +584,7 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('touchend', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.handleContextmenu);
         this.canvas.addEventListener('mousewheel', this.handleMousewheel);
+        this.canvas.addEventListener('wheel', this.handleMousewheel);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mouseup', this.handleMouseUp);
@@ -1137,6 +1138,7 @@ export default class CanvasSelect extends EventBus {
         this.image.removeEventListener('load', this.handleLoad);
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu);
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel);
+        this.canvas.removeEventListener('wheel', this.handleMousewheel);
         this.canvas.removeEventListener('mousedown', this.handleMouseDown);
         this.canvas.removeEventListener('touchend', this.handleMouseDown);
         this.canvas.removeEventListener('mousemove', this.handleMouseMove);
