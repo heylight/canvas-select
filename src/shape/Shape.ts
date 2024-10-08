@@ -37,6 +37,8 @@ export default class Shape {
     public uuid: string = createUuid()
     /** 向上展示label */
     public labelUp: boolean
+    /** 隐藏标注 */
+    public hide: boolean
     constructor(item: ShapeProp, index: number) {
         this.index = index
         Object.assign(this, item)

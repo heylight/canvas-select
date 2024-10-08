@@ -653,6 +653,7 @@ export default class CanvasSelect extends EventBus {
         let hitShape: AllShape;
         for (let i = this.dataset.length - 1; i > -1; i--) {
             const shape = this.dataset[i];
+            if (shape.hide) continue;
             if (
                 (shape.type === Shape.Dot && this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius)) ||
                 (shape.type === Shape.Circle && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) ||
