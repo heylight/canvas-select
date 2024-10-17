@@ -182,16 +182,19 @@ export default class CanvasSelect extends EventBus {
         let mouseY = 0;
         let mouseCX = 0;
         let mouseCY = 0;
-        if (this.isMobile) {
+        if (this.isMobile && (e as TouchEvent).touches) {
             const { clientX, clientY } = (e as TouchEvent).touches[0];
             const target = e.target as HTMLCanvasElement;
             const { left, top } = target.getBoundingClientRect();
             mouseX = Math.round(clientX - left);
             mouseY = Math.round(clientY - top);
-            if ((e as TouchEvent).touches.length === 2) {
+            if ((e as TouchEvent).touches?.length === 2) {
                 const { clientX: clientX1 = 0, clientY: clientY1 = 0 } = (e as TouchEvent).touches[1] || {};
                 mouseCX = Math.round(Math.abs((clientX1 - clientX) / 2 + clientX) - left);
                 mouseCY = Math.round(Math.abs((clientY1 - clientY) / 2 + clientY) - top);
+            } else if ((e as TouchEvent).touches?.length === 1) {
+                mouseCX = Math.round(clientX - left);
+                mouseCY = Math.round(clientY - top);
             }
         } else {
             mouseX = (e as MouseEvent).offsetX;
@@ -229,9 +232,9 @@ export default class CanvasSelect extends EventBus {
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
-        this.mouse = this.isMobile && (e as TouchEvent).touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         this.remmberOrigin = [mouseX - this.originX, mouseY - this.originY];
-        if ((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) { // 鼠标左键
+        if ((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) { // 鼠标左键
             const ctrls = this.activeShape.ctrlsData || [];
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
             if (this.ctrlIndex > -1 && !this.readonly) { // 点击到控制点
@@ -314,7 +317,7 @@ export default class CanvasSelect extends EventBus {
                 }
                 this.update();
             }
-        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2) || (this.isMobile && (e as TouchEvent).touches.length === 3) && !this.readonly) { // 鼠标右键
+        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2) || (this.isMobile && (e as TouchEvent).touches?.length === 3) && !this.readonly) { // 鼠标右键
             if ([Shape.Grid].includes(this.activeShape.type) && this.gridMenuEnable) {
                 const rowCol = prompt('x 行 y 列 x,y', [this.activeShape.row, this.activeShape.col].join(','));
                 if (typeof rowCol === 'string') {
@@ -338,8 +341,8 @@ export default class CanvasSelect extends EventBus {
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
-        this.mouse = this.isMobile && (e as TouchEvent).touches.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
-        if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches.length === 1)) && this.activeShape.type) {
+        this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
@@ -448,12 +451,12 @@ export default class CanvasSelect extends EventBus {
         } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
-        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches.length === 1 && !this.isTouch2)) {
+        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
             this.update();
-        } else if (this.isMobile && (e as TouchEvent).touches.length === 2) {
+        } else if (this.isMobile && (e as TouchEvent).touches?.length === 2) {
             this.isTouch2 = true;
             const touch0 = (e as TouchEvent).touches[0];
             const touch1 = (e as TouchEvent).touches[1];
@@ -468,7 +471,7 @@ export default class CanvasSelect extends EventBus {
         this.evt = e;
         if (this.lock) return;
         if (this.isMobile) {
-            if ((e as TouchEvent).touches.length === 0) {
+            if ((e as TouchEvent).touches?.length === 0) {
                 this.isTouch2 = false;
             }
             if ((Date.now() - this.dblTouchStore) < this.dblTouch) {
