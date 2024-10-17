@@ -72,6 +72,17 @@ export default class CanvasSelect extends EventBus {
     offScreen: HTMLCanvasElement;
 
     offScreenCtx: CanvasRenderingContext2D;
+
+
+    // 放大镜相关配置 Start
+    magnifierCanvas: HTMLCanvasElement
+    magnifierCtx: CanvasRenderingContext2D
+    // 默认展示放大镜
+    isMagnifierVisible: boolean = true
+    // 放大镜位置，默认跟随鼠标
+    magnifierPosition: Point | 'auto' = 'auto'
+    // 放大镜相关配置 End
+
     /** 记录锚点距离 */
     remmber: number[][];
     /** 记录鼠标位置 */
@@ -174,6 +185,117 @@ export default class CanvasSelect extends EventBus {
     /** 图片原始最大边尺寸 */
     get imageOriginMax() {
         return Math.max(this.IMAGE_ORIGIN_WIDTH, this.IMAGE_ORIGIN_HEIGHT);
+    }
+
+
+    /** 创建放大镜容器 */
+    createMagnifierCanvas() {
+        if (this.isMagnifierVisible) {
+            this.magnifierCanvas = this.magnifierCanvas || document.createElement('canvas')
+            this.magnifierCtx = this.magnifierCanvas && this.magnifierCanvas.getContext('2d', {
+                willReadFrequently: true,
+            }) as CanvasRenderingContext2D
+            this.magnifierCanvas.style.position = 'fixed'
+            this.magnifierCanvas.style.pointerEvents = 'none'
+            this.magnifierCanvas.style.zIndex = '1000'
+            this.magnifierCanvas.style.border = '1px solid black'
+            this.magnifierCanvas.style.borderRadius = '50%'
+            this.magnifierCanvas.style.width = '100px'
+            this.magnifierCanvas.style.height = '100px'
+            document.body.appendChild(this.magnifierCanvas)
+        }
+
+    }
+
+    /** 创建放大镜 */
+    createMagnifier(x: number, y: number) {
+        if (!this.magnifierCanvas) {
+            this.createMagnifierCanvas()
+        } else {
+            this.updateMagnifier(x, y)
+        }
+    }
+    /** 更新放大镜 */
+    updateMagnifier(x: number, y: number) {
+        if (this.magnifierCanvas && this.magnifierCtx) {
+            const magnifierSize = 100;
+            const dpr = window.devicePixelRatio || 1
+            this.magnifierCanvas.width = magnifierSize;
+            this.magnifierCanvas.height = magnifierSize;
+            this.magnifierCtx.clearRect(0, 0, magnifierSize, magnifierSize);
+
+            // 放大镜位置
+            if (this.magnifierPosition && this.magnifierPosition.length === 2) {
+                const [mx, my] = this.magnifierPosition
+                this.magnifierCanvas.style.left = `${mx}px`;
+                this.magnifierCanvas.style.top = `${my}px`;
+            } else {
+                this.magnifierCanvas.style.left = `${x + 10}px`;
+                this.magnifierCanvas.style.top = `${y + 10}px`;
+            }
+
+
+
+            const originImageData = this.getImageDataFromCanvas(this.canvas, [
+                x * dpr - magnifierSize / 2,
+                y * dpr - magnifierSize / 2,
+                magnifierSize,
+                magnifierSize,
+            ]);
+            // 新的像素信息对象
+            const areaImageData = this.magnifierCanvas
+                .getContext('2d', { willReadFrequently: true })
+                .createImageData(this.magnifierCanvas.width, this.magnifierCanvas.height);
+            let count = 0;
+            for (let j = 0; j < magnifierSize; j += 1) {
+                for (let i = 0; i < magnifierSize; i += 1) {
+                    for (let k = j; k < j + 1; k++) {
+                        for (let m = i; m < i + 1; m++) {
+                            const index = (k * magnifierSize + m) * 4;
+                            areaImageData.data[index] = originImageData.data[count];
+                            areaImageData.data[index + 1] =
+                                originImageData.data[count + 1];
+                            areaImageData.data[index + 2] =
+                                originImageData.data[count + 2];
+                            areaImageData.data[index + 3] =
+                                originImageData.data[count + 3];
+                        }
+                    }
+                    count += 4;
+                }
+            }
+            this.magnifierCanvas.getContext('2d', { willReadFrequently: true }).putImageData(areaImageData, 0, 0);
+
+            // 十字线 有需要可以加
+            // this.magnifierCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+            // this.magnifierCtx.lineWidth = 1;
+            // this.magnifierCtx.beginPath();
+            // this.magnifierCtx.moveTo(magnifierSize / 2, 0);
+            // this.magnifierCtx.lineTo(magnifierSize / 2, magnifierSize);
+            // this.magnifierCtx.moveTo(0, magnifierSize / 2);
+            // this.magnifierCtx.lineTo(magnifierSize, magnifierSize / 2);
+            // this.magnifierCtx.stroke();
+
+            // // 绘制放大镜边框
+            this.magnifierCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            this.magnifierCtx.lineWidth = 2;
+            this.magnifierCtx.strokeRect(0, 0, magnifierSize, magnifierSize);
+        }
+    }
+
+    /** 销毁放大镜 */
+    private destroyMagnifier() {
+        if (this.magnifierCanvas) {
+            this.magnifierCanvas.remove()
+            this.magnifierCanvas = null
+            this.magnifierCtx = null
+        }
+    }
+
+    /* 提取像素信息 */
+    getImageDataFromCanvas(canvas: HTMLCanvasElement, [x, y, width, height]: [number, number, number, number]) {
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        return context.getImageData(x, y, width, height);
     }
 
     /** 合成事件 */
@@ -414,7 +536,18 @@ export default class CanvasSelect extends EventBus {
                     const newRadius = nx - this.activeShape.coor[0];
                     if (newRadius >= this.MIN_RADIUS) this.activeShape.radius = newRadius;
                 }
+                if (this.isMagnifierVisible) {
+                    const [ux, uy] = this.isMobile ? [mouseCX, mouseCY] : [mouseX, mouseY]
+                    this.createMagnifier(ux, uy)
+                }
+
+
             } else if (this.activeShape.dragging && !this.readonly) { // 拖拽
+                // 拖拽点的时候，也需要触发放大镜
+                if (this.isMagnifierVisible && this.activeShape.type === 3) {
+                    const [ux, uy] = this.isMobile ? [mouseCX, mouseCY] : [mouseX, mouseY]
+                    this.createMagnifier(ux, uy)
+                }
                 let coor = [];
                 let noLimit = true;
                 const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
@@ -470,6 +603,8 @@ export default class CanvasSelect extends EventBus {
         e.stopPropagation();
         this.evt = e;
         if (this.lock) return;
+        // 鼠标抬起则卸载放大器
+        this.destroyMagnifier()
         if (this.isMobile) {
             if ((e as TouchEvent).touches?.length === 0) {
                 this.isTouch2 = false;
@@ -565,6 +700,8 @@ export default class CanvasSelect extends EventBus {
     /** 初始化配置 */
     initSetting() {
         const dpr = window.devicePixelRatio || 1;
+        // 处理图片跨域问题
+        this.image.crossOrigin = 'anonymous';
         this.canvas.style.userSelect = 'none';
         this.ctx = this.ctx || this.canvas.getContext('2d', { alpha: this.alpha });
         this.WIDTH = Math.round(this.canvas.clientWidth);
