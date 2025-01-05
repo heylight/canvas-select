@@ -6,7 +6,6 @@ import Line from './shape/Line';
 import Circle from './shape/Circle';
 import Grid from './shape/Grid';
 import pkg from '../package.json';
-import { isNested } from "./tools";
 
 export type Point = [number, number];
 export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid;
@@ -63,20 +62,19 @@ export default class CanvasSelect extends EventBus {
     /** 画布高度 */
     HEIGHT = 0;
 
-    canvas: HTMLCanvasElement;
+    canvas: HTMLCanvasElement | undefined
 
-    ctx: CanvasRenderingContext2D;
+    ctx: CanvasRenderingContext2D | null | undefined
     /** 所有标注数据 */
     dataset: AllShape[] = [];
 
-    offScreen: HTMLCanvasElement;
+    offScreen: HTMLCanvasElement | undefined
 
-    offScreenCtx: CanvasRenderingContext2D;
-
+    offScreenCtx: CanvasRenderingContext2D | null | undefined
 
     // 放大镜相关配置 Start
-    magnifierCanvas: HTMLCanvasElement
-    magnifierCtx: CanvasRenderingContext2D
+    magnifierCanvas: HTMLCanvasElement | undefined
+    magnifierCtx: CanvasRenderingContext2D | undefined
     // 默认展示放大镜
     isMagnifierVisible: boolean = true
     // 放大镜位置，默认跟随鼠标
@@ -84,9 +82,9 @@ export default class CanvasSelect extends EventBus {
     // 放大镜相关配置 End
 
     /** 记录锚点距离 */
-    remmber: number[][];
+    remmber: number[][] = [];
     /** 记录鼠标位置 */
-    mouse: Point;
+    mouse: Point = [0, 0];
     /** 记录背景图鼠标位移 */
     remmberOrigin: number[] = [0, 0];
     /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
@@ -96,7 +94,7 @@ export default class CanvasSelect extends EventBus {
     /** 背景图片 */
     image: HTMLImageElement = new Image();
     /** 图片原始宽度 */
-    IMAGE_ORIGIN_WIDTH: number;
+    IMAGE_ORIGIN_WIDTH: number = 0;
     /** 图片缩放宽度 */
     IMAGE_WIDTH = 0;
     /** 图片原始高度 */
@@ -112,7 +110,7 @@ export default class CanvasSelect extends EventBus {
     /** 滚动缩放 */
     scrollZoom = true;
 
-    private timer: any;
+    private timer: any = null;
     /** 最小touch双击时间 */
     dblTouch = 300;
     /** 记录touch双击开始时间 */
@@ -121,8 +119,6 @@ export default class CanvasSelect extends EventBus {
     alpha = true;
     /** 专注模式 */
     focusMode = false;
-    /** 记录当前事件 */
-    private evt: MouseEvent | TouchEvent | KeyboardEvent;
     /** 触控缩放时记录上一次两点距离 */
     scaleTouchStore = 0;
     /** 当前是否为双指触控 */
@@ -217,7 +213,7 @@ export default class CanvasSelect extends EventBus {
     }
     /** 更新放大镜 */
     updateMagnifier(x: number, y: number) {
-        if (this.magnifierCanvas && this.magnifierCtx) {
+        if (this.canvas && this.magnifierCanvas && this.magnifierCtx) {
             const magnifierSize = 100;
             const dpr = window.devicePixelRatio || 1
             this.magnifierCanvas.width = magnifierSize;
@@ -234,8 +230,6 @@ export default class CanvasSelect extends EventBus {
                 this.magnifierCanvas.style.top = `${y + 10}px`;
             }
 
-
-
             const originImageData = this.getImageDataFromCanvas(this.canvas, [
                 x * dpr - magnifierSize / 2,
                 y * dpr - magnifierSize / 2,
@@ -243,43 +237,46 @@ export default class CanvasSelect extends EventBus {
                 magnifierSize,
             ]);
             // 新的像素信息对象
-            const areaImageData = this.magnifierCanvas
-                .getContext('2d', { willReadFrequently: true })
-                .createImageData(this.magnifierCanvas.width, this.magnifierCanvas.height);
-            let count = 0;
-            for (let j = 0; j < magnifierSize; j += 1) {
-                for (let i = 0; i < magnifierSize; i += 1) {
-                    for (let k = j; k < j + 1; k++) {
-                        for (let m = i; m < i + 1; m++) {
-                            const index = (k * magnifierSize + m) * 4;
-                            areaImageData.data[index] = originImageData.data[count];
-                            areaImageData.data[index + 1] =
-                                originImageData.data[count + 1];
-                            areaImageData.data[index + 2] =
-                                originImageData.data[count + 2];
-                            areaImageData.data[index + 3] =
-                                originImageData.data[count + 3];
+            const areaImageData = this.magnifierCanvas.getContext('2d', { willReadFrequently: true })
+                ?.createImageData(this.magnifierCanvas.width, this.magnifierCanvas.height);
+
+            if (areaImageData && originImageData) {
+                let count = 0;
+                for (let j = 0; j < magnifierSize; j += 1) {
+                    for (let i = 0; i < magnifierSize; i += 1) {
+                        for (let k = j; k < j + 1; k++) {
+                            for (let m = i; m < i + 1; m++) {
+                                const index = (k * magnifierSize + m) * 4;
+                                areaImageData.data[index] = originImageData.data[count];
+                                areaImageData.data[index + 1] =
+                                    originImageData.data[count + 1];
+                                areaImageData.data[index + 2] =
+                                    originImageData.data[count + 2];
+                                areaImageData.data[index + 3] =
+                                    originImageData.data[count + 3];
+                            }
                         }
+                        count += 4;
                     }
-                    count += 4;
                 }
+                this.magnifierCanvas.getContext('2d', { willReadFrequently: true })
+                    ?.putImageData(areaImageData, 0, 0);
+
+                // 十字线 有需要可以加
+                // this.magnifierCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+                // this.magnifierCtx.lineWidth = 1;
+                // this.magnifierCtx.beginPath();
+                // this.magnifierCtx.moveTo(magnifierSize / 2, 0);
+                // this.magnifierCtx.lineTo(magnifierSize / 2, magnifierSize);
+                // this.magnifierCtx.moveTo(0, magnifierSize / 2);
+                // this.magnifierCtx.lineTo(magnifierSize, magnifierSize / 2);
+                // this.magnifierCtx.stroke();
+
+                // // 绘制放大镜边框
+                this.magnifierCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                this.magnifierCtx.lineWidth = 2;
+                this.magnifierCtx.strokeRect(0, 0, magnifierSize, magnifierSize);
             }
-            this.magnifierCanvas.getContext('2d', { willReadFrequently: true }).putImageData(areaImageData, 0, 0);
-
-            // 十字线 有需要可以加
-            // this.magnifierCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
-            // this.magnifierCtx.lineWidth = 1;
-            // this.magnifierCtx.beginPath();
-            // this.magnifierCtx.moveTo(magnifierSize / 2, 0);
-            // this.magnifierCtx.lineTo(magnifierSize / 2, magnifierSize);
-            // this.magnifierCtx.moveTo(0, magnifierSize / 2);
-            // this.magnifierCtx.lineTo(magnifierSize, magnifierSize / 2);
-            // this.magnifierCtx.stroke();
-
-            // // 绘制放大镜边框
-            this.magnifierCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-            this.magnifierCtx.lineWidth = 2;
-            this.magnifierCtx.strokeRect(0, 0, magnifierSize, magnifierSize);
         }
     }
 
@@ -287,15 +284,15 @@ export default class CanvasSelect extends EventBus {
     private destroyMagnifier() {
         if (this.magnifierCanvas) {
             this.magnifierCanvas.remove()
-            this.magnifierCanvas = null
-            this.magnifierCtx = null
+            this.magnifierCanvas = undefined
+            this.magnifierCtx = undefined
         }
     }
 
     /* 提取像素信息 */
     getImageDataFromCanvas(canvas: HTMLCanvasElement, [x, y, width, height]: [number, number, number, number]) {
         const context = canvas.getContext('2d', { willReadFrequently: true });
-        return context.getImageData(x, y, width, height);
+        return context?.getImageData(x, y, width, height);
     }
 
     /** 合成事件 */
@@ -334,13 +331,11 @@ export default class CanvasSelect extends EventBus {
 
     private handleContextmenu(e: MouseEvent) {
         e.preventDefault();
-        this.evt = e;
         if (this.lock) return;
     }
 
     private handleMousewheel(e: WheelEvent) {
         e.stopPropagation();
-        this.evt = e;
         if (this.lock || !this.scrollZoom) return;
         const { mouseX, mouseY } = this.mergeEvent(e);
         this.mouse = [mouseX, mouseY];
@@ -349,7 +344,6 @@ export default class CanvasSelect extends EventBus {
 
     private handleMouseDown(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
-        this.evt = e;
         if (this.lock) return;
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
@@ -408,13 +402,15 @@ export default class CanvasSelect extends EventBus {
                         default:
                             break;
                     }
-                    this.dataset.forEach((sp) => { sp.active = false; });
-                    newShape.active = true;
-                    this.dataset.push(newShape);
+                    if (newShape) {
+                        this.dataset.forEach((sp) => { sp.active = false; });
+                        newShape.active = true;
+                        this.dataset.push(newShape);
+                    }
                 } else {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
-                    if (hitShapeIndex > -1) {
+                    if (hitShapeIndex > -1 && hitShape) {
                         hitShape.dragging = true;
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
                         this.dataset.splice(hitShapeIndex, 1);
@@ -458,7 +454,6 @@ export default class CanvasSelect extends EventBus {
 
     private handleMouseMove(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
-        this.evt = e;
         if (this.lock) return;
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
@@ -601,7 +596,6 @@ export default class CanvasSelect extends EventBus {
 
     private handleMouseUp(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
-        this.evt = e;
         if (this.lock) return;
         // 鼠标抬起则卸载放大器
         this.destroyMagnifier()
@@ -645,7 +639,6 @@ export default class CanvasSelect extends EventBus {
 
     private handleDblclick(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
-        this.evt = e;
         if (this.lock) return;
         if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
             const canPolygon = this.activeShape.type === Shape.Polygon && this.activeShape.coor.length > 2
@@ -681,7 +674,6 @@ export default class CanvasSelect extends EventBus {
         if (e.code === this.ctrlCode) {
             this.isCtrlKey = false;
         }
-        this.evt = e;
         if (this.lock || document.activeElement !== document.body || this.readonly) return;
         if (this.activeShape.type) {
             if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && e.key === 'Escape') {
@@ -699,6 +691,7 @@ export default class CanvasSelect extends EventBus {
 
     /** 初始化配置 */
     initSetting() {
+        if (!this.canvas || !this.offScreen) return;
         const dpr = window.devicePixelRatio || 1;
         // 处理图片跨域问题
         this.image.crossOrigin = 'anonymous';
@@ -713,16 +706,18 @@ export default class CanvasSelect extends EventBus {
         this.offScreen.width = this.WIDTH;
         this.offScreen.height = this.HEIGHT;
         this.offScreenCtx = this.offScreenCtx || this.offScreen.getContext('2d', { willReadFrequently: true });
-        this.ctx.scale(dpr, dpr);
+        this.ctx?.scale(dpr, dpr);
     }
 
     /** 初始化事件 */
     initEvents() {
+        if (!this.canvas) return;
         this.image.addEventListener('load', this.handleLoad);
         this.canvas.addEventListener('touchstart', this.handleMouseDown);
         this.canvas.addEventListener('touchmove', this.handleMouseMove);
         this.canvas.addEventListener('touchend', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.handleContextmenu);
+        // @ts-ignore
         this.canvas.addEventListener('mousewheel', this.handleMousewheel);
         this.canvas.addEventListener('wheel', this.handleMousewheel);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
@@ -750,7 +745,7 @@ export default class CanvasSelect extends EventBus {
             const initdata: AllShape[] = [];
             data.forEach((item, index) => {
                 if (Object.prototype.toString.call(item).includes('Object')) {
-                    let shape: AllShape;
+                    let shape: any;
                     switch (item.type) {
                         case Shape.Rect:
                             shape = new Rect(item, index);
@@ -774,7 +769,7 @@ export default class CanvasSelect extends EventBus {
                             console.warn('Invalid shape', item);
                             break;
                     }
-                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid].includes(item.type) && initdata.push(shape);
+                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid].includes(item.type) && shape && initdata.push(shape);
                 } else {
                     console.warn('Shape must be an enumerable Object.', item);
                 }
@@ -791,7 +786,7 @@ export default class CanvasSelect extends EventBus {
      */
     hitOnShape(mousePoint: Point): [number, AllShape] {
         let hitShapeIndex = -1;
-        let hitShape: AllShape;
+        let hitShape: any;
         for (let i = this.dataset.length - 1; i > -1; i--) {
             const shape = this.dataset[i];
             if (shape.hide) continue;
@@ -847,6 +842,7 @@ export default class CanvasSelect extends EventBus {
      * @returns 布尔值
      */
     isPointInPolygon(point: Point, coor: Point[]): boolean {
+        if (!this.offScreenCtx) return false;
         this.offScreenCtx.save();
         this.offScreenCtx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
         this.offScreenCtx.translate(this.originX, this.originY);
@@ -854,9 +850,9 @@ export default class CanvasSelect extends EventBus {
         coor.forEach((pt, i) => {
             const [x, y] = pt.map((a) => Math.round(a * this.scale));
             if (i === 0) {
-                this.offScreenCtx.moveTo(x, y);
+                this.offScreenCtx?.moveTo(x, y);
             } else {
-                this.offScreenCtx.lineTo(x, y);
+                this.offScreenCtx?.lineTo(x, y);
             }
         });
         this.offScreenCtx.closePath();
@@ -889,6 +885,7 @@ export default class CanvasSelect extends EventBus {
      * @returns 布尔值
      */
     isPointInLine(point: Point, coor: Point[]): boolean {
+        if (!this.offScreenCtx) return false;
         this.offScreenCtx.save();
         this.offScreenCtx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
         this.offScreenCtx.translate(this.originX, this.originY);
@@ -897,9 +894,9 @@ export default class CanvasSelect extends EventBus {
         coor.forEach((pt, i) => {
             const [x, y] = pt.map((a) => Math.round(a * this.scale));
             if (i === 0) {
-                this.offScreenCtx.moveTo(x, y);
+                this.offScreenCtx?.moveTo(x, y);
             } else {
-                this.offScreenCtx.lineTo(x, y);
+                this.offScreenCtx?.lineTo(x, y);
             }
         });
         this.offScreenCtx.stroke();
@@ -910,22 +907,12 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
-       * 判断是图形是否属于嵌套关系 (目前只支持矩形和多边形)
-       * @param shape1 标注实例
-       * @param shape2 标注实例
-       * @returns 布尔值
-       */
-    isNested(shape1: Rect | Polygon, shape2: Rect | Polygon): boolean {
-        return isNested(shape1, shape2);
-    }
-
-    /**
      * 绘制矩形
      * @param shape 标注实例
      * @returns
      */
     drawRect(shape: Rect, sub?: Record<string, any>) {
-        if (shape.coor.length !== 2) return;
+        if (!this.ctx || shape.coor.length !== 2) return;
         const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
@@ -945,6 +932,7 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawPolygon(shape: Polygon) {
+        if (!this.ctx) return;
         const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
         this.ctx.save();
         this.ctx.lineJoin = 'round';
@@ -955,9 +943,9 @@ export default class CanvasSelect extends EventBus {
         coor.forEach((el: Point, i) => {
             const [x, y] = el.map((a) => Math.round(a * this.scale));
             if (i === 0) {
-                this.ctx.moveTo(x, y);
+                this.ctx?.moveTo(x, y);
             } else {
-                this.ctx.lineTo(x, y);
+                this.ctx?.lineTo(x, y);
             }
         });
         if (creating) {
@@ -977,6 +965,7 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawDot(shape: Dot) {
+        if (!this.ctx) return;
         const { strokeStyle, fillStyle, active, coor, lineWidth } = shape;
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
@@ -997,6 +986,7 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawCirle(shape: Circle) {
+        if (!this.ctx) return;
         const { strokeStyle, fillStyle, active, coor, label, creating, radius, ctrlsData, lineWidth } = shape;
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
@@ -1017,6 +1007,7 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawLine(shape: Line) {
+        if (!this.ctx) return;
         const { strokeStyle, active, creating, coor, lineWidth } = shape;
         this.ctx.save();
         this.ctx.lineJoin = 'round';
@@ -1026,9 +1017,9 @@ export default class CanvasSelect extends EventBus {
         coor.forEach((el: Point, i) => {
             const [x, y] = el.map((a) => Math.round(a * this.scale));
             if (i === 0) {
-                this.ctx.moveTo(x, y);
+                this.ctx?.moveTo(x, y);
             } else {
-                this.ctx.lineTo(x, y);
+                this.ctx?.lineTo(x, y);
             }
         });
         if (creating) {
@@ -1046,6 +1037,7 @@ export default class CanvasSelect extends EventBus {
      * @returns
      */
     drawGrid(shape: Grid) {
+        if (!this.ctx) return;
         if (shape.coor.length !== 2) return;
         const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
@@ -1072,6 +1064,7 @@ export default class CanvasSelect extends EventBus {
      * @param point 坐标
      */
     drawCtrl(point: Point) {
+        if (!this.ctx) return;
         const [x, y] = point.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.beginPath();
@@ -1109,7 +1102,7 @@ export default class CanvasSelect extends EventBus {
         const isLabelUp = typeof labelUp === 'boolean' ? labelUp : this.labelUp;
         const currLineWidth = lineWidth || this.lineWidth;
 
-        if (label.length && !isHideLabel) {
+        if (this.ctx && label.length && !isHideLabel) {
             this.ctx.font = labelFont || this.labelFont;
             const textPaddingLeft = 4;
             const textPaddingTop = 4;
@@ -1138,6 +1131,7 @@ export default class CanvasSelect extends EventBus {
     update() {
         window.cancelAnimationFrame(this.timer);
         this.timer = window.requestAnimationFrame(() => {
+            if (!this.ctx) return;
             this.ctx.save();
             this.ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
             this.ctx.translate(this.originX, this.originY);
@@ -1275,8 +1269,10 @@ export default class CanvasSelect extends EventBus {
      * 销毁
      */
     destroy() {
+        if (!this.canvas) return
         this.image.removeEventListener('load', this.handleLoad);
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu);
+        // @ts-ignore
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel);
         this.canvas.removeEventListener('wheel', this.handleMousewheel);
         this.canvas.removeEventListener('mousedown', this.handleMouseDown);
@@ -1290,19 +1286,20 @@ export default class CanvasSelect extends EventBus {
         document.body.removeEventListener('keyup', this.handleKeyup, true);
         this.canvas.width = this.WIDTH;
         this.canvas.height = this.HEIGHT;
-        this.canvas.style.width = null;
-        this.canvas.style.height = null;
-        this.canvas.style.userSelect = null;
+        this.canvas.style.width = '';
+        this.canvas.style.height = '';
+        this.canvas.style.userSelect = '';
     }
 
     /**
      * 重新设置画布大小
      */
     resize() {
-        this.canvas.width = null;
-        this.canvas.height = null;
-        this.canvas.style.width = null;
-        this.canvas.style.height = null;
+        if (!this.canvas) return
+        this.canvas.removeAttribute('width');
+        this.canvas.removeAttribute('height');
+        this.canvas.style.width = '';
+        this.canvas.style.height = '';
         this.initSetting();
         this.update();
     }

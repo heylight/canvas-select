@@ -1,17 +1,21 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "noImplicitAny": true,
-    "downlevelIteration": true,
-    "lib": ["es2016", "DOM"],
-    "module": "es6",
+    "importHelpers": true,
+    "outDir": "./dist",
+    "module": "esnext",
     "target": "es5",
-    "allowJs": true,
+    "lib": ["es6", "dom", "es2017"],
     "sourceMap": true,
-    "experimentalDecorators": true,
-    "resolveJsonModule": true,
+    "allowJs": true,
     "moduleResolution": "node",
-    "declaration": true
+    "rootDir": "./src",
+    "strict": true,
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "downlevelIteration": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts"]
 }
