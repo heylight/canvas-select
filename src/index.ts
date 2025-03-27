@@ -137,7 +137,7 @@ export default class CanvasSelect extends EventBus {
      * @param el Valid CSS selector string, or DOM
      * @param src image src
      */
-    constructor(el: HTMLCanvasElement | string, src?: string) {
+    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement) {
         super();
         this.handleLoad = this.handleLoad.bind(this);
         this.handleContextmenu = this.handleContextmenu.bind(this);
@@ -730,10 +730,20 @@ export default class CanvasSelect extends EventBus {
 
     /**
      * 添加/切换图片
-     * @param url 图片链接
+     * @param source 图片链接或图片对象
      */
-    setImage(url: string) {
-        this.image.src = url;
+    setImage(source: string | HTMLImageElement) {
+        if (typeof source === 'string') {
+            this.image.src = source;
+        } else {
+            this.image = source;
+            this.image.crossOrigin = 'anonymous';
+            if (this.image.complete) {
+                this.handleLoad();
+            } else {
+                this.image.addEventListener('load', this.handleLoad);
+            }
+        }
     }
 
     /**
