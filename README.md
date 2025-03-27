@@ -68,7 +68,7 @@ npm install canvas-select --save
 ```ts
 // 创建实例（重要：一定要等到挂载节点就绪）
 // 第一个参数为挂载节点 可以是css选择器或者HTMLCanvasElement
-// 第二个参数为图片链接
+// 第二个参数为图片链接或者image对象
 const instance = new CanvasSelect(".container", "/one.jpg");
 // or
 // const instance = new CanvasSelect('.container');
