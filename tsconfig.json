@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "importHelpers": true,
-    "outDir": "./dist",
-    "module": "esnext",
+    "outDir": "./lib",
+    "module": "ESNext",
     "target": "es5",
     "lib": ["es6", "dom", "es2017"],
     "sourceMap": true,
@@ -11,7 +11,7 @@
     "rootDir": "./src",
     "strict": true,
     "declaration": true,
-    "declarationDir": "./dist/types",
+    "declarationDir": "./lib/types",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,

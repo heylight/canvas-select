@@ -1,11 +1,11 @@
-import Rect from './shape/Rect';
-import Polygon from './shape/Polygon';
-import Dot from './shape/Dot';
-import EventBus from './EventBus';
-import Line from './shape/Line';
-import Circle from './shape/Circle';
-import Grid from './shape/Grid';
 import pkg from '../package.json';
+import EventBus from './EventBus';
+import Circle from './shape/Circle';
+import Dot from './shape/Dot';
+import Grid from './shape/Grid';
+import Line from './shape/Line';
+import Polygon from './shape/Polygon';
+import Rect from './shape/Rect';
 
 export type Point = [number, number];
 export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid;
@@ -137,7 +137,7 @@ export default class CanvasSelect extends EventBus {
      * @param el Valid CSS selector string, or DOM
      * @param src image src
      */
-    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement) {
+    constructor(el: HTMLCanvasElement | string, src?: string | HTMLImageElement) {
         super();
         this.handleLoad = this.handleLoad.bind(this);
         this.handleContextmenu = this.handleContextmenu.bind(this);
@@ -370,43 +370,9 @@ export default class CanvasSelect extends EventBus {
                         }
                     }
                 } else if (this.createType !== Shape.None && !this.readonly && !this.isCtrlKey) { // 开始创建
-                    let newShape;
-                    const nx = Math.round(offsetX - this.originX / this.scale);
-                    const ny = Math.round(offsetY - this.originY / this.scale);
-                    const curPoint: Point = [nx, ny];
-                    switch (this.createType) {
-                        case Shape.Rect:
-                            newShape = new Rect({ coor: [curPoint, curPoint] }, this.dataset.length);
-                            newShape.creating = true;
-                            break;
-                        case Shape.Polygon:
-                            newShape = new Polygon({ coor: [curPoint] }, this.dataset.length);
-                            newShape.creating = true;
-                            break;
-                        case Shape.Dot:
-                            newShape = new Dot({ coor: curPoint }, this.dataset.length);
-                            this.emit('add', newShape);
-                            break;
-                        case Shape.Line:
-                            newShape = new Line({ coor: [curPoint] }, this.dataset.length);
-                            newShape.creating = true;
-                            break;
-                        case Shape.Circle:
-                            newShape = new Circle({ coor: curPoint }, this.dataset.length);
-                            newShape.creating = true;
-                            break;
-                        case Shape.Grid:
-                            newShape = new Grid({ coor: [curPoint, curPoint] }, this.dataset.length);
-                            newShape.creating = true;
-                            break;
-                        default:
-                            break;
-                    }
-                    if (newShape) {
-                        this.dataset.forEach((sp) => { sp.active = false; });
-                        newShape.active = true;
-                        this.dataset.push(newShape);
-                    }
+                    this.activeShape.active = false;
+                    this.dataset.sort((a, b) => a.index - b.index);
+                    this.emit('select', null);
                 } else {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
@@ -428,9 +394,43 @@ export default class CanvasSelect extends EventBus {
                         }
                         this.emit('select', hitShape);
                     } else {
-                        this.activeShape.active = false;
-                        this.dataset.sort((a, b) => a.index - b.index);
-                        this.emit('select', null);
+                        let newShape;
+                        const nx = Math.round(offsetX - this.originX / this.scale);
+                        const ny = Math.round(offsetY - this.originY / this.scale);
+                        const curPoint: Point = [nx, ny];
+                        switch (this.createType) {
+                            case Shape.Rect:
+                                newShape = new Rect({ coor: [curPoint, curPoint] }, this.dataset.length);
+                                newShape.creating = true;
+                                break;
+                            case Shape.Polygon:
+                                newShape = new Polygon({ coor: [curPoint] }, this.dataset.length);
+                                newShape.creating = true;
+                                break;
+                            case Shape.Dot:
+                                newShape = new Dot({ coor: curPoint }, this.dataset.length);
+                                this.emit('add', newShape);
+                                break;
+                            case Shape.Line:
+                                newShape = new Line({ coor: [curPoint] }, this.dataset.length);
+                                newShape.creating = true;
+                                break;
+                            case Shape.Circle:
+                                newShape = new Circle({ coor: curPoint }, this.dataset.length);
+                                newShape.creating = true;
+                                break;
+                            case Shape.Grid:
+                                newShape = new Grid({ coor: [curPoint, curPoint] }, this.dataset.length);
+                                newShape.creating = true;
+                                break;
+                            default:
+                                break;
+                        }
+                        if (newShape) {
+                            this.dataset.forEach((sp) => { sp.active = false; });
+                            newShape.active = true;
+                            this.dataset.push(newShape);
+                        }
                     }
                 }
                 this.update();
@@ -459,7 +459,7 @@ export default class CanvasSelect extends EventBus {
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
         this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
-        if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
+        if (((!this.isMobile && (e as MouseEvent).buttons === 1) && this.isCtrlKey || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
                 const [[x, y]] = this.remmber;
                 // resize矩形
@@ -579,7 +579,7 @@ export default class CanvasSelect extends EventBus {
         } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
-        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
+        } else if ((!this.isMobile && (e as MouseEvent).buttons === 1 && !this.isCtrlKey) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
@@ -610,7 +610,7 @@ export default class CanvasSelect extends EventBus {
             this.dblTouchStore = Date.now();
         }
         this.remmber = [];
-        if (this.activeShape.type !== Shape.None && !this.isCtrlKey) {
+        if (this.activeShape.type !== Shape.None) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
                 if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
