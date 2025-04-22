@@ -8,15 +8,8 @@ import terser from '@rollup/plugin-terser';
 const mergePlugins = process.env.NODE_ENV === 'development' ?
   [serve({ open: true }), livereload({ watch: 'lib' })] : [terser()]
 
-export default {
+const baseConfig = {
   input: 'src/index.ts',
-  output: {
-    exports: 'auto',
-    file: 'lib/canvas-select.min.js',
-    format: 'umd',
-    name: 'CanvasSelect',
-    sourcemap: true,
-  },
   plugins: [
     babel({ babelHelpers: 'bundled' }),
     typescript({
@@ -25,4 +18,28 @@ export default {
     json(),
     ...mergePlugins
   ]
-};
+}
+
+export default [
+  // UMD 构建
+  {
+    ...baseConfig,
+    output: {
+      file: 'lib/canvas-select.min.js',
+      format: 'umd',
+      name: 'CanvasSelect',
+      exports: 'auto',
+      sourcemap: true,
+    }
+  },
+  // ES 构建
+  {
+    ...baseConfig,
+    output: {
+      file: 'lib/canvas-select.esm.js',
+      format: 'es',
+      exports: 'auto',
+      sourcemap: true
+    }
+  }
+];
