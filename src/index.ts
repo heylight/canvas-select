@@ -40,7 +40,7 @@ export default class CanvasSelect extends EventBus {
     /** 当前选中的标注边线颜色 */
     activeStrokeStyle = '#f00';
     /** 当前选中的标注填充颜色 */
-    activeFillStyle = 'rgba(255, 0, 0, 0.1)';
+    activeFillStyle = 'rgba(0, 0, 255, 0.1)';
     /** 控制点边线颜色 */
     ctrlStrokeStyle = '#000';
     /** 控制点填充颜色 */
@@ -927,7 +927,7 @@ export default class CanvasSelect extends EventBus {
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = sub?.isSelected ? sub?.selectedFillStyle : (fillStyle || this.fillStyle);
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (sub?.isSelected ? sub?.selectedFillStyle : (fillStyle || this.fillStyle));
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         const w = x1 - x0;
         const h = y1 - y0;
@@ -947,7 +947,7 @@ export default class CanvasSelect extends EventBus {
         this.ctx.save();
         this.ctx.lineJoin = 'round';
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.fillStyle);
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
         coor.forEach((el: Point, i) => {
@@ -976,11 +976,11 @@ export default class CanvasSelect extends EventBus {
      */
     drawDot(shape: Dot) {
         if (!this.ctx) return;
-        const { strokeStyle, fillStyle, active, coor, lineWidth } = shape;
+        const { strokeStyle, creating, fillStyle, active, coor, lineWidth } = shape;
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = fillStyle || this.ctrlFillStyle;
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.ctrlFillStyle);
         this.ctx.strokeStyle = active ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
@@ -1001,7 +1001,7 @@ export default class CanvasSelect extends EventBus {
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.fillStyle);
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         this.ctx.beginPath();
         this.ctx.arc(x, y, radius * this.scale, 0, 2 * Math.PI, true);
@@ -1053,7 +1053,7 @@ export default class CanvasSelect extends EventBus {
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = fillStyle || this.fillStyle;
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.fillStyle);
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
         shape.gridRects.forEach((rect: Rect, m) => {
             this.drawRect(rect, {
