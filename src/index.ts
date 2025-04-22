@@ -1198,6 +1198,15 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
+     * 删除指定形状
+     * @param index number
+     */
+    deleteShapeByUuid(uuid: string) {
+        this.dataset = this.dataset.filter((x) => x.uuid !== uuid);
+        this.update();
+    }
+
+    /**
      * 计算缩放步长
      */
     calcStep(flag = '') {
