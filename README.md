@@ -187,6 +187,7 @@ instance.on("select", (info) => {
 | fitZoom       |       无        |      适配图片到画布 （contain）       |
 | update        |       无        | 更新画布， 修改实例属性后要执行此方法 |
 | deleteByIndex |     number      |           根据索引删除形状            |
+| deleteByUuid  |     string      |           根据uuid删除形状            |
 | setFocusMode  |     boolean     |             设置专注模式              |
 | on            | string,function |               监听事件                |
 | resize        |       无        |           重新设置画布大小            |

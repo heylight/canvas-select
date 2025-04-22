@@ -1184,7 +1184,7 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
-     * 删除指定矩形
+     * 通过索引删除指定形状
      * @param index number
      */
     deleteByIndex(index: number) {
@@ -1198,12 +1198,16 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
-     * 删除指定形状
-     * @param index number
+     * 通过uuid删除指定形状
+     * @param index string
      */
-    deleteShapeByUuid(uuid: string) {
-        this.dataset = this.dataset.filter((x) => x.uuid !== uuid);
-        this.update();
+    deleteByUuid(uuid: string) {
+        const target = this.dataset.find((x) => x.uuid === uuid);
+        if (target) {
+            this.emit('delete', target);
+            this.dataset = this.dataset.filter((x) => x.uuid !== uuid);
+            this.update();
+        }
     }
 
     /**
