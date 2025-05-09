@@ -46,7 +46,7 @@ yarn add canvas-select
 在您的 HTML 文件中准备一个 `<canvas>` 元素：
 
 ```html
-<canvas id="container"></canvas>
+<canvas class="container"></canvas>
 ```
 
 ### 2. 初始化实例
