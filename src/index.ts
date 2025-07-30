@@ -1117,11 +1117,21 @@ export default class CanvasSelect extends EventBus {
             this.ctx.font = labelFont || this.labelFont;
             const textPaddingLeft = 4;
             const textPaddingTop = 4;
-            const newText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
-            const text = this.ctx.measureText(newText);
+            const rawText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
+            const lines = rawText.split('\n');
+            // 计算每行的宽度，取最大值
+            let maxWidth = 0;
+            const lineWidths: number[] = [];
+            lines.forEach(line => {
+                const textMetrics = this.ctx!.measureText(line);
+                lineWidths.push(textMetrics.width);
+                maxWidth = Math.max(maxWidth, textMetrics.width);
+            });
+            
             const font = parseInt(this.ctx.font) - 4;
-            const labelWidth = text.width + textPaddingLeft * 2;
-            const labelHeight = font + textPaddingTop * 2;
+            const lineHeight = font + 4; // 行高
+            const labelWidth = maxWidth + textPaddingLeft * 2;
+            const labelHeight = lineHeight * lines.length + textPaddingTop * 2;
             const [x, y] = point.map((a) => a * this.scale);
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < labelWidth / this.scale;
             const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < labelHeight / this.scale;
@@ -1129,9 +1139,26 @@ export default class CanvasSelect extends EventBus {
             const isup = isLabelUp ? toTop2 : toTop;
             this.ctx.save();
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
-            this.ctx.fillRect(toleft ? (x - text.width - textPaddingLeft - currLineWidth / 2) : (x + currLineWidth / 2), isup ? (y - labelHeight - currLineWidth / 2) : (y + currLineWidth / 2), labelWidth, labelHeight);
+            this.ctx.fillRect(
+                toleft ? (x - maxWidth - textPaddingLeft - currLineWidth / 2) : (x + currLineWidth / 2), 
+                isup ? (y - labelHeight - currLineWidth / 2) : (y + currLineWidth / 2), 
+                labelWidth, 
+                labelHeight
+            );
+            // 绘制文本（多行）
             this.ctx.fillStyle = textFillStyle || this.textFillStyle;
-            this.ctx.fillText(newText, toleft ? (x - text.width) : (x + textPaddingLeft + currLineWidth / 2), isup ? (y - labelHeight + font + textPaddingTop) : (y + font + textPaddingTop + currLineWidth / 2), 180);
+            lines.forEach((line, index) => {
+                const lineY = isup 
+                    ? (y - labelHeight + font + textPaddingTop + index * lineHeight)
+                    : (y + font + textPaddingTop + currLineWidth / 2 + index * lineHeight);
+                this.ctx!.fillText(
+                    line, 
+                    toleft ? (x - lineWidths[index]) : (x + textPaddingLeft + currLineWidth / 2), 
+                    lineY, 
+                    180
+                );
+            });
+            
             this.ctx.restore();
         }
     }
