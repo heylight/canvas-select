@@ -39,6 +39,8 @@ export default class Shape {
     public labelUp: boolean | undefined
     /** 隐藏标注 */
     public hide: boolean | undefined
+    /** 只读模式 */
+    public readonly: boolean | undefined
     constructor(item: ShapeProp, index: number) {
         this.index = index
         Object.assign(this, item)

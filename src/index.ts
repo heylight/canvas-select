@@ -410,6 +410,7 @@ export default class CanvasSelect extends EventBus {
                 } else {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
+                    if (hitShape.readonly) return;
                     if (hitShapeIndex > -1 && hitShape) {
                         hitShape.dragging = true;
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
