@@ -6,6 +6,7 @@ import Line from './shape/Line';
 import Circle from './shape/Circle';
 import Grid from './shape/Grid';
 import pkg from '../package.json';
+import GridHelper, { GridHelperOptions } from './GridHelper';
 
 export type Point = [number, number];
 export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid;
@@ -19,6 +20,10 @@ enum Shape {
     Grid
 }
 export default class CanvasSelect extends EventBus {
+    /** 网格辅助线组件 */
+    gridHelper?: GridHelper;
+    /** 网格辅助线配置 */
+    gridHelperOptions: GridHelperOptions = { enabled: false, size: 50 };
     /** 当前版本 */
     version = pkg.version;
     /** 只读模式，画布不允许任何交互 */
@@ -109,6 +114,8 @@ export default class CanvasSelect extends EventBus {
     scaleStep = 0;
     /** 滚动缩放 */
     scrollZoom = true;
+    minZoom: number = 0.1;
+    maxZoom: number = 3.0;
 
     private timer: any = null;
     /** 最小touch双击时间 */
@@ -137,7 +144,12 @@ export default class CanvasSelect extends EventBus {
      * @param el Valid CSS selector string, or DOM
      * @param src image src
      */
-    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement) {
+    /**
+     * @param el Valid CSS selector string, or DOM
+     * @param src image src
+     * @param gridHelperOptions 网格辅助线配置
+     */
+    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement, gridHelperOptions?: Partial<GridHelperOptions>) {
         super();
         this.handleLoad = this.handleLoad.bind(this);
         this.handleContextmenu = this.handleContextmenu.bind(this);
@@ -152,11 +164,26 @@ export default class CanvasSelect extends EventBus {
         if (container instanceof HTMLCanvasElement) {
             this.canvas = container;
             this.offScreen = document.createElement('canvas');
+            if (gridHelperOptions) {
+                this.gridHelperOptions = { ...this.gridHelperOptions, ...gridHelperOptions };
+            }
+            this.gridHelper = new GridHelper(this.canvas, this.gridHelperOptions, this);
             this.initSetting();
             this.initEvents();
             src && this.setImage(src);
         } else {
             console.warn('HTMLCanvasElement is required!');
+        }
+    }
+
+    /**
+     * 设置/更新网格辅助线配置
+     */
+    public setGridHelperOptions(options: Partial<GridHelperOptions>) {
+        this.gridHelperOptions = { ...this.gridHelperOptions, ...options };
+        if (this.gridHelper) {
+            this.gridHelper.setOptions(this.gridHelperOptions);
+            this.update();
         }
     }
 
@@ -411,6 +438,7 @@ export default class CanvasSelect extends EventBus {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
                     if (hitShapeIndex > -1 && hitShape) {
+                        if (hitShape.readonly) return;
                         hitShape.dragging = true;
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
                         this.dataset.splice(hitShapeIndex, 1);
@@ -443,7 +471,7 @@ export default class CanvasSelect extends EventBus {
                     if (/^[1-9]\d*$/.test(row) && /^[1-9]\d*$/.test(col)) {
                         this.activeShape.row = Number(row);
                         this.activeShape.col = Number(col);
-                        this.update();
+                        this.update(this.activeShape);
                     }
                 }
 
@@ -575,7 +603,9 @@ export default class CanvasSelect extends EventBus {
                     this.activeShape.radius = r;
                 }
             }
-            this.update();
+            // 如果是拖拽或调整控制点，传入被更新的要素
+            const shouldEmitUpdateShape = (this.ctrlIndex > -1 && this.remmber.length) || this.activeShape.dragging;
+            this.update(shouldEmitUpdateShape ? this.activeShape : undefined);
         } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
@@ -633,7 +663,7 @@ export default class CanvasSelect extends EventBus {
                     }
                 }
                 this.update();
-            }
+            } 
         }
     }
 
@@ -660,7 +690,7 @@ export default class CanvasSelect extends EventBus {
                         }
                     }
                 });
-                this.update();
+                this.update(this.activeShape);
             }
         }
     }
@@ -679,10 +709,10 @@ export default class CanvasSelect extends EventBus {
             if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && e.key === 'Escape') {
                 if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
                     this.activeShape.coor.pop();
+                    this.update(this.activeShape);
                 } else {
                     this.deleteByIndex(this.activeShape.index);
                 }
-                this.update();
             } else if (e.key === 'Backspace') {
                 this.deleteByIndex(this.activeShape.index);
             }
@@ -1107,8 +1137,8 @@ export default class CanvasSelect extends EventBus {
      * @param label 文本
      */
     drawLabel(point: Point, shape: AllShape) {
-        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', hideLabel, labelUp, lineWidth } = shape;
-        const isHideLabel = typeof hideLabel === 'boolean' ? hideLabel : this.hideLabel;
+        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', active, labelUp, lineWidth } = shape;
+        const isHideLabel = !active;
         const isLabelUp = typeof labelUp === 'boolean' ? labelUp : this.labelUp;
         const currLineWidth = lineWidth || this.lineWidth;
 
@@ -1116,11 +1146,21 @@ export default class CanvasSelect extends EventBus {
             this.ctx.font = labelFont || this.labelFont;
             const textPaddingLeft = 4;
             const textPaddingTop = 4;
-            const newText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
-            const text = this.ctx.measureText(newText);
+            const rawText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
+            const lines = rawText.split('\n');
+            // 计算每行的宽度，取最大值
+            let maxWidth = 0;
+            const lineWidths: number[] = [];
+            lines.forEach(line => {
+                const textMetrics = this.ctx!.measureText(line);
+                lineWidths.push(textMetrics.width);
+                maxWidth = Math.max(maxWidth, textMetrics.width);
+            });
+            
             const font = parseInt(this.ctx.font) - 4;
-            const labelWidth = text.width + textPaddingLeft * 2;
-            const labelHeight = font + textPaddingTop * 2;
+            const lineHeight = font + 4; // 行高
+            const labelWidth = maxWidth + textPaddingLeft * 2;
+            const labelHeight = lineHeight * lines.length + textPaddingTop * 2;
             const [x, y] = point.map((a) => a * this.scale);
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < labelWidth / this.scale;
             const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < labelHeight / this.scale;
@@ -1128,17 +1168,35 @@ export default class CanvasSelect extends EventBus {
             const isup = isLabelUp ? toTop2 : toTop;
             this.ctx.save();
             this.ctx.fillStyle = labelFillStyle || this.labelFillStyle;
-            this.ctx.fillRect(toleft ? (x - text.width - textPaddingLeft - currLineWidth / 2) : (x + currLineWidth / 2), isup ? (y - labelHeight - currLineWidth / 2) : (y + currLineWidth / 2), labelWidth, labelHeight);
+            this.ctx.fillRect(
+                toleft ? (x - maxWidth - textPaddingLeft - currLineWidth / 2) : (x + currLineWidth / 2), 
+                isup ? (y - labelHeight - currLineWidth / 2) : (y + currLineWidth / 2), 
+                labelWidth, 
+                labelHeight
+            );
+            // 绘制文本（多行）
             this.ctx.fillStyle = textFillStyle || this.textFillStyle;
-            this.ctx.fillText(newText, toleft ? (x - text.width) : (x + textPaddingLeft + currLineWidth / 2), isup ? (y - labelHeight + font + textPaddingTop) : (y + font + textPaddingTop + currLineWidth / 2), 180);
+            lines.forEach((line, index) => {
+                const lineY = isup 
+                    ? (y - labelHeight + font + textPaddingTop + index * lineHeight)
+                    : (y + font + textPaddingTop + currLineWidth / 2 + index * lineHeight);
+                this.ctx!.fillText(
+                    line, 
+                    toleft ? (x - lineWidths[index]) : (x + textPaddingLeft + currLineWidth / 2), 
+                    lineY, 
+                    180
+                );
+            });
+            
             this.ctx.restore();
         }
     }
 
     /**
      * 更新画布
+     * @param updatedShape 被更新的要素，如果提供则会额外抛出 updateShape 事件
      */
-    update() {
+    update(updatedShape?: AllShape) {
         window.cancelAnimationFrame(this.timer);
         this.timer = window.requestAnimationFrame(() => {
             if (!this.ctx) return;
@@ -1179,7 +1237,15 @@ export default class CanvasSelect extends EventBus {
                 this.drawCtrlList(this.activeShape);
             }
             this.ctx.restore();
+            // 绘制网格标尺（在所有内容之上）
+            if (this.gridHelper && this.gridHelperOptions.enabled) {
+                this.gridHelper.draw([this.originX, this.originY], this.scale);
+            }
             this.emit('updated', this.dataset);
+            // 如果提供了被更新的要素，则抛出 updateShape 事件
+            if (updatedShape) {
+                this.emit('updateShape', updatedShape);
+            }
         });
     }
 
@@ -1236,7 +1302,17 @@ export default class CanvasSelect extends EventBus {
      */
     setScale(type: boolean, byMouse = false, pure = false) {
         if (this.lock) return;
-        if ((!type && this.imageMin < 20) || (type && this.IMAGE_WIDTH > this.imageOriginMax * 100)) return;
+        // 计算当前缩放比例
+        let currentScale = this.IMAGE_WIDTH && this.IMAGE_ORIGIN_WIDTH ? this.IMAGE_WIDTH / this.IMAGE_ORIGIN_WIDTH : 1;
+        // 计算下一步缩放比例
+        let nextScale = currentScale;
+        if (type) {
+            nextScale = currentScale * 1.05;
+        } else {
+            nextScale = currentScale * 0.95;
+        }
+        // 限制缩放比例在 minZoom ~ maxZoom 之间
+        if (nextScale < this.minZoom || nextScale > this.maxZoom) return;
         if (type) { this.scaleStep++; } else { this.scaleStep--; }
         let realToLeft = 0;
         let realToRight = 0;

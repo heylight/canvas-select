@@ -51,5 +51,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/heylight/canvas-select.git"
+  },
+  "dependencies": {
+    "@babel/core": "^7.28.0"
   }
 }

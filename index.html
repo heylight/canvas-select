@@ -18,8 +18,7 @@
     .container {
       background-color: #ccc;
       width: 100%;
-      max-width: 400px;
-      height: 400px;
+      height: 100%;
     }
 
     .right {
@@ -61,19 +60,20 @@
   <script>
     // alert(document.body.clientWidth)
     const output = document.getElementById('output');
-    const instance = new CanvasSelect('.container', 'https://n.sinaimg.cn/www/transform/300/w660h440/20240318/3875-37fb8533570d8661d3f547c7e3b0ddde.jpg');
+    const instance = new CanvasSelect('.container', 'http://mapugcnew-1306570047.cos.ap-beijing-cdz-tmap-1.tencentcos.cn/device-image-t3/rRV5vy16p0LZxZhcBqPOtXKI_iBXywEVxoC6vdSKDuQ=/2503171414381527205/1742191492608.jpg?sign=8sMmE1Vlr8w2EzGyJu0%2BbKZ3aYVhPTEzMDY1NzAwNDcmYj1tYXB1Z2NuZXcmaz1BS0lEa1IwUGV2NDZBQkVNUWN4UG5JbTdIVWQwRVlxS3ZQakYmZT0xNzUzOTU0NzUzJnQ9MTc1Mzg2ODM1MyZyPTA0NzMwNjc5MDMmZj0%3D', { enabled: true, size: 40 });
     // instance.readonly = true
     // instance.focusMode = true
     instance.ctrlRadius = navigator.userAgent.includes('Mobile') ? 6 : 3
     window.c = instance;
     let option = [
       {
-        label: "矩形",
+        label: "只读矩形",
         coor: [[184, 183], [275, 238]],
+        readonly: true,
         type: 1
       },
       {
-        label: "多边形",
+        label: "多边形\n测试换行",
         coor: [[135, 291], [129, 319], [146, 346], [174, 365], [214, 362], [196, 337], [161, 288]],
         type: 2
       },
@@ -127,14 +127,12 @@
     instance.on('select', (info) => {
       console.log('当前选中1', info)
     });
-    instance.on('updated', (result) => {
-      console.log('标注结果', result)
-      // const list = [...result]
-      // list.sort((a, b) => a.index - b.index)
-      // output.value = JSON.stringify(list, null, 2);
-    });
     instance.on('contextmenu', () => {
       console.log('右键')
+    });
+
+    instance.on('updateShape', (shape) => {
+      console.log('被更新的要素:', shape);
     });
 
     function change(num) {
