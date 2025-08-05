@@ -66,6 +66,8 @@ export default class CanvasSelect extends EventBus {
     WIDTH = 0;
     /** 画布高度 */
     HEIGHT = 0;
+    /** 最小移动距离 */
+    MIN_MOVE_DISTANCE = 4;
 
     canvas: HTMLCanvasElement | undefined
 
@@ -92,6 +94,8 @@ export default class CanvasSelect extends EventBus {
     mouse: Point = [0, 0];
     /** 记录背景图鼠标位移 */
     remmberOrigin: number[] = [0, 0];
+    /** 记录拖拽开始时的鼠标位置 */
+    dragStartMouse: Point = [0, 0];
     /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
     createType: Shape = Shape.None; //
     /** 控制点索引 */
@@ -440,6 +444,7 @@ export default class CanvasSelect extends EventBus {
                     if (hitShapeIndex > -1 && hitShape) {
                         if (hitShape.readonly) return;
                         hitShape.dragging = true;
+                        this.dragStartMouse = [mouseX, mouseY]; // 记录拖拽开始位置
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
                         this.dataset.splice(hitShapeIndex, 1);
                         this.dataset.push(hitShape);
@@ -566,6 +571,14 @@ export default class CanvasSelect extends EventBus {
 
 
             } else if (this.activeShape.dragging && !this.readonly) { // 拖拽
+                const dragDistance = Math.sqrt(
+                    Math.pow(mouseX - this.dragStartMouse[0], 2) + 
+                    Math.pow(mouseY - this.dragStartMouse[1], 2)
+                );
+                if (dragDistance < this.MIN_MOVE_DISTANCE) {
+                    return;
+                }
+                
                 // 拖拽点的时候，也需要触发放大镜
                 if (this.isMagnifierVisible && this.activeShape.type === 3) {
                     const [ux, uy] = this.isMobile ? [mouseCX, mouseCY] : [mouseX, mouseY]
@@ -640,6 +653,7 @@ export default class CanvasSelect extends EventBus {
             this.dblTouchStore = Date.now();
         }
         this.remmber = [];
+        this.dragStartMouse = [0, 0]; // 重置拖拽开始位置
         if (this.activeShape.type !== Shape.None && !this.isCtrlKey) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
@@ -670,6 +684,7 @@ export default class CanvasSelect extends EventBus {
     private handleDblclick(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         if (this.lock) return;
+        if(this.activeShape.creating === false) return;
         if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
             const canPolygon = this.activeShape.type === Shape.Polygon && this.activeShape.coor.length > 2
             const canLine = this.activeShape.type === Shape.Line && this.activeShape.coor.length > 1
@@ -815,6 +830,45 @@ export default class CanvasSelect extends EventBus {
                 }
             });
             this.dataset = initdata;
+            this.update();
+        });
+    }
+
+    addData(data:AllShape[]){
+        setTimeout(() => {
+            const initdata: AllShape[] = [];
+            data.forEach((item, index) => {
+                if (Object.prototype.toString.call(item).includes('Object')) {
+                    let shape: any;
+                    switch (item.type) {
+                        case Shape.Rect:
+                            shape = new Rect(item, index);
+                            break;
+                        case Shape.Polygon:
+                            shape = new Polygon(item, index);
+                            break;
+                        case Shape.Dot:
+                            shape = new Dot(item, index);
+                            break;
+                        case Shape.Line:
+                            shape = new Line(item, index);
+                            break;
+                        case Shape.Circle:
+                            shape = new Circle(item, index);
+                            break;
+                        case Shape.Grid:
+                            shape = new Grid(item, index);
+                            break;
+                        default:
+                            console.warn('Invalid shape', item);
+                            break;
+                    }
+                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid].includes(item.type) && shape && initdata.push(shape);
+                } else {
+                    console.warn('Shape must be an enumerable Object.', item);
+                }
+            });
+            this.dataset = [...this.dataset,...initdata];
             this.update();
         });
     }
