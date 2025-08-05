@@ -724,7 +724,7 @@ export default class CanvasSelect extends EventBus {
         if (!this.canvas || !this.offScreen) return;
         const dpr = window.devicePixelRatio || 1;
         // 处理图片跨域问题
-        this.image.crossOrigin = 'anonymous';
+
         this.canvas.style.userSelect = 'none';
         this.ctx = this.ctx || this.canvas.getContext('2d', { alpha: this.alpha });
         this.WIDTH = Math.round(this.canvas.clientWidth);
@@ -1241,11 +1241,14 @@ export default class CanvasSelect extends EventBus {
             if (this.gridHelper && this.gridHelperOptions.enabled) {
                 this.gridHelper.draw([this.originX, this.originY], this.scale);
             }
-            this.emit('updated', this.dataset);
-            // 如果提供了被更新的要素，则抛出 updateShape 事件
-            if (updatedShape) {
-                this.emit('updateShape', updatedShape);
+            if(!this.readonly){
+                this.emit('updated', this.dataset);
+                // 如果提供了被更新的要素，则抛出 updateShape 事件
+                if (updatedShape) {
+                    this.emit('updateShape', updatedShape);
+                }
             }
+           
         });
     }
 
@@ -1302,17 +1305,7 @@ export default class CanvasSelect extends EventBus {
      */
     setScale(type: boolean, byMouse = false, pure = false) {
         if (this.lock) return;
-        // 计算当前缩放比例
-        let currentScale = this.IMAGE_WIDTH && this.IMAGE_ORIGIN_WIDTH ? this.IMAGE_WIDTH / this.IMAGE_ORIGIN_WIDTH : 1;
-        // 计算下一步缩放比例
-        let nextScale = currentScale;
-        if (type) {
-            nextScale = currentScale * 1.05;
-        } else {
-            nextScale = currentScale * 0.95;
-        }
-        // 限制缩放比例在 minZoom ~ maxZoom 之间
-        if (nextScale < this.minZoom || nextScale > this.maxZoom) return;
+        if ((!type && this.imageMin < 20) || (type && this.IMAGE_WIDTH > this.imageOriginMax * 100)) return;
         if (type) { this.scaleStep++; } else { this.scaleStep--; }
         let realToLeft = 0;
         let realToRight = 0;
