@@ -442,7 +442,6 @@ export default class CanvasSelect extends EventBus {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
                     if (hitShapeIndex > -1 && hitShape) {
-                        if (hitShape.readonly) return;
                         hitShape.dragging = true;
                         this.dragStartMouse = [mouseX, mouseY]; // 记录拖拽开始位置
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
@@ -488,6 +487,7 @@ export default class CanvasSelect extends EventBus {
     private handleMouseMove(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         if (this.lock) return;
+        if(this.activeShape.readonly) return;
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
@@ -725,10 +725,9 @@ export default class CanvasSelect extends EventBus {
                 if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
                     this.activeShape.coor.pop();
                     this.update(this.activeShape);
-                } else {
-                    this.deleteByIndex(this.activeShape.index);
                 }
             } else if (e.key === 'Backspace') {
+                if(this.activeShape.readonly) return;
                 this.deleteByIndex(this.activeShape.index);
             }
         }
@@ -872,6 +871,7 @@ export default class CanvasSelect extends EventBus {
             this.update();
         });
     }
+
 
     /**
      * 判断是否在标注实例上
