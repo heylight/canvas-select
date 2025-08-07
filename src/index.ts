@@ -118,8 +118,6 @@ export default class CanvasSelect extends EventBus {
     scaleStep = 0;
     /** 滚动缩放 */
     scrollZoom = true;
-    minZoom: number = 0.1;
-    maxZoom: number = 3.0;
 
     private timer: any = null;
     /** 最小touch双击时间 */
@@ -1449,4 +1447,14 @@ export default class CanvasSelect extends EventBus {
         this.initSetting();
         this.update();
     }
+    toggleGrid(){
+        this.gridHelper?.toggle()
+    }
+    enableGrid() {
+        this.gridHelper?.enable()
+    }
+    disableGrid() {
+        this.gridHelper?.disable()
+    }
+    
 }

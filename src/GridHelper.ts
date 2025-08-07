@@ -54,6 +54,39 @@ export default class GridHelper {
   }
 
   /**
+   * 切换网格显示/隐藏状态
+   * @returns 返回切换后的显示状态
+   */
+  toggle() {
+    this.options.enabled = !this.options.enabled;
+    this.canvasSelect.update();
+  }
+
+  /**
+   * 启用网格显示
+   */
+  enable() {
+    this.options.enabled = true;
+    this.canvasSelect.update();
+  }
+
+  /**
+   * 禁用网格显示
+   */
+  disable() {
+    this.options.enabled = false;
+    this.canvasSelect.update();
+  }
+
+  /**
+   * 获取当前网格显示状态
+   * @returns 是否启用网格显示
+   */
+  isEnabled(): boolean {
+    return this.options.enabled;
+  }
+
+  /**
    * 绘制网格辅助线
    * @param origin 原点坐标 [x, y]
    * @param scale 缩放比例
