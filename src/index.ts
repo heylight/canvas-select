@@ -191,7 +191,12 @@ export default class CanvasSelect extends EventBus {
 
     /** 当前当前选中的标注 */
     get activeShape() {
-        return this.dataset.find(x => x.active) || {} as any;
+        // 如果有多个 active 则返回 {}, 如果只有有个则返回哪一个
+        const activeShapes = this.dataset.filter(x => x.active);
+        if (activeShapes.length > 1) {
+            return {} as any;
+        }
+        return activeShapes[0] || {} as any;
     }
 
     /** 当前缩放比例 */
@@ -719,14 +724,9 @@ export default class CanvasSelect extends EventBus {
         }
         if (this.lock || document.activeElement !== document.body || this.readonly) return;
         if (this.activeShape.type) {
-            if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && e.key === 'Escape') {
-                if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
-                    this.activeShape.coor.pop();
-                    this.update(this.activeShape);
-                }
-            } else if (e.key === 'Backspace') {
+          if (['Delete', 'Backspace'].includes(e.key)) {
                 if(this.activeShape.readonly) return;
-                this.deleteByIndex(this.activeShape.index);
+                this.deleteByUuid(this.activeShape.uuid);
             }
         }
     }
@@ -831,7 +831,7 @@ export default class CanvasSelect extends EventBus {
         });
     }
 
-    addData(data:AllShape[]){
+    addData(data:AllShape[], isUnshift = false) {
         setTimeout(() => {
             const initdata: AllShape[] = [];
             data.forEach((item, index) => {
@@ -842,7 +842,7 @@ export default class CanvasSelect extends EventBus {
                             shape = new Rect(item, index);
                             break;
                         case Shape.Polygon:
-                            shape = new Polygon(item, index);
+                            shape = new Polygon(item,  index);
                             break;
                         case Shape.Dot:
                             shape = new Dot(item, index);
@@ -865,7 +865,17 @@ export default class CanvasSelect extends EventBus {
                     console.warn('Shape must be an enumerable Object.', item);
                 }
             });
-            this.dataset = [...this.dataset,...initdata];
+
+            if(isUnshift) {
+                this.dataset.unshift(...initdata);
+            } else {
+                this.dataset.push(...initdata);
+            }
+
+            // 重新设置 index
+            this.dataset.forEach((item, index) => {
+                item.index = index;
+            });
             this.update();
         });
     }
@@ -1174,6 +1184,8 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawCtrlList(shape: Rect | Polygon | Line) {
+        if(!shape) return;
+        if(shape.readonly) return;
         shape.ctrlsData.forEach((point, i) => {
             if (shape.type === Shape.Circle) {
                 if (i === 1) this.drawCtrl(point);
@@ -1456,5 +1468,5 @@ export default class CanvasSelect extends EventBus {
     disableGrid() {
         this.gridHelper?.disable()
     }
-    
+
 }

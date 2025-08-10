@@ -1,4 +1,7 @@
-# canvas-select
+# canvas-select-pro
+此仓库基于 [canvas-select](https://github.com/heylight/canvas-select) 进行扩展和改进。
+增加了网格/标尺/单要素只读/修复了一系列 bug
+
 
 一个用于图片标注的 javascript 库，基于 canvas，简单轻量，支持矩形、多边形、点、折线、圆形标注、网格标注。
 
@@ -21,22 +24,14 @@
 
 ## 🚀 安装 (Installation)
 
-您可以通过以下任一方式将 `canvas-select` 集成到您的项目中：
-
-### 通过 CDN (UMD)
-
-直接在 HTML 文件中引入：
-
-```html
-<script src="https://unpkg.com/canvas-select@^2/lib/canvas-select.min.js"></script>
-```
+您可以通过以下式将 `canvas-select-pro` 集成到您的项目中：
 
 ### 通过 npm/yarn
 
 ```bash
-npm install canvas-select --save
+npm install canvas-select-pro  --save
 # 或者
-yarn add canvas-select
+yarn add canvas-select-pro
 ```
 
 ## 🛠️ 使用方法 (Usage)
