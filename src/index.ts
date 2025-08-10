@@ -6,6 +6,7 @@ import Line from './shape/Line';
 import Circle from './shape/Circle';
 import Grid from './shape/Grid';
 import pkg from '../package.json';
+import GridHelper, { GridHelperOptions } from './GridHelper';
 
 export type Point = [number, number];
 export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid;
@@ -19,6 +20,10 @@ enum Shape {
     Grid
 }
 export default class CanvasSelect extends EventBus {
+    /** 网格辅助线组件 */
+    gridHelper?: GridHelper;
+    /** 网格辅助线配置 */
+    gridHelperOptions: GridHelperOptions = { enabled: false, size: 50 };
     /** 当前版本 */
     version = pkg.version;
     /** 只读模式，画布不允许任何交互 */
@@ -61,6 +66,8 @@ export default class CanvasSelect extends EventBus {
     WIDTH = 0;
     /** 画布高度 */
     HEIGHT = 0;
+    /** 最小移动距离 */
+    MIN_MOVE_DISTANCE = 4;
 
     canvas: HTMLCanvasElement | undefined
 
@@ -87,6 +94,8 @@ export default class CanvasSelect extends EventBus {
     mouse: Point = [0, 0];
     /** 记录背景图鼠标位移 */
     remmberOrigin: number[] = [0, 0];
+    /** 记录拖拽开始时的鼠标位置 */
+    dragStartMouse: Point = [0, 0];
     /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
     createType: Shape = Shape.None; //
     /** 控制点索引 */
@@ -137,7 +146,12 @@ export default class CanvasSelect extends EventBus {
      * @param el Valid CSS selector string, or DOM
      * @param src image src
      */
-    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement) {
+    /**
+     * @param el Valid CSS selector string, or DOM
+     * @param src image src
+     * @param gridHelperOptions 网格辅助线配置
+     */
+    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement, gridHelperOptions?: Partial<GridHelperOptions>) {
         super();
         this.handleLoad = this.handleLoad.bind(this);
         this.handleContextmenu = this.handleContextmenu.bind(this);
@@ -152,6 +166,10 @@ export default class CanvasSelect extends EventBus {
         if (container instanceof HTMLCanvasElement) {
             this.canvas = container;
             this.offScreen = document.createElement('canvas');
+            if (gridHelperOptions) {
+                this.gridHelperOptions = { ...this.gridHelperOptions, ...gridHelperOptions };
+            }
+            this.gridHelper = new GridHelper(this.canvas, this.gridHelperOptions, this);
             this.initSetting();
             this.initEvents();
             src && this.setImage(src);
@@ -160,9 +178,25 @@ export default class CanvasSelect extends EventBus {
         }
     }
 
+    /**
+     * 设置/更新网格辅助线配置
+     */
+    public setGridHelperOptions(options: Partial<GridHelperOptions>) {
+        this.gridHelperOptions = { ...this.gridHelperOptions, ...options };
+        if (this.gridHelper) {
+            this.gridHelper.setOptions(this.gridHelperOptions);
+            this.update();
+        }
+    }
+
     /** 当前当前选中的标注 */
     get activeShape() {
-        return this.dataset.find(x => x.active) || {} as any;
+        // 如果有多个 active 则返回 {}, 如果只有有个则返回哪一个
+        const activeShapes = this.dataset.filter(x => x.active);
+        if (activeShapes.length > 1) {
+            return {} as any;
+        }
+        return activeShapes[0] || {} as any;
     }
 
     /** 当前缩放比例 */
@@ -413,6 +447,7 @@ export default class CanvasSelect extends EventBus {
                     if (hitShape.readonly) return;
                     if (hitShapeIndex > -1 && hitShape) {
                         hitShape.dragging = true;
+                        this.dragStartMouse = [mouseX, mouseY]; // 记录拖拽开始位置
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
                         this.dataset.splice(hitShapeIndex, 1);
                         this.dataset.push(hitShape);
@@ -444,7 +479,7 @@ export default class CanvasSelect extends EventBus {
                     if (/^[1-9]\d*$/.test(row) && /^[1-9]\d*$/.test(col)) {
                         this.activeShape.row = Number(row);
                         this.activeShape.col = Number(col);
-                        this.update();
+                        this.update(this.activeShape);
                     }
                 }
 
@@ -456,6 +491,7 @@ export default class CanvasSelect extends EventBus {
     private handleMouseMove(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         if (this.lock) return;
+        if(this.activeShape.readonly) return;
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
@@ -539,6 +575,14 @@ export default class CanvasSelect extends EventBus {
 
 
             } else if (this.activeShape.dragging && !this.readonly) { // 拖拽
+                const dragDistance = Math.sqrt(
+                    Math.pow(mouseX - this.dragStartMouse[0], 2) + 
+                    Math.pow(mouseY - this.dragStartMouse[1], 2)
+                );
+                if (dragDistance < this.MIN_MOVE_DISTANCE) {
+                    return;
+                }
+                
                 // 拖拽点的时候，也需要触发放大镜
                 if (this.isMagnifierVisible && this.activeShape.type === 3) {
                     const [ux, uy] = this.isMobile ? [mouseCX, mouseCY] : [mouseX, mouseY]
@@ -576,7 +620,9 @@ export default class CanvasSelect extends EventBus {
                     this.activeShape.radius = r;
                 }
             }
-            this.update();
+            // 如果是拖拽或调整控制点，传入被更新的要素
+            const shouldEmitUpdateShape = (this.ctrlIndex > -1 && this.remmber.length) || this.activeShape.dragging;
+            this.update(shouldEmitUpdateShape ? this.activeShape : undefined);
         } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
@@ -611,6 +657,7 @@ export default class CanvasSelect extends EventBus {
             this.dblTouchStore = Date.now();
         }
         this.remmber = [];
+        this.dragStartMouse = [0, 0]; // 重置拖拽开始位置
         if (this.activeShape.type !== Shape.None && !this.isCtrlKey) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
@@ -634,13 +681,14 @@ export default class CanvasSelect extends EventBus {
                     }
                 }
                 this.update();
-            }
+            } 
         }
     }
 
     private handleDblclick(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
         if (this.lock) return;
+        if(this.activeShape.creating === false) return;
         if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
             const canPolygon = this.activeShape.type === Shape.Polygon && this.activeShape.coor.length > 2
             const canLine = this.activeShape.type === Shape.Line && this.activeShape.coor.length > 1
@@ -661,7 +709,7 @@ export default class CanvasSelect extends EventBus {
                         }
                     }
                 });
-                this.update();
+                this.update(this.activeShape);
             }
         }
     }
@@ -677,15 +725,9 @@ export default class CanvasSelect extends EventBus {
         }
         if (this.lock || document.activeElement !== document.body || this.readonly) return;
         if (this.activeShape.type) {
-            if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && e.key === 'Escape') {
-                if (this.activeShape.coor.length > 1 && this.activeShape.creating) {
-                    this.activeShape.coor.pop();
-                } else {
-                    this.deleteByIndex(this.activeShape.index);
-                }
-                this.update();
-            } else if (e.key === 'Backspace') {
-                this.deleteByIndex(this.activeShape.index);
+          if (['Delete', 'Backspace'].includes(e.key)) {
+                if(this.activeShape.readonly) return;
+                this.deleteByUuid(this.activeShape.uuid);
             }
         }
     }
@@ -695,7 +737,7 @@ export default class CanvasSelect extends EventBus {
         if (!this.canvas || !this.offScreen) return;
         const dpr = window.devicePixelRatio || 1;
         // 处理图片跨域问题
-        this.image.crossOrigin = 'anonymous';
+
         this.canvas.style.userSelect = 'none';
         this.ctx = this.ctx || this.canvas.getContext('2d', { alpha: this.alpha });
         this.WIDTH = Math.round(this.canvas.clientWidth);
@@ -789,6 +831,56 @@ export default class CanvasSelect extends EventBus {
             this.update();
         });
     }
+
+    addData(data:AllShape[], isUnshift = false) {
+        setTimeout(() => {
+            const initdata: AllShape[] = [];
+            data.forEach((item, index) => {
+                if (Object.prototype.toString.call(item).includes('Object')) {
+                    let shape: any;
+                    switch (item.type) {
+                        case Shape.Rect:
+                            shape = new Rect(item, index);
+                            break;
+                        case Shape.Polygon:
+                            shape = new Polygon(item,  index);
+                            break;
+                        case Shape.Dot:
+                            shape = new Dot(item, index);
+                            break;
+                        case Shape.Line:
+                            shape = new Line(item, index);
+                            break;
+                        case Shape.Circle:
+                            shape = new Circle(item, index);
+                            break;
+                        case Shape.Grid:
+                            shape = new Grid(item, index);
+                            break;
+                        default:
+                            console.warn('Invalid shape', item);
+                            break;
+                    }
+                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid].includes(item.type) && shape && initdata.push(shape);
+                } else {
+                    console.warn('Shape must be an enumerable Object.', item);
+                }
+            });
+
+            if(isUnshift) {
+                this.dataset.unshift(...initdata);
+            } else {
+                this.dataset.push(...initdata);
+            }
+
+            // 重新设置 index
+            this.dataset.forEach((item, index) => {
+                item.index = index;
+            });
+            this.update();
+        });
+    }
+
 
     /**
      * 判断是否在标注实例上
@@ -1093,6 +1185,8 @@ export default class CanvasSelect extends EventBus {
      * @param shape 标注实例
      */
     drawCtrlList(shape: Rect | Polygon | Line) {
+        if(!shape) return;
+        if(shape.readonly) return;
         shape.ctrlsData.forEach((point, i) => {
             if (shape.type === Shape.Circle) {
                 if (i === 1) this.drawCtrl(point);
@@ -1108,8 +1202,8 @@ export default class CanvasSelect extends EventBus {
      * @param label 文本
      */
     drawLabel(point: Point, shape: AllShape) {
-        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', hideLabel, labelUp, lineWidth } = shape;
-        const isHideLabel = typeof hideLabel === 'boolean' ? hideLabel : this.hideLabel;
+        const { label = '', labelFillStyle = '', labelFont = '', textFillStyle = '', active, labelUp, lineWidth } = shape;
+        const isHideLabel = !active;
         const isLabelUp = typeof labelUp === 'boolean' ? labelUp : this.labelUp;
         const currLineWidth = lineWidth || this.lineWidth;
 
@@ -1165,8 +1259,9 @@ export default class CanvasSelect extends EventBus {
 
     /**
      * 更新画布
+     * @param updatedShape 被更新的要素，如果提供则会额外抛出 updateShape 事件
      */
-    update() {
+    update(updatedShape?: AllShape) {
         window.cancelAnimationFrame(this.timer);
         this.timer = window.requestAnimationFrame(() => {
             if (!this.ctx) return;
@@ -1207,7 +1302,18 @@ export default class CanvasSelect extends EventBus {
                 this.drawCtrlList(this.activeShape);
             }
             this.ctx.restore();
-            this.emit('updated', this.dataset);
+            // 绘制网格标尺（在所有内容之上）
+            if (this.gridHelper && this.gridHelperOptions.enabled) {
+                this.gridHelper.draw([this.originX, this.originY], this.scale);
+            }
+            if(!this.readonly){
+                this.emit('updated', this.dataset);
+                // 如果提供了被更新的要素，则抛出 updateShape 事件
+                if (updatedShape) {
+                    this.emit('updateShape', updatedShape);
+                }
+            }
+           
         });
     }
 
@@ -1354,4 +1460,14 @@ export default class CanvasSelect extends EventBus {
         this.initSetting();
         this.update();
     }
+    toggleGrid(){
+        this.gridHelper?.toggle()
+    }
+    enableGrid() {
+        this.gridHelper?.enable()
+    }
+    disableGrid() {
+        this.gridHelper?.disable()
+    }
+
 }
