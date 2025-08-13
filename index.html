@@ -60,9 +60,10 @@
   <script>
     // alert(document.body.clientWidth)
     const output = document.getElementById('output');
-    const instance = new CanvasSelect('.container', 'http://mapugcnew-1306570047.cos.ap-beijing-cdz-tmap-1.tencentcos.cn/device-image-t3/rRV5vy16p0LZxZhcBqPOtXKI_iBXywEVxoC6vdSKDuQ=/2503171414381527205/1742191492608.jpg?sign=8sMmE1Vlr8w2EzGyJu0%2BbKZ3aYVhPTEzMDY1NzAwNDcmYj1tYXB1Z2NuZXcmaz1BS0lEa1IwUGV2NDZBQkVNUWN4UG5JbTdIVWQwRVlxS3ZQakYmZT0xNzUzOTU0NzUzJnQ9MTc1Mzg2ODM1MyZyPTA0NzMwNjc5MDMmZj0%3D', { enabled: true, size: 40 });
+    const instance = new CanvasSelect('.container', 'https://n.sinaimg.cn/www/transform/300/w660h440/20240318/3875-37fb8533570d8661d3f547c7e3b0ddde.jpg');
     // instance.readonly = true
     // instance.focusMode = true
+    instance.isMagnifierVisible = false;
     instance.ctrlRadius = navigator.userAgent.includes('Mobile') ? 6 : 3
     window.c = instance;
     let option = [

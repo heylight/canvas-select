@@ -444,7 +444,6 @@ export default class CanvasSelect extends EventBus {
                 } else {
                     // 是否点击到形状
                     const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
-                    if (hitShape.readonly) return;
                     if (hitShapeIndex > -1 && hitShape) {
                         hitShape.dragging = true;
                         this.dragStartMouse = [mouseX, mouseY]; // 记录拖拽开始位置
@@ -883,31 +882,103 @@ export default class CanvasSelect extends EventBus {
 
 
     /**
+     * 计算形状面积，用于优先级排序
+     * @param shape 形状对象
+     * @returns 面积值
+     */
+    private calculateShapeArea(shape: AllShape): number {
+        switch (shape.type) {
+            case Shape.Dot:
+                return 0; // 点的面积设为0，但会通过优先级处理
+            case Shape.Line:
+                return 1; // 线的面积设为1，但会通过优先级处理
+            case Shape.Circle:
+                const circle = shape as Circle;
+                return Math.PI * circle.radius * circle.radius;
+            case Shape.Rect:
+            case Shape.Grid:
+                const rect = shape as Rect;
+                const [[x0, y0], [x1, y1]] = rect.coor;
+                return Math.abs((x1 - x0) * (y1 - y0));
+            case Shape.Polygon:
+                const polygon = shape as Polygon;
+                // 使用鞋带公式计算多边形面积
+                const coords = polygon.coor;
+                if (coords.length < 3) return 0;
+                let area = 0;
+                for (let i = 0; i < coords.length; i++) {
+                    const j = (i + 1) % coords.length;
+                    area += coords[i][0] * coords[j][1];
+                    area -= coords[j][0] * coords[i][1];
+                }
+                return Math.abs(area) / 2;
+            default:
+                return Infinity;
+        }
+    }
+
+    /**
      * 判断是否在标注实例上
      * @param mousePoint 点击位置
      * @returns
      */
     hitOnShape(mousePoint: Point): [number, AllShape] {
-        let hitShapeIndex = -1;
-        let hitShape: any;
+        const hitShapes: Array<{ index: number; shape: AllShape; area: number; priority: number }> = [];
+        
+        // 收集所有命中的形状
         for (let i = this.dataset.length - 1; i > -1; i--) {
             const shape = this.dataset[i];
             if (shape.hide) continue;
-            if (
-                (shape.type === Shape.Dot && this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius)) ||
-                (shape.type === Shape.Circle && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) ||
-                (shape.type === Shape.Rect && this.isPointInRect(mousePoint, (shape as Rect).coor)) ||
-                (shape.type === Shape.Polygon && this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) ||
-                (shape.type === Shape.Line && this.isPointInLine(mousePoint, (shape as Line).coor)) ||
-                (shape.type === Shape.Grid && this.isPointInRect(mousePoint, (shape as Grid).coor))
-            ) {
+            
+            let isHit = false;
+            if (shape.type === Shape.Dot && this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius)) {
+                isHit = true;
+            } else if (shape.type === Shape.Circle && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) {
+                isHit = true;
+            } else if (shape.type === Shape.Rect && this.isPointInRect(mousePoint, (shape as Rect).coor)) {
+                isHit = true;
+            } else if (shape.type === Shape.Polygon && this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) {
+                isHit = true;
+            } else if (shape.type === Shape.Line && this.isPointInLine(mousePoint, (shape as Line).coor)) {
+                isHit = true;
+            } else if (shape.type === Shape.Grid && this.isPointInRect(mousePoint, (shape as Grid).coor)) {
+                isHit = true;
+            }
+            
+            if (isHit) {
                 if (this.focusMode && !shape.active) continue;
-                hitShapeIndex = i;
-                hitShape = shape;
-                break;
+                
+                // 计算优先级：Dot = 1, Line = 2, 其他 = 3
+                let priority = 3;
+                if (shape.type === Shape.Dot) {
+                    priority = 1;
+                } else if (shape.type === Shape.Line) {
+                    priority = 2;
+                }
+                
+                const area = this.calculateShapeArea(shape);
+                hitShapes.push({ index: i, shape, area, priority });
             }
         }
-        return [hitShapeIndex, hitShape];
+        
+        // 如果没有命中任何形状
+        if (hitShapes.length === 0) {
+            return [-1, undefined as any];
+        }
+        
+        // 按优先级和面积排序
+        hitShapes.sort((a, b) => {
+            // 首先按优先级排序（数字越小优先级越高）
+            if (a.priority !== b.priority) {
+                return a.priority - b.priority;
+            }
+            // 同优先级按面积排序（面积越小优先级越高）
+            return a.area - b.area;
+        });
+        
+        // 返回优先级最高的形状
+        const bestHit = hitShapes[0];
+        return [bestHit.index, bestHit.shape];
     }
 
     /**
