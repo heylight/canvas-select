@@ -61,6 +61,9 @@ export default class CanvasSelect extends EventBus {
     WIDTH = 0;
     /** 画布高度 */
     HEIGHT = 0;
+    /** XY十字坐标 */
+    xLine  = new Line({}, 0);
+    yLine  = new Line({}, 1);
 
     canvas: HTMLCanvasElement | undefined
 
@@ -158,6 +161,8 @@ export default class CanvasSelect extends EventBus {
         } else {
             console.warn('HTMLCanvasElement is required!');
         }
+        this.xLine.strokeStyle = "rgba(130,22,220,.6)";
+        this.yLine.strokeStyle = "rgba(130,22,220,.6)";
     }
 
     /** 当前当前选中的标注 */
@@ -458,6 +463,16 @@ export default class CanvasSelect extends EventBus {
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
+        if(!this.isCtrlKey) {
+            this.xLine.coor = [
+                [offsetX - this.originX / this.scale, 0],
+                [offsetX - this.originX / this.scale, this.image.height],
+            ];
+            this.yLine.coor = [
+                [0,                offsetY - this.originY / this.scale],
+                [this.image.width, offsetY - this.originY / this.scale],
+            ];
+        }
         this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
@@ -591,6 +606,10 @@ export default class CanvasSelect extends EventBus {
             const cur = this.scaleTouchStore;
             this.scaleTouchStore = Math.abs((touch1.clientX - touch0.clientX) * (touch1.clientY - touch0.clientY));
             this.setScale(this.scaleTouchStore > cur, true);
+        } else {
+            if(!this.isCtrlKey) {
+                this.update();
+            }
         }
     }
 
@@ -1149,6 +1168,10 @@ export default class CanvasSelect extends EventBus {
                 this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
             }
             const renderList = this.focusMode ? (this.activeShape.type ? [this.activeShape] : []) : this.dataset;
+            if(!this.isCtrlKey) {
+                this.drawLine(this.xLine);
+                this.drawLine(this.yLine);
+            }
             for (let i = 0; i < renderList.length; i++) {
                 const shape = renderList[i];
                 if (shape.hide) continue;
