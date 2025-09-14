@@ -62,8 +62,10 @@ export default class CanvasSelect extends EventBus {
     /** 画布高度 */
     HEIGHT = 0;
     /** XY十字坐标 */
-    xLine  = new Line({}, 0);
-    yLine  = new Line({}, 1);
+    crossX = new Line({}, 0);
+    crossY = new Line({}, 1);
+    crossStroke = '#ff0';
+    showCross = false;
 
     canvas: HTMLCanvasElement | undefined
 
@@ -140,7 +142,7 @@ export default class CanvasSelect extends EventBus {
      * @param el Valid CSS selector string, or DOM
      * @param src image src
      */
-    constructor(el: HTMLCanvasElement | string, src?:  string | HTMLImageElement) {
+    constructor(el: HTMLCanvasElement | string, src?: string | HTMLImageElement) {
         super();
         this.handleLoad = this.handleLoad.bind(this);
         this.handleContextmenu = this.handleContextmenu.bind(this);
@@ -161,8 +163,8 @@ export default class CanvasSelect extends EventBus {
         } else {
             console.warn('HTMLCanvasElement is required!');
         }
-        this.xLine.strokeStyle = "rgba(130,22,220,.6)";
-        this.yLine.strokeStyle = "rgba(130,22,220,.6)";
+        this.crossX.strokeStyle = this.crossStroke;
+        this.crossY.strokeStyle = this.crossStroke;
     }
 
     /** 当前当前选中的标注 */
@@ -463,15 +465,18 @@ export default class CanvasSelect extends EventBus {
         const { mouseX, mouseY, mouseCX, mouseCY } = this.mergeEvent(e);
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
-        if(!this.isCtrlKey) {
-            this.xLine.coor = [
+        if (!this.isCtrlKey && this.isInBackground(e)) {
+            this.crossX.coor = [
                 [offsetX - this.originX / this.scale, 0],
                 [offsetX - this.originX / this.scale, this.image.height],
             ];
-            this.yLine.coor = [
-                [0,                offsetY - this.originY / this.scale],
+            this.crossY.coor = [
+                [0, offsetY - this.originY / this.scale],
                 [this.image.width, offsetY - this.originY / this.scale],
             ];
+        } else {
+            this.crossX.coor = []
+            this.crossY.coor = []
         }
         this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
@@ -607,7 +612,7 @@ export default class CanvasSelect extends EventBus {
             this.scaleTouchStore = Math.abs((touch1.clientX - touch0.clientX) * (touch1.clientY - touch0.clientY));
             this.setScale(this.scaleTouchStore > cur, true);
         } else {
-            if(!this.isCtrlKey) {
+            if (!this.isCtrlKey) {
                 this.update();
             }
         }
@@ -1168,9 +1173,9 @@ export default class CanvasSelect extends EventBus {
                 this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
             }
             const renderList = this.focusMode ? (this.activeShape.type ? [this.activeShape] : []) : this.dataset;
-            if(!this.isCtrlKey) {
-                this.drawLine(this.xLine);
-                this.drawLine(this.yLine);
+            if (!this.isCtrlKey && this.showCross) {
+                this.drawLine(this.crossX);
+                this.drawLine(this.crossY);
             }
             for (let i = 0; i < renderList.length; i++) {
                 const shape = renderList[i];

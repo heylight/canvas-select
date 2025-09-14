@@ -194,6 +194,7 @@ instance.on("updated", (allShapesData) => {
 | `lock`                  | `boolean` |         `false`          |                  | 锁定画布，禁止所有交互                                                      |
 | `readonly`              | `boolean` |         `false`          |                  | 仅查看模式，禁止编辑                                                        |
 | `scrollZoom`            | `boolean` |          `true`          |                  | 是否允许鼠标滚轮缩放画布                                                    |
+| `showCross`            | `boolean` |          `false`          |                  | 是否展示十字坐标线                                                             |
 | `MIN_WIDTH`             | `number`  |           `10`           |                  | 矩形最小宽度                                                                |
 | `MIN_HEIGHT`            | `number`  |           `10`           |                  | 矩形最小高度                                                                |
 | `MIN_RADIUS`            | `number`  |           `5`            |                  | 圆形最小半径                                                                |
@@ -217,6 +218,7 @@ instance.on("updated", (allShapesData) => {
 | `focusMode`             | `boolean` |         `false`          |                  | 专注模式，开启后只有活动状态的标注会完整显示，其他标注可能半透明或隐藏      |
 | `gridMenuEnable`        | `boolean` |          `true`          |                  | 网格标注时是否启用右键 `prompt` 输入框，可关闭以使用自定义右键菜单          |
 | `gridSelectedFillStyle` | `string`  | `rgba(255, 255, 0, 0.6)` |       支持       | 网格标注中选中单元格的填充颜色                                              |
+| `crossStroke`           | `string`  | `#ff0`                   |                          | 十字标尺颜色                                            |
 
 ### 实例方法 (Instance Methods)
 
