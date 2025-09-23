@@ -81,7 +81,7 @@ export default class CanvasSelect extends EventBus {
     magnifierCanvas: HTMLCanvasElement | undefined
     magnifierCtx: CanvasRenderingContext2D | undefined
     // 默认展示放大镜
-    isMagnifierVisible: boolean = true
+    isMagnifierVisible: boolean = false
     // 放大镜位置，默认跟随鼠标
     magnifierPosition: Point | 'auto' = 'auto'
     // 放大镜相关配置 End

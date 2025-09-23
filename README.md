@@ -219,6 +219,7 @@ instance.on("updated", (allShapesData) => {
 | `gridMenuEnable`        | `boolean` |          `true`          |                  | 网格标注时是否启用右键 `prompt` 输入框，可关闭以使用自定义右键菜单          |
 | `gridSelectedFillStyle` | `string`  | `rgba(255, 255, 0, 0.6)` |       支持       | 网格标注中选中单元格的填充颜色                                              |
 | `crossStroke`           | `string`  | `#ff0`                   |                          | 十字标尺颜色                                            |
+| `isMagnifierVisible`           | `boolean`  | `false`                   |                          | 启用放大镜色                                            |
 
 ### 实例方法 (Instance Methods)
 
