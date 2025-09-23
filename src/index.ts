@@ -57,6 +57,8 @@ export default class CanvasSelect extends EventBus {
     textFillStyle = '#000';
     /** 标签字符最大长度，超出使用省略号 */
     labelMaxLen = 10;
+    /** 默认标签文本 */
+    defaultLabel = '';
     /** 画布宽度 */
     WIDTH = 0;
     /** 画布高度 */
@@ -383,27 +385,27 @@ export default class CanvasSelect extends EventBus {
                     const curPoint: Point = [nx, ny];
                     switch (this.createType) {
                         case Shape.Rect:
-                            newShape = new Rect({ coor: [curPoint, curPoint] }, this.dataset.length);
+                            newShape = new Rect({ coor: [curPoint, curPoint], label: this.defaultLabel }, this.dataset.length);
                             newShape.creating = true;
                             break;
                         case Shape.Polygon:
-                            newShape = new Polygon({ coor: [curPoint] }, this.dataset.length);
+                            newShape = new Polygon({ coor: [curPoint], label: this.defaultLabel }, this.dataset.length);
                             newShape.creating = true;
                             break;
                         case Shape.Dot:
-                            newShape = new Dot({ coor: curPoint }, this.dataset.length);
+                            newShape = new Dot({ coor: curPoint, label: this.defaultLabel }, this.dataset.length);
                             this.emit('add', newShape);
                             break;
                         case Shape.Line:
-                            newShape = new Line({ coor: [curPoint] }, this.dataset.length);
+                            newShape = new Line({ coor: [curPoint], label: this.defaultLabel }, this.dataset.length);
                             newShape.creating = true;
                             break;
                         case Shape.Circle:
-                            newShape = new Circle({ coor: curPoint }, this.dataset.length);
+                            newShape = new Circle({ coor: curPoint, label: this.defaultLabel }, this.dataset.length);
                             newShape.creating = true;
                             break;
                         case Shape.Grid:
-                            newShape = new Grid({ coor: [curPoint, curPoint] }, this.dataset.length);
+                            newShape = new Grid({ coor: [curPoint, curPoint], label: this.defaultLabel }, this.dataset.length);
                             newShape.creating = true;
                             break;
                         default:
@@ -1135,12 +1137,14 @@ export default class CanvasSelect extends EventBus {
         const isHideLabel = typeof hideLabel === 'boolean' ? hideLabel : this.hideLabel;
         const isLabelUp = typeof labelUp === 'boolean' ? labelUp : this.labelUp;
         const currLineWidth = lineWidth || this.lineWidth;
+        // 如果形状没有 label，使用默认 label
+        const displayLabel = label || this.defaultLabel;
 
-        if (this.ctx && label.length && !isHideLabel) {
+        if (this.ctx && displayLabel.length && !isHideLabel) {
             this.ctx.font = labelFont || this.labelFont;
             const textPaddingLeft = 4;
             const textPaddingTop = 4;
-            const newText = label.length < this.labelMaxLen + 1 ? label : `${label.slice(0, this.labelMaxLen)}...`;
+            const newText = displayLabel.length < this.labelMaxLen + 1 ? displayLabel : `${displayLabel.slice(0, this.labelMaxLen)}...`;
             const text = this.ctx.measureText(newText);
             const font = parseInt(this.ctx.font) - 4;
             const labelWidth = text.width + textPaddingLeft * 2;
