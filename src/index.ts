@@ -1468,6 +1468,76 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
+     * 缩放到指定倍数
+     * @param targetScale 目标缩放倍数（相对于fitZoom适配大小，1.0 = fitZoom大小）
+     * @param centerPoint 缩放中心点 [x, y]，如果不传则图片居中显示
+     * @param pure 是否不重绘画布
+     * @returns 实际应用的缩放倍数
+     */
+    setScaleToTarget(targetScale: number, centerPoint?: Point, pure = false): number {
+        if (this.lock) return this.scale;
+        
+        // 计算fitZoom后的尺寸（适配canvas的尺寸）
+        let fitWidth: number, fitHeight: number;
+        if (this.IMAGE_ORIGIN_HEIGHT / this.IMAGE_ORIGIN_WIDTH >= this.HEIGHT / this.WIDTH) {
+            // 以高度为准适配
+            fitWidth = this.IMAGE_ORIGIN_WIDTH / (this.IMAGE_ORIGIN_HEIGHT / this.HEIGHT);
+            fitHeight = this.HEIGHT;
+        } else {
+            // 以宽度为准适配
+            fitWidth = this.WIDTH;
+            fitHeight = this.IMAGE_ORIGIN_HEIGHT / (this.IMAGE_ORIGIN_WIDTH / this.WIDTH);
+        }
+        
+        // 限制缩放范围
+        const minScale = 0.01; // 最小1%
+        const maxScale = 100; // 最大100倍
+        const clampedScale = Math.max(minScale, Math.min(maxScale, targetScale));
+        
+        // 计算目标尺寸（基于fitZoom尺寸的倍数）
+        const targetWidth = Math.round(fitWidth * clampedScale);
+        const targetHeight = Math.round(fitHeight * clampedScale);
+        
+        if (centerPoint) {
+            // 指定了缩放中心点，按照该点进行缩放
+            const [cx, cy] = centerPoint;
+            
+            // 保存当前缩放比例
+            const currentScale = this.scale;
+            
+            // 计算缩放前该点在图片坐标系中的相对位置（0-1之间的比例）
+            const relativeX = (cx - this.originX) / (this.IMAGE_WIDTH);
+            const relativeY = (cy - this.originY) / (this.IMAGE_HEIGHT);
+            
+            // 应用新的尺寸
+            this.IMAGE_WIDTH = targetWidth;
+            this.IMAGE_HEIGHT = targetHeight;
+            
+            // 根据相对位置重新计算原点，使指定点保持在屏幕上的相同位置
+            this.originX = cx - relativeX * this.IMAGE_WIDTH;
+            this.originY = cy - relativeY * this.IMAGE_HEIGHT;
+        } else {
+            // 没有指定中心点，图片居中显示
+            this.IMAGE_WIDTH = targetWidth;
+            this.IMAGE_HEIGHT = targetHeight;
+            
+            // 图片居中显示
+            this.originX = (this.WIDTH - this.IMAGE_WIDTH) / 2;
+            this.originY = (this.HEIGHT - this.IMAGE_HEIGHT) / 2;
+        }
+        
+        // 根据新的缩放比例反推scaleStep，保持与setScale方法的一致性
+        const actualScale = this.IMAGE_WIDTH / this.IMAGE_ORIGIN_WIDTH;
+        this.scaleStep = Math.round(Math.log(actualScale) / Math.log(1.05));
+        
+        if (!pure) {
+            this.update();
+        }
+        
+        return clampedScale;
+    }
+
+    /**
      * 适配背景图
      */
     fitZoom() {

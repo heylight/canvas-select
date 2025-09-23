@@ -49,6 +49,16 @@
         <button onclick="zoom(false)">缩小</button>
         <button onclick="fitting()">适配</button>
         <button onclick="focusMode()">专注模式</button>
+        <br />
+        <button onclick="scaleToTarget(1.0)">1.0倍(fitZoom大小)</button>
+        <button onclick="scaleToTarget(2.0)">2.0倍</button>
+        <button onclick="scaleToTarget(0.5)">0.5倍</button>
+        <button onclick="scaleToTarget(1.5)">1.5倍</button>
+        <button onclick="scaleToTarget(3.0)">3.0倍</button>
+        <button onclick="scaleToTargetWithCenter(1.5)">1.5倍(指定中心)</button>
+        <br />
+        <button onclick="compareFitZoomAndOriginal()">对比fitZoom和1.0倍</button>
+        <button onclick="testCenterScalingAfterMove()">综合测试：移动后指定中心缩放</button>
       </div>
     </div>
     <!-- <div class="right">
@@ -151,6 +161,130 @@
     function changeData() {
       const data = JSON.parse(output.value)
       instance.setData(data)
+    }
+    
+    // 测试 setScaleToTarget 方法 - 按fitZoom适配大小的倍数缩放
+    function scaleToTarget(scale) {
+      console.log(`\n=== 缩放到 ${scale} 倍（相对于fitZoom适配大小）===`);
+      
+      // 先计算fitZoom的理论尺寸
+      let fitWidth, fitHeight;
+      if (instance.IMAGE_ORIGIN_HEIGHT / instance.IMAGE_ORIGIN_WIDTH >= instance.HEIGHT / instance.WIDTH) {
+        fitWidth = instance.IMAGE_ORIGIN_WIDTH / (instance.IMAGE_ORIGIN_HEIGHT / instance.HEIGHT);
+        fitHeight = instance.HEIGHT;
+      } else {
+        fitWidth = instance.WIDTH;
+        fitHeight = instance.IMAGE_ORIGIN_HEIGHT / (instance.IMAGE_ORIGIN_WIDTH / instance.WIDTH);
+      }
+      
+      console.log(`fitZoom理论尺寸:`);
+      console.log(`  - fitWidth: ${fitWidth.toFixed(1)}, fitHeight: ${fitHeight.toFixed(1)}`);
+      console.log(`缩放前状态:`);
+      console.log(`  - 当前缩放比例: ${instance.scale.toFixed(3)}`);
+      console.log(`  - IMAGE_WIDTH: ${instance.IMAGE_WIDTH}, IMAGE_HEIGHT: ${instance.IMAGE_HEIGHT}`);
+      console.log(`  - scaleStep: ${instance.scaleStep}`);
+      
+      const actualScale = instance.setScaleToTarget(scale);
+      
+      console.log(`缩放后状态:`);
+      console.log(`  - 实际应用的缩放倍数: ${actualScale.toFixed(3)}`);
+      console.log(`  - 当前缩放比例: ${instance.scale.toFixed(3)}`);
+      console.log(`  - IMAGE_WIDTH: ${instance.IMAGE_WIDTH}, IMAGE_HEIGHT: ${instance.IMAGE_HEIGHT}`);
+      console.log(`  - scaleStep: ${instance.scaleStep}`);
+      console.log(`验证结果:`);
+      console.log(`  - 期望宽度: ${(fitWidth * scale).toFixed(1)}, 实际宽度: ${instance.IMAGE_WIDTH}`);
+      console.log(`  - 期望高度: ${(fitHeight * scale).toFixed(1)}, 实际高度: ${instance.IMAGE_HEIGHT}`);
+      const widthMatch = Math.abs(instance.IMAGE_WIDTH - fitWidth * scale) < 1;
+      const heightMatch = Math.abs(instance.IMAGE_HEIGHT - fitHeight * scale) < 1;
+      console.log(`  - 尺寸是否匹配: ${widthMatch && heightMatch ? '✓' : '✗'}`);
+      
+      // 验证1.0倍是否等于fitZoom大小
+      if (scale === 1.0) {
+        const isFitSize = Math.abs(instance.IMAGE_WIDTH - fitWidth) < 1 && 
+                         Math.abs(instance.IMAGE_HEIGHT - fitHeight) < 1;
+        console.log(`  - 1.0倍是否等于fitZoom大小: ${isFitSize ? '✓' : '✗'}`);
+      }
+    }
+    
+    // 测试以指定位置为中心的缩放
+    function scaleToTargetWithCenter(scale) {
+      console.log(`\n=== 以指定位置为中心缩放到 ${scale} 倍 ===`);
+      console.log(`缩放前状态:`);
+      console.log(`  - 当前缩放比例: ${instance.scale.toFixed(3)}`);
+      console.log(`  - originX: ${instance.originX.toFixed(1)}, originY: ${instance.originY.toFixed(1)}`);
+      console.log(`  - IMAGE_WIDTH: ${instance.IMAGE_WIDTH}, IMAGE_HEIGHT: ${instance.IMAGE_HEIGHT}`);
+      
+      // 使用固定位置 [200, 150] 作为缩放中心点进行演示
+      const centerPoint = [200, 150];
+      console.log(`缩放中心点: [${centerPoint[0]}, ${centerPoint[1]}]`);
+      
+      const actualScale = instance.setScaleToTarget(scale, centerPoint);
+      
+      console.log(`缩放后状态:`);
+      console.log(`  - 实际应用的缩放倍数: ${actualScale.toFixed(3)}`);
+      console.log(`  - 当前缩放比例: ${instance.scale.toFixed(3)}`);
+      console.log(`  - originX: ${instance.originX.toFixed(1)}, originY: ${instance.originY.toFixed(1)}`);
+      console.log(`  - IMAGE_WIDTH: ${instance.IMAGE_WIDTH}, IMAGE_HEIGHT: ${instance.IMAGE_HEIGHT}`);
+      console.log(`验证: 中心点 [${centerPoint[0]}, ${centerPoint[1]}] 应该始终指向图片的同一位置`);
+    }
+    
+    // 综合测试：先移动图片，再指定中心缩放
+    function testCenterScalingAfterMove() {
+      console.log(`\n=== 综合测试：移动后指定中心缩放 ===`);
+      
+      // 1. 先适配图片
+      console.log(`1. 执行 fitZoom()`);
+      instance.fitZoom();
+      console.log(`  - fitZoom后: originX=${instance.originX.toFixed(1)}, originY=${instance.originY.toFixed(1)}`);
+      
+      // 2. 手动移动图片位置（模拟用户拖拽）
+        console.log(`2. 手动移动图片位置`);
+        instance.originX += 50;
+        instance.originY += 30;
+        instance.update();
+        console.log(`  - 移动后: originX=${instance.originX.toFixed(1)}, originY=${instance.originY.toFixed(1)}`);
+        
+        // 3. 指定中心点缩放
+          console.log(`3. 以 [200, 150] 为中心缩放到 1.5 倍`);
+          const centerPoint = [200, 150];
+          instance.setScaleToTarget(1.5, centerPoint);
+          console.log(`  - 缩放后: originX=${instance.originX.toFixed(1)}, originY=${instance.originY.toFixed(1)}`);
+          console.log(`  - 缩放比例: ${instance.scale.toFixed(3)}`);
+          console.log(`✓ 测试完成：无论图片之前在什么位置，都应该以指定点为中心进行缩放`);
+    }
+    
+    // 对比 fitZoom 和 1.0倍 的区别
+    function compareFitZoomAndOriginal() {
+      console.log(`\n=== 对比 fitZoom 和 1.0倍适配大小 ===`);
+      
+      // 先执行 fitZoom
+      console.log(`执行 fitZoom():`);
+      instance.fitZoom();
+      const fitZoomWidth = instance.IMAGE_WIDTH;
+      const fitZoomHeight = instance.IMAGE_HEIGHT;
+      console.log(`  - fitZoom后缩放比例: ${instance.scale.toFixed(3)}`);
+      console.log(`  - fitZoom后IMAGE_WIDTH: ${fitZoomWidth}, IMAGE_HEIGHT: ${fitZoomHeight}`);
+      console.log(`  - fitZoom后scaleStep: ${instance.scaleStep}`);
+      
+      // 等待一秒后执行 1.0倍
+      setTimeout(() => {
+        console.log(`执行 setScaleToTarget(1.0):`);
+        instance.setScaleToTarget(1.0);
+        console.log(`  - 1.0倍后缩放比例: ${instance.scale.toFixed(3)}`);
+        console.log(`  - 1.0倍后IMAGE_WIDTH: ${instance.IMAGE_WIDTH}, IMAGE_HEIGHT: ${instance.IMAGE_HEIGHT}`);
+        console.log(`  - 1.0倍后scaleStep: ${instance.scaleStep}`);
+        
+        // 验证1.0倍是否等于fitZoom大小
+        const isSameSize = Math.abs(instance.IMAGE_WIDTH - fitZoomWidth) < 1 && 
+                          Math.abs(instance.IMAGE_HEIGHT - fitZoomHeight) < 1;
+        console.log(`  - 1.0倍是否等于fitZoom大小: ${isSameSize ? '✓ 是' : '✗ 否'}`);
+        
+        console.log(`对比结果:`);
+        console.log(`  - fitZoom: 适配画布大小`);
+        console.log(`  - 1.0倍: 等于fitZoom的大小（现在应该完全一致）`);
+        console.log(`  - 2.0倍: fitZoom大小的2倍`);
+        console.log(`  - 0.5倍: fitZoom大小的0.5倍`);
+      }, 1000);
     }
   </script>
   <!-- <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
