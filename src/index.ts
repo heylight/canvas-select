@@ -65,7 +65,10 @@ export default class CanvasSelect extends EventBus {
     crossX = new Line({}, 0);
     crossY = new Line({}, 1);
     crossStroke = '#ff0';
+    /** 开启十字辅助 */
     showCross = false;
+    /** 开启矩形旋转控制点 */
+    showRotation = false;
 
     canvas: HTMLCanvasElement | undefined
 
@@ -482,64 +485,75 @@ export default class CanvasSelect extends EventBus {
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
                 const [[x, y]] = this.remmber;
-                // resize矩形
+                // resize矩形或旋转
                 if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
-                    const [[x0, y0], [x1, y1]] = this.activeShape.coor;
-                    let coor: Point[] = [];
-                    switch (this.ctrlIndex) {
-                        case 0:
-                            coor = [[offsetX - x, offsetY - y], [x1, y1]];
-                            break;
-                        case 1:
-                            coor = [[x0, offsetY - y], [x1, y1]];
-                            break;
-                        case 2:
-                            coor = [[x0, offsetY - y], [offsetX - x, y1]];
-                            break;
-                        case 3:
-                            coor = [[x0, y0], [offsetX - x, y1]];
-                            break;
-                        case 4:
-                            coor = [[x0, y0], [offsetX - x, offsetY - y]];
-                            break;
-                        case 5:
-                            coor = [[x0, y0], [x1, offsetY - y]];
-                            break;
-                        case 6:
-                            coor = [[offsetX - x, y0], [x1, offsetY - y]];
-                            break;
-                        case 7:
-                            coor = [[offsetX - x, y0], [x1, y1]];
-                            break;
-                        default:
-                            break;
-                    }
-                    let [[a0, b0], [a1, b1]] = coor;
-                    if (
-                        a0 < 0 ||
-                        a1 < 0 ||
-                        b0 < 0 ||
-                        b1 < 0 ||
-                        a1 > this.IMAGE_ORIGIN_WIDTH ||
-                        b1 > this.IMAGE_ORIGIN_HEIGHT
-                    ) {
-                        // 偶然触发 超出边界处理
-                        a0 < 0 && (a0 = 0);
-                        a1 < 0 && (a1 = 0);
-                        b0 < 0 && (b0 = 0);
-                        b1 < 0 && (b1 = 0);
-                        if (a1 > this.IMAGE_ORIGIN_WIDTH) {
-                            a1 = this.IMAGE_ORIGIN_WIDTH;
-                        }
-                        if (b1 > this.IMAGE_ORIGIN_HEIGHT) {
-                            b1 = this.IMAGE_ORIGIN_HEIGHT;
-                        }
-                    }
-
-                    if (a1 - a0 >= this.MIN_WIDTH && b1 - b0 >= this.MIN_HEIGHT) {
-                        this.activeShape.coor = [[a0, b0], [a1, b1]];
+                    // 处理旋转控制点（索引8）
+                    if (this.ctrlIndex === 8) {
+                        const [centerX, centerY] = this.activeShape.center;
+                        const mouseX = offsetX - x;
+                        const mouseY = offsetY - y;
+                        const dx = mouseX - centerX;
+                        const dy = mouseY - centerY;
+                        this.activeShape.rotation = Math.atan2(dy, dx) + Math.PI / 2;
                     } else {
-                        this.emit('warn', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`);
+                        // 处理resize控制点
+                        const [[x0, y0], [x1, y1]] = this.activeShape.coor;
+                        let coor: Point[] = [];
+                        switch (this.ctrlIndex) {
+                            case 0:
+                                coor = [[offsetX - x, offsetY - y], [x1, y1]];
+                                break;
+                            case 1:
+                                coor = [[x0, offsetY - y], [x1, y1]];
+                                break;
+                            case 2:
+                                coor = [[x0, offsetY - y], [offsetX - x, y1]];
+                                break;
+                            case 3:
+                                coor = [[x0, y0], [offsetX - x, y1]];
+                                break;
+                            case 4:
+                                coor = [[x0, y0], [offsetX - x, offsetY - y]];
+                                break;
+                            case 5:
+                                coor = [[x0, y0], [x1, offsetY - y]];
+                                break;
+                            case 6:
+                                coor = [[offsetX - x, y0], [x1, offsetY - y]];
+                                break;
+                            case 7:
+                                coor = [[offsetX - x, y0], [x1, y1]];
+                                break;
+                            default:
+                                break;
+                        }
+                        let [[a0, b0], [a1, b1]] = coor;
+                        if (
+                            a0 < 0 ||
+                            a1 < 0 ||
+                            b0 < 0 ||
+                            b1 < 0 ||
+                            a1 > this.IMAGE_ORIGIN_WIDTH ||
+                            b1 > this.IMAGE_ORIGIN_HEIGHT
+                        ) {
+                            // 偶然触发 超出边界处理
+                            a0 < 0 && (a0 = 0);
+                            a1 < 0 && (a1 = 0);
+                            b0 < 0 && (b0 = 0);
+                            b1 < 0 && (b1 = 0);
+                            if (a1 > this.IMAGE_ORIGIN_WIDTH) {
+                                a1 = this.IMAGE_ORIGIN_WIDTH;
+                            }
+                            if (b1 > this.IMAGE_ORIGIN_HEIGHT) {
+                                b1 = this.IMAGE_ORIGIN_HEIGHT;
+                            }
+                        }
+
+                        if (a1 - a0 >= this.MIN_WIDTH && b1 - b0 >= this.MIN_HEIGHT) {
+                            this.activeShape.coor = [[a0, b0], [a1, b1]];
+                        } else {
+                            this.emit('warn', `Width cannot be less than ${this.MIN_WIDTH},Height cannot be less than${this.MIN_HEIGHT}。`);
+                        }
                     }
                 } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
                     const nx = Math.round(offsetX - this.originX / this.scale);
@@ -777,12 +791,13 @@ export default class CanvasSelect extends EventBus {
     setData(data: AllShape[]) {
         setTimeout(() => {
             const initdata: AllShape[] = [];
-            data.forEach((item, index) => {
+            data.forEach((item: any, index) => {
                 if (Object.prototype.toString.call(item).includes('Object')) {
                     let shape: any;
                     switch (item.type) {
                         case Shape.Rect:
                             shape = new Rect(item, index);
+                            shape.showRotation = item.showRotation ?? this.showRotation
                             break;
                         case Shape.Polygon:
                             shape = new Polygon(item, index);
@@ -947,14 +962,23 @@ export default class CanvasSelect extends EventBus {
      */
     drawRect(shape: Rect, sub?: Record<string, any>) {
         if (!this.ctx || shape.coor.length !== 2) return;
-        const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
+        const { strokeStyle, fillStyle, active, creating, coor, lineWidth, rotation } = shape;
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
+        const centerX = (x0 + x1) / 2;
+        const centerY = (y0 + y1) / 2;
+        const w = x1 - x0;
+        const h = y1 - y0;
+
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
         this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (sub?.isSelected ? sub?.selectedFillStyle : (fillStyle || this.fillStyle));
         this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
-        const w = x1 - x0;
-        const h = y1 - y0;
+
+        // 应用旋转
+        this.ctx.translate(centerX, centerY);
+        this.ctx.rotate(rotation);
+        this.ctx.translate(-centerX, -centerY);
+
         if (!creating) this.ctx.fillRect(x0, y0, w, h);
         this.ctx.strokeRect(x0, y0, w, h);
         this.ctx.restore();
@@ -1145,7 +1169,29 @@ export default class CanvasSelect extends EventBus {
             const font = parseInt(this.ctx.font) - 4;
             const labelWidth = text.width + textPaddingLeft * 2;
             const labelHeight = font + textPaddingTop * 2;
-            const [x, y] = point.map((a) => a * this.scale);
+
+            let [x, y] = point.map((a) => a * this.scale);
+
+            // 对于矩形，如果存在旋转角度，需要调整label位置
+            if (shape.type === Shape.Rect && (shape as Rect).rotation !== 0) {
+                const rect = shape as Rect;
+                const [[x0, y0], [x1, y1]] = rect.coor;
+                const centerX = (x0 + x1) / 2 * this.scale;
+                const centerY = (y0 + y1) / 2 * this.scale;
+
+                // 将左上角点转换为相对于中心点的坐标
+                const dx = x - centerX;
+                const dy = y - centerY;
+
+                // 应用旋转
+                const rotatedX = dx * Math.cos(rect.rotation) - dy * Math.sin(rect.rotation);
+                const rotatedY = dx * Math.sin(rect.rotation) + dy * Math.cos(rect.rotation);
+
+                // 转换回绝对坐标
+                x = rotatedX + centerX;
+                y = rotatedY + centerY;
+            }
+
             const toleft = (this.IMAGE_ORIGIN_WIDTH - point[0]) < labelWidth / this.scale;
             const toTop = (this.IMAGE_ORIGIN_HEIGHT - point[1]) < labelHeight / this.scale;
             const toTop2 = point[1] > labelHeight / this.scale;

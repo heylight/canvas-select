@@ -206,6 +206,7 @@ instance.on("updated", (allShapesData) => {
 | `ctrlStrokeStyle`       | `string`  |          `#000`          |                  | 控制点边框颜色                                                              |
 | `ctrlFillStyle`         | `string`  |          `#fff`          |                  | 控制点填充颜色                                                              |
 | `ctrlRadius`            | `number`  |           `3`            |                  | 控制点半径                                                                  |
+| `showRotation`          | `boolean` |           `false`        |        支持       | 启用矩形旋转控制                                                          |
 | `hide`                  | `boolean` |         `false`          |       支持       | 是否在画布中隐藏指定标注                                                    |
 | `label`                 | `string`  |           `无`           |       支持       | 标签名称                                                                    |
 | `hideLabel`             | `boolean` |         `false`          |       支持       | 是否隐藏标签名称                                                            |
