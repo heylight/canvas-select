@@ -1,179 +1,1097 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-  <title>canvas-select示例</title>
+  <title>Canvas-Select 功能演示</title>
   <style>
     * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
-    /* .box {
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+
+    .main-container {
       display: flex;
-    } */
+      gap: 20px;
+      padding: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
 
-    .container {
-      background-color: #ccc;
+    .left-sidebar {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+    }
+
+    .canvas-section {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .canvas-container {
+      position: relative;
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .canvas-container canvas {
+      display: block;
       width: 100%;
-      max-width: 400px;
-      height: 400px;
+      height: 500px;
+      /* cursor: crosshair; */
     }
 
-    .right {
-      margin-left: 20px;
+    .controls-section {
+      width: 350px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
     }
 
-    #output {
-      height: 450px;
-      width: 400px;
+    .control-group {
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .control-group:last-child {
+      border-bottom: none;
+    }
+
+    .control-group h3 {
+      color: #495057;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-group h3::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      padding: 10px 12px;
+      border: 2px solid #e9ecef;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 12px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+      transform: translateY(-1px);
+    }
+
+    .btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn.danger {
+      border-color: #dc3545;
+      color: #dc3545;
+    }
+
+    .btn.danger:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #495057;
+    }
+
+    .input-group input,
+    .input-group select {
+      padding: 8px 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .color-input {
+      width: 50px;
+      height: 35px;
+      padding: 2px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .range-input {
+      width: 100%;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .data-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    .data-section h4 {
+      margin-bottom: 10px;
+      color: #495057;
+    }
+
+    .data-output {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .event-log {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+
+    .event-item {
+      padding: 4px 0;
+      border-bottom: 1px solid #ffeaa7;
+      word-break: break-all;
+    }
+
+    .event-item:last-child {
+      border-bottom: none;
+    }
+
+    .status-bar {
+      background: #343a40;
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 13px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 4px 0;
+    }
+
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-section {
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .help-section h4 {
+      color: #1976d2;
+      margin-bottom: 10px;
+    }
+
+    .help-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .help-section li {
+      padding: 4px 0;
+      font-size: 13px;
+      color: #424242;
+    }
+
+    .help-section li::before {
+      content: '💡';
+      margin-right: 8px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-container {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .left-sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .status-bar {
+        min-width: 300px;
+      }
+
+      .help-section {
+        min-width: 300px;
+      }
+
+      .content-area {
+        flex-direction: column;
+      }
+
+      .controls-section {
+        width: 100%;
+        max-height: none;
+      }
+
+      .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .header h1 {
+        font-size: 2em;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .left-sidebar {
+        flex-direction: column;
+      }
+
+      .status-bar,
+      .help-section {
+        min-width: auto;
+      }
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #28a745;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast.error {
+      background: #dc3545;
+    }
+
+    .toast.warning {
+      background: #ffc107;
+      color: #212529;
     }
   </style>
 </head>
 
 <body>
-  <div class="box">
-    <div class="left">
-      <canvas class="container"></canvas>
-      <div>
-        <button onclick="change(1)">创建矩形</button>
-        <button onclick="change(2)">创建多边形</button>
-        <button onclick="change(3)">创建点</button>
-        <button onclick="change(4)">创建折线</button>
-        <button onclick="change(5)">创建圆形</button>
-        <button onclick="change(6)">创建网格</button>
-        <button onclick="change(0)">取消创建</button>
-        <br />
-        <button onclick="zoom(true)">放大</button>
-        <button onclick="zoom(false)">缩小</button>
-        <button onclick="fitting()">适配</button>
-        <button onclick="focusMode()">专注模式</button>
+  <div class="header">
+    <h3>Canvas-Select 完整功能演示</h3>
+  </div>
+  <div class="main-container">
+    <!-- 内容区域 -->
+    <div class="content-area">
+      <!-- 左侧边栏 -->
+      <div class="left-sidebar">
+        <!-- 状态栏 -->
+        <div class="status-bar">
+          <div class="status-item">
+            <span>📍 鼠标位置:</span>
+            <span id="mousePos">0, 0</span>
+          </div>
+          <div class="status-item">
+            <span>📍 坐标位置:</span>
+            <span id="mousePos2">0, 0</span>
+          </div>
+          <div class="status-item">
+            <span>📏 缩放比例:</span>
+            <span id="scaleInfo">100%</span>
+          </div>
+          <div class="status-item">
+            <span>📊 标注数量:</span>
+            <span id="shapeCount">0</span>
+          </div>
+          <div class="status-item">
+            <span>🎯 当前模式:</span>
+            <span id="currentMode">选择模式</span>
+          </div>
+        </div>
+
+        <!-- 帮助信息 -->
+        <div class="help-section">
+          <h4>💡 操作提示</h4>
+          <ul>
+            <li><strong>矩形:</strong> 按住鼠标左键拖动创建</li>
+            <li><strong>多边形:</strong> 左键点击添加点，点击起始点闭合，ESC退出，Backspace删除上一点</li>
+            <li><strong>点标注:</strong> 左键单击创建</li>
+            <li><strong>折线:</strong> 左键点击添加点，双击完成，ESC退出</li>
+            <li><strong>圆形:</strong> 按住左键拖动确定半径</li>
+            <li><strong>网格:</strong> 右键设置行列数，双击单元格选中/取消</li>
+            <li><strong>画笔:</strong> 按住左键拖动绘制</li>
+            <li><strong>橡皮擦:</strong> 按住左键拖动擦除</li>
+            <li><strong>画布操作:</strong> 右键拖动画布，滚轮缩放，Backspace删除选中形状</li>
+          </ul>
+        </div>
+      </div>
+      <div class="canvas-section">
+        <div class="canvas-container">
+          <canvas class="canvas"></canvas>
+        </div>
+
+        <div class="data-section">
+          <h4>📊 标注数据输出</h4>
+          <div class="data-output" id="dataOutput">等待标注数据...</div>
+
+          <h4 style="margin-top: 15px;">📝 事件日志</h4>
+          <div class="event-log" id="eventLog">
+            <div class="event-item">系统已初始化，等待操作...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-section">
+        <!-- 创建工具 -->
+        <div class="control-group">
+          <h3>🎨 创建工具</h3>
+          <div class="button-grid">
+            <button class="btn" onclick="setCreateType(0)" id="btn-0">选择模式</button>
+            <button class="btn" onclick="setCreateType(1)" id="btn-1">矩形</button>
+            <button class="btn" onclick="setCreateType(2)" id="btn-2">多边形</button>
+            <button class="btn" onclick="setCreateType(3)" id="btn-3">点标注</button>
+            <button class="btn" onclick="setCreateType(4)" id="btn-4">折线</button>
+            <button class="btn" onclick="setCreateType(5)" id="btn-5">圆形</button>
+            <button class="btn" onclick="setCreateType(6)" id="btn-6">网格</button>
+            <button class="btn" onclick="setCreateType(7)" id="btn-7">画笔</button>
+            <button class="btn" onclick="setCreateType(8)" id="btn-8">橡皮擦</button>
+          </div>
+        </div>
+
+        <!-- 视图控制 -->
+        <div class="control-group">
+          <h3>🔍 视图控制</h3>
+          <div class="button-grid">
+            <button class="btn" onclick="zoomIn()">放大</button>
+            <button class="btn" onclick="zoomOut()">缩小</button>
+            <button class="btn" onclick="fitZoom()">适配画布</button>
+            <button class="btn" onclick="toggleFocusMode()">专注模式</button>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="showCross" onchange="toggleCross()">
+            <label for="showCross">显示十字坐标线</label>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="scrollZoom" checked onchange="toggleScrollZoom()">
+            <label for="scrollZoom">鼠标滚轮缩放</label>
+          </div>
+        </div>
+
+        <!-- 模式设置 -->
+        <div class="control-group">
+          <h3>⚙️ 模式设置</h3>
+          <div class="checkbox-group">
+            <input type="checkbox" id="readonly" onchange="toggleReadonly()">
+            <label for="readonly">只读模式</label>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="lock" onchange="toggleLock()">
+            <label for="lock">锁定画布</label>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="showRotation" onchange="toggleShowRotation()">
+            <label for="showRotation">矩形旋转控制</label>
+          </div>
+        </div>
+
+        <!-- 样式设置 -->
+        <div class="control-group">
+          <h3>🎨 样式设置</h3>
+          <div class="input-group">
+            <label>边框颜色</label>
+            <input type="color" class="color-input" id="strokeStyle" value="#00ff00" onchange="updateStyle()">
+          </div>
+
+          <div class="input-group">
+            <label>填充颜色</label>
+            <input type="color" class="color-input" id="fillStyle" value="#0000ff" onchange="updateStyle()">
+          </div>
+
+          <div class="input-group">
+            <label>边框宽度: <span id="lineWidthValue">1</span></label>
+            <input type="range" class="range-input" id="lineWidth" min="1" max="10" value="1" onchange="updateStyle()">
+          </div>
+
+          <div class="input-group">
+            <label>控制点大小: <span id="ctrlRadiusValue">3</span></label>
+            <input type="range" class="range-input" id="ctrlRadius" min="2" max="10" value="3" onchange="updateStyle()">
+          </div>
+        </div>
+
+        <!-- 画笔设置 -->
+        <div class="control-group">
+          <h3>🖌️ 画笔设置</h3>
+          <div class="input-group">
+            <label>画笔颜色</label>
+            <input type="color" class="color-input" id="brushColor" value="#ff0000" onchange="updateBrushStyle()">
+          </div>
+
+          <div class="input-group">
+            <label>画笔大小: <span id="brushSizeValue">20</span></label>
+            <input type="range" class="range-input" id="brushSize" min="1" max="50" value="20"
+              onchange="updateBrushStyle()">
+          </div>
+
+          <div class="input-group">
+            <label>橡皮擦大小: <span id="eraserSizeValue">20</span></label>
+            <input type="range" class="range-input" id="eraserSize" min="5" max="100" value="20"
+              onchange="updateEraserStyle()">
+          </div>
+        </div>
+
+        <!-- 标签设置 -->
+        <div class="control-group">
+          <h3>🏷️ 标签设置</h3>
+          <div class="input-group">
+            <label>标签字体</label>
+            <select id="labelFont" onchange="updateLabelStyle()">
+              <option value="10px sans-serif">10px 默认字体</option>
+              <option value="12px sans-serif">12px 默认字体</option>
+              <option value="14px sans-serif">14px 默认字体</option>
+              <option value="10px Arial">10px Arial</option>
+              <option value="12px Arial">12px Arial</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>标签背景色</label>
+            <input type="color" class="color-input" id="labelFillStyle" value="#ffffff" onchange="updateLabelStyle()">
+          </div>
+
+          <div class="input-group">
+            <label>标签文字颜色</label>
+            <input type="color" class="color-input" id="textFillStyle" value="#000000" onchange="updateLabelStyle()">
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="hideLabel" onchange="updateLabelStyle()">
+            <label for="hideLabel">隐藏标签</label>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="labelUp" onchange="updateLabelStyle()">
+            <label for="labelUp">标签显示在上方</label>
+          </div>
+        </div>
+
+        <!-- 数据操作 -->
+        <div class="control-group">
+          <h3>💾 数据操作</h3>
+          <div class="button-grid">
+            <button class="btn" onclick="loadSampleData()">加载示例数据</button>
+            <button class="btn" onclick="clearAllData()">清空所有数据</button>
+            <button class="btn" onclick="exportData()">导出数据</button>
+            <button class="btn" onclick="importData()">导入数据</button>
+          </div>
+
+          <div class="button-grid">
+            <button class="btn danger" onclick="deleteSelected()">删除选中</button>
+            <button class="btn" onclick="clearBrush()">清除画笔</button>
+          </div>
+        </div>
+
+        <!-- 图片操作 -->
+        <div class="control-group">
+          <h3>🖼️ 图片操作</h3>
+          <div class="input-group">
+            <label>图片URL</label>
+            <input type="text" id="imageUrl" placeholder="输入图片URL"
+              value="https://n.sinaimg.cn/www/transform/300/w660h440/20240318/3875-37fb8533570d8661d3f547c7e3b0ddde.jpg">
+          </div>
+          <div class="button-grid">
+            <button class="btn" onclick="changeImage()">更换图片</button>
+            <button class="btn" onclick="loadLocalImage()">本地图片</button>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+        </div>
       </div>
     </div>
-    <!-- <div class="right">
-      <div>output:</div>
-      <textarea id="output" onchange="changeData()"></textarea>
-    </div> -->
-  </div>
-  <script src="./lib/canvas-select.min.js"></script>
-  <script>
-    // alert(document.body.clientWidth)
-    const output = document.getElementById('output');
-    const instance = new CanvasSelect('.container', 'https://n.sinaimg.cn/www/transform/300/w660h440/20240318/3875-37fb8533570d8661d3f547c7e3b0ddde.jpg');
-    // instance.readonly = true
-    // instance.focusMode = true
-    instance.ctrlRadius = navigator.userAgent.includes('Mobile') ? 6 : 3
-    window.c = instance;
-    let option = [
-      {
-        label: "矩形",
-        coor: [[184, 183], [275, 238]],
-        type: 1
-      },
-      {
-        label: "矩形2",
-        coor: [[284, 283], [375, 338]],
-        type: 1,
-        showRotation: false
-      },
-      {
-        label: "多边形",
-        coor: [[135, 291], [129, 319], [146, 346], [174, 365], [214, 362], [196, 337], [161, 288]],
-        type: 2
-      },
-      {
-        label: "点",
-        coor: [345, 406],
-        type: 3
-      },
-      {
-        label: "折线",
-        coor: [[470, 155], [490, 230], [493, 298]],
-        type: 4
-      },
-      {
-        label: "圆形",
-        coor: [369, 197],
-        radius: 38,
-        type: 5
-      },
-      {
-        label: "网格",
-        coor: [[419, 40], [539, 101]],
-        type: 6,
-        row: 3,
-        col: 2,
-        selected: [4]
-      },
-    ]
-    // let list = []
-    // for (let i = 0; i < 1000; i++) {
-    //   list = list.concat(option)
-    // }
-    // console.log('number, list.length)
-    instance.on('load', (src) => {
-      console.log('图片加载完成', src);
-      instance.setData(option);
-    });
-    instance.on('warn', (msg) => {
-      console.warn('warn', msg);
-    });
-    // 添加
-    instance.on('add', (info) => {
-      console.log('当前添加', info)
-      window.info = info
-    });
-    // 删除
-    instance.on('delete', (info) => {
-      console.log('当前删除', info)
-    });
-    // 选中
-    instance.on('select', (info) => {
-      console.log('当前选中1', info)
-    });
-    instance.on('updated', (result) => {
-      console.log('标注结果', result)
-      // const list = [...result]
-      // list.sort((a, b) => a.index - b.index)
-      // output.value = JSON.stringify(list, null, 2);
-    });
-    instance.on('contextmenu', () => {
-      console.log('右键')
-    });
 
-    function change(num) {
-      instance.createType = num;
-    }
-    function zoom(type) {
-      instance.setScale(type);
-    }
-    function fitting() {
-      instance.fitZoom();
-    }
-    function focusMode() {
-      instance.setFocusMode(!instance.focusMode);
-    }
-    function changeData() {
-      const data = JSON.parse(output.value)
-      instance.setData(data)
-    }
-  </script>
-  <!-- <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
-  <script>
-    const stats = new Stats();
-    // stats.showPanel(2); // 0: fps, 1: ms, 2: mb, 3+: custom
-    document.body.appendChild(stats.dom);
-    function animate() {
-      stats.begin();
-      // monitored code goes here
-      stats.end();
+    <script src="./lib/canvas-select.min.js"></script>
+    <script>
+      // 全局变量
+      let instance;
+      let eventLog = [];
+      const maxLogItems = 50;
+
+      // 初始化
+      function init() {
+        const canvas = document.querySelector('.canvas');
+        canvas.addEventListener('mousewheel', (e) => {
+          console.log(e.wheelDelta);
+          e.preventDefault();
+        });
+        instance = new CanvasSelect(canvas, document.getElementById('imageUrl').value);
+        window.instance = instance;
+
+        // 设置初始属性
+        instance.ctrlRadius = navigator.userAgent.includes('Mobile') ? 6 : 3;
+        instance.createType = 0;
+
+        // 绑定事件监听
+        setupEventListeners();
+
+        // 更新UI状态
+        updateUI();
+
+        showToast('Canvas-Select 初始化完成！', 'success');
+      }
+
+      // 设置事件监听
+      function setupEventListeners() {
+        // 图片加载完成
+        instance.on('load', (src) => {
+          addEventLog('图片加载完成', { src });
+          updateUI();
+        });
+
+        // 警告信息
+        instance.on('warn', (msg) => {
+          addEventLog('警告', { message: msg });
+          showToast(msg, 'warning');
+        });
+
+        // 添加标注
+        instance.on('add', (info) => {
+          addEventLog('添加标注', {
+            type: getShapeTypeName(info.type),
+            label: info.label || '无标签',
+            uuid: info.uuid
+          });
+          updateUI();
+        });
+
+        // 删除标注
+        instance.on('delete', (info) => {
+          addEventLog('删除标注', {
+            type: getShapeTypeName(info.type),
+            label: info.label || '无标签',
+            uuid: info.uuid
+          });
+          updateUI();
+        });
+
+        // 选中标注
+        instance.on('select', (info) => {
+          if (info) {
+            addEventLog('选中标注', {
+              type: getShapeTypeName(info.type),
+              label: info.label || '无标签',
+              uuid: info.uuid
+            });
+          } else {
+            addEventLog('取消选中', {});
+          }
+          updateUI();
+        });
+
+        // 数据更新
+        instance.on('updated', (result) => {
+          updateDataOutput(result);
+          updateShapeCount(result.length);
+          updateScaleInfo();
+        });
+
+        // 右键菜单
+        instance.on('contextmenu', (e) => {
+          addEventLog('右键', instance.mouse);
+        });
+
+        instance.on('coor', (s) => {
+          console.log('coor', s);
+        });
+
+        // 监听鼠标移动显示坐标
+        const canvas = document.querySelector('.canvas');
+        canvas.addEventListener('mousemove', (e) => {
+          document.getElementById('mousePos').textContent = `${instance.mouse[0]}, ${instance.mouse[0]}`;
+          document.getElementById('mousePos2').textContent = `${instance.position[0]}, ${instance.position[1]}`;
+        });
+
+      }
+
+      // 设置创建类型
+      function setCreateType(type) {
+        instance.createType = type;
+
+        // 更新按钮状态
+        document.querySelectorAll('.btn[id^="btn-"]').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.getElementById(`btn-${type}`).classList.add('active');
+
+        // 更新当前模式显示
+        const modeNames = {
+          0: '选择模式', 1: '矩形', 2: '多边形', 3: '点标注',
+          4: '折线', 5: '圆形', 6: '网格', 7: '画笔', 8: '橡皮擦'
+        };
+        document.getElementById('currentMode').textContent = modeNames[type];
+
+        addEventLog('切换创建模式', { mode: modeNames[type] });
+      }
+
+      // 缩放控制
+      function zoomIn() {
+        instance.setScale(true);
+        addEventLog('放大画布', {});
+      }
+
+      function zoomOut() {
+        instance.setScale(false);
+        addEventLog('缩小画布', {});
+      }
+
+      function fitZoom() {
+        instance.fitZoom();
+        addEventLog('适配画布', {});
+      }
+
+      function toggleFocusMode() {
+        instance.setFocusMode(!instance.focusMode);
+        addEventLog('切换专注模式', { enabled: instance.focusMode });
+        updateUI();
+      }
+
+      // 切换功能
+      function toggleCross() {
+        instance.showCross = document.getElementById('showCross').checked;
+        instance.update();
+        addEventLog('切换十字坐标线', { enabled: instance.showCross });
+      }
+
+      function toggleScrollZoom() {
+        instance.scrollZoom = document.getElementById('scrollZoom').checked;
+        addEventLog('切换滚轮缩放', { enabled: instance.scrollZoom });
+      }
+
+      function toggleReadonly() {
+        instance.readonly = document.getElementById('readonly').checked;
+        addEventLog('切换只读模式', { enabled: instance.readonly });
+      }
+
+      function toggleLock() {
+        instance.lock = document.getElementById('lock').checked;
+        addEventLog('切换锁定模式', { enabled: instance.lock });
+      }
+
+      function toggleShowRotation() {
+        instance.showRotation = document.getElementById('showRotation').checked;
+        instance.update();
+        addEventLog('切换旋转控制', { enabled: instance.showRotation });
+      }
+
+      // 样式更新
+      function updateStyle() {
+        instance.strokeStyle = document.getElementById('strokeStyle').value;
+        instance.fillStyle = document.getElementById('fillStyle').value + '40'; // 添加透明度
+        instance.lineWidth = parseInt(document.getElementById('lineWidth').value);
+        instance.ctrlRadius = parseInt(document.getElementById('ctrlRadius').value);
+
+        document.getElementById('lineWidthValue').textContent = instance.lineWidth;
+        document.getElementById('ctrlRadiusValue').textContent = instance.ctrlRadius;
+
+        instance.update();
+        addEventLog('更新样式', {
+          strokeStyle: instance.strokeStyle,
+          lineWidth: instance.lineWidth
+        });
+      }
+
+      function updateBrushStyle() {
+        instance.brushStokeStyle = document.getElementById('brushColor').value;
+        instance.brushSize = parseInt(document.getElementById('brushSize').value);
+
+        document.getElementById('brushSizeValue').textContent = instance.brushSize;
+
+        addEventLog('更新画笔样式', {
+          color: instance.brushStokeStyle,
+          size: instance.brushSize
+        });
+      }
+
+      function updateEraserStyle() {
+        instance.eraserSize = parseInt(document.getElementById('eraserSize').value);
+        document.getElementById('eraserSizeValue').textContent = instance.eraserSize;
+
+        addEventLog('更新橡皮擦大小', { size: instance.eraserSize });
+      }
+
+      function updateLabelStyle() {
+        instance.labelFont = document.getElementById('labelFont').value;
+        instance.labelFillStyle = document.getElementById('labelFillStyle').value;
+        instance.textFillStyle = document.getElementById('textFillStyle').value;
+        instance.hideLabel = document.getElementById('hideLabel').checked;
+        instance.labelUp = document.getElementById('labelUp').checked;
+
+        instance.update();
+        addEventLog('更新标签样式', {
+          font: instance.labelFont,
+          hideLabel: instance.hideLabel
+        });
+      }
+
+      // 数据操作
+      function loadSampleData() {
+        const sampleData = [
+          {
+            label: "示例矩形",
+            coor: [[100, 100], [200, 150]],
+            type: 1,
+            strokeStyle: "#ff0000",
+            fillStyle: "rgba(255, 0, 0, 0.2)"
+          },
+          {
+            label: "示例多边形",
+            coor: [[250, 120], [280, 100], [320, 130], [300, 170], [260, 160]],
+            type: 2,
+            strokeStyle: "#00ff00",
+            fillStyle: "rgba(0, 255, 0, 0.2)"
+          },
+          {
+            label: "示例点",
+            coor: [350, 200],
+            type: 3,
+            strokeStyle: "#0000ff"
+          },
+          {
+            label: "示例折线",
+            coor: [[400, 100], [450, 120], [480, 90], [520, 110]],
+            type: 4,
+            strokeStyle: "#ff00ff"
+          },
+          {
+            label: "示例圆形",
+            coor: [150, 250],
+            radius: 40,
+            type: 5,
+            strokeStyle: "#ffff00",
+            fillStyle: "rgba(255, 255, 0, 0.2)"
+          },
+          {
+            label: "示例网格",
+            coor: [[300, 250], [400, 320]],
+            type: 6,
+            row: 3,
+            col: 2,
+            selected: [1, 3],
+            strokeStyle: "#00ffff"
+          }
+        ];
+
+        instance.setData(sampleData);
+        addEventLog('加载示例数据', { count: sampleData.length });
+        showToast('示例数据加载完成！', 'success');
+      }
+
+      function clearAllData() {
+        if (confirm('确定要清空所有标注数据吗？')) {
+          instance.setData([]);
+          addEventLog('清空所有数据', {});
+          showToast('所有数据已清空！', 'success');
+        }
+      }
+
+      function exportData() {
+        const data = JSON.stringify(instance.dataset, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `canvas-select-data-${new Date().getTime()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        addEventLog('导出数据', { count: instance.dataset.length });
+        showToast('数据导出完成！', 'success');
+      }
+
+      function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const data = JSON.parse(e.target.result);
+                instance.setData(data);
+                addEventLog('导入数据', { count: data.length });
+                showToast('数据导入完成！', 'success');
+              } catch (error) {
+                showToast('数据格式错误！', 'error');
+              }
+            };
+            reader.readAsText(file);
+          }
+        };
+        input.click();
+      }
+
+      function deleteSelected() {
+        const activeShape = instance.activeShape;
+        if (activeShape && activeShape.index !== undefined) {
+          instance.deleteByIndex(activeShape.index);
+          showToast('已删除选中标注！', 'success');
+        } else {
+          showToast('请先选中要删除的标注！', 'warning');
+        }
+      }
+
+      function clearBrush() {
+        instance.clearBrush();
+        addEventLog('清除画笔数据', {});
+        showToast('画笔数据已清除！', 'success');
+      }
+
+      // 图片操作
+      function changeImage() {
+        const url = document.getElementById('imageUrl').value;
+        if (url) {
+          instance.setImage(url);
+          addEventLog('更换图片', { url });
+        } else {
+          showToast('请输入图片URL！', 'warning');
+        }
+      }
+
+      function loadLocalImage() {
+        document.getElementById('fileInput').click();
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              instance.setImage(img);
+              addEventLog('加载本地图片', { name: file.name });
+              showToast('本地图片加载完成！', 'success');
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        } else {
+          showToast('请选择有效的图片文件！', 'error');
+        }
+      }
+
+      // UI更新函数
+      function updateUI() {
+        updateScaleInfo();
+        updateShapeCount(instance.dataset.length);
+
+        // 更新创建类型按钮状态
+        setCreateType(instance.createType);
+
+        // 更新复选框状态
+        document.getElementById('showCross').checked = instance.showCross;
+        document.getElementById('scrollZoom').checked = instance.scrollZoom;
+        document.getElementById('readonly').checked = instance.readonly;
+        document.getElementById('lock').checked = instance.lock;
+        document.getElementById('showRotation').checked = instance.showRotation;
+        document.getElementById('hideLabel').checked = instance.hideLabel;
+        document.getElementById('labelUp').checked = instance.labelUp;
+      }
+
+      function updateScaleInfo() {
+        const scale = Math.round(instance.scale * 100);
+        document.getElementById('scaleInfo').textContent = `${scale}%`;
+      }
+
+      function updateShapeCount(count) {
+        document.getElementById('shapeCount').textContent = count;
+      }
+
+      function updateDataOutput(data) {
+        const output = document.getElementById('dataOutput');
+        if (data && data.length > 0) {
+          output.textContent = JSON.stringify(data, null, 2);
+        } else {
+          output.textContent = '暂无标注数据';
+        }
+      }
+
+      // 事件日志
+      function addEventLog(event, data) {
+        const timestamp = new Date().toLocaleTimeString();
+        eventLog.unshift({ timestamp, event, data });
+
+        if (eventLog.length > maxLogItems) {
+          eventLog = eventLog.slice(0, maxLogItems);
+        }
+
+        updateEventLogDisplay();
+      }
+
+      function updateEventLogDisplay() {
+        const logContainer = document.getElementById('eventLog');
+        logContainer.innerHTML = eventLog.map(log =>
+          `<div class="event-item">
+          <strong>${log.timestamp}</strong> - ${log.event}
+          ${Object.keys(log.data).length > 0 ?
+            `<br><small>${JSON.stringify(log.data)}</small>` : ''}
+        </div>`
+        ).join('');
+      }
+
+      // 工具函数
+      function getShapeTypeName(type) {
+        const typeNames = {
+          1: '矩形', 2: '多边形', 3: '点', 4: '折线',
+          5: '圆形', 6: '网格', 7: '画笔', 8: '橡皮擦'
+        };
+        return typeNames[type] || '未知';
+      }
+
+      function showToast(message, type = 'success') {
+        console.info('::canvas-select事件', message);
+      }
+
+      // 页面加载完成后初始化
+      document.addEventListener('DOMContentLoaded', init);
+
+      // 窗口大小改变时重新调整
+      window.addEventListener('resize', () => {
+        if (instance) {
+          instance.resize();
+        }
+      });
+    </script>
+    <!-- 以下是性能检测脚本-->
+    <!-- <script src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"> </script>
+    <script>
+      const stats = new Stats();
+      // stats.showPanel(2); // 0: fps, 1: ms, 2: mb, 3+: custom
+      document.body.appendChild(stats.dom);
+      function animate() {
+        stats.begin();
+        // monitored code goes here
+        stats.end();
+        requestAnimationFrame(animate);
+      }
       requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-
-  </script> -->
+    </script> -->
 </body>
 
 </html>

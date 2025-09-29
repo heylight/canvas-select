@@ -1,7 +1,7 @@
 {
   "name": "canvas-select",
-  "version": "2.31.0",
-  "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形、网格。",
+  "version": "2.32.0",
+  "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形、网格、画笔",
   "main": "lib/canvas-select.min.js",
   "module": "lib/canvas-select.esm.js",
   "types": "lib/index.d.ts",
@@ -30,6 +30,7 @@
     "折线",
     "圆",
     "网格",
+    "画笔",
     "电子围栏"
   ],
   "author": "heylight",

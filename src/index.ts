@@ -6,9 +6,11 @@ import Line from './shape/Line';
 import Circle from './shape/Circle';
 import Grid from './shape/Grid';
 import pkg from '../package.json';
+import Brush from './shape/Brush';
+import Eraser from './shape/Eraser';
 
 export type Point = [number, number];
-export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid;
+export type AllShape = Rect | Polygon | Dot | Line | Circle | Grid | Brush | Eraser;
 enum Shape {
     None,
     Rect,
@@ -16,7 +18,9 @@ enum Shape {
     Dot,
     Line,
     Circle,
-    Grid
+    Grid,
+    Brush,
+    Eraser,
 }
 export default class CanvasSelect extends EventBus {
     /** 当前版本 */
@@ -62,8 +66,8 @@ export default class CanvasSelect extends EventBus {
     /** 画布高度 */
     HEIGHT = 0;
     /** XY十字坐标 */
-    crossX = new Line({}, 0);
-    crossY = new Line({}, 1);
+    crossX = new Line({}, 0, {});
+    crossY = new Line({}, 1, {});
     crossStroke = '#ff0';
     /** 开启十字辅助 */
     showCross = false;
@@ -141,6 +145,14 @@ export default class CanvasSelect extends EventBus {
     gridMenuEnable = true;
     /** 网格选中背景填充颜色 */
     gridSelectedFillStyle = 'rgba(255, 255, 0, 0.6)';
+    /** 画笔大小 */
+    brushSize = 20;
+    /** 画笔颜色 */
+    brushStokeStyle = '#f00';
+    /** 橡皮擦大小 */
+    eraserSize = 20;
+    /** 标注坐标 (以背景图片左上角为原点) */
+    position: number[] = [0, 0];
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -306,7 +318,7 @@ export default class CanvasSelect extends EventBus {
     }
 
     /** 合成事件 */
-    private mergeEvent(e: TouchEvent | MouseEvent) {
+    public mergeEvent(e: TouchEvent | MouseEvent) {
         let mouseX = 0;
         let mouseY = 0;
         let mouseCX = 0;
@@ -345,6 +357,7 @@ export default class CanvasSelect extends EventBus {
     }
 
     private handleMousewheel(e: WheelEvent) {
+        e.preventDefault();
         e.stopPropagation();
         if (this.lock || !this.scrollZoom) return;
         const { mouseX, mouseY } = this.mergeEvent(e);
@@ -370,45 +383,52 @@ export default class CanvasSelect extends EventBus {
                 }
                 this.remmber = [[offsetX - x0, offsetY - y0]];
             } else if (this.isInBackground(e)) {
+                const nx = Math.round(offsetX - this.originX / this.scale);
+                const ny = Math.round(offsetY - this.originY / this.scale);
                 if (this.activeShape.creating && !this.readonly) { // 创建中
                     if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
                         const [x, y] = this.activeShape.coor[this.activeShape.coor.length - 1];
                         if (x !== offsetX && y !== offsetY) {
-                            const nx = Math.round(offsetX - this.originX / this.scale);
-                            const ny = Math.round(offsetY - this.originY / this.scale);
                             this.activeShape.coor.push([nx, ny]);
                         }
                     }
                 } else if (this.createType !== Shape.None && !this.readonly && !this.isCtrlKey) { // 开始创建
                     let newShape;
-                    const nx = Math.round(offsetX - this.originX / this.scale);
-                    const ny = Math.round(offsetY - this.originY / this.scale);
                     const curPoint: Point = [nx, ny];
                     switch (this.createType) {
                         case Shape.Rect:
-                            newShape = new Rect({ coor: [curPoint, curPoint] }, this.dataset.length);
+                            newShape = new Rect({ coor: [curPoint, curPoint] }, this.dataset.length, this);
                             newShape.creating = true;
                             break;
                         case Shape.Polygon:
-                            newShape = new Polygon({ coor: [curPoint] }, this.dataset.length);
+                            newShape = new Polygon({ coor: [curPoint] }, this.dataset.length, this);
                             newShape.creating = true;
                             break;
                         case Shape.Dot:
-                            newShape = new Dot({ coor: curPoint }, this.dataset.length);
+                            newShape = new Dot({ coor: curPoint }, this.dataset.length, this);
                             this.emit('add', newShape);
                             break;
                         case Shape.Line:
-                            newShape = new Line({ coor: [curPoint] }, this.dataset.length);
+                            newShape = new Line({ coor: [curPoint] }, this.dataset.length, this);
                             newShape.creating = true;
                             break;
                         case Shape.Circle:
-                            newShape = new Circle({ coor: curPoint }, this.dataset.length);
+                            newShape = new Circle({ coor: curPoint }, this.dataset.length, this);
+                            console.log(newShape);
                             newShape.creating = true;
                             break;
                         case Shape.Grid:
-                            newShape = new Grid({ coor: [curPoint, curPoint] }, this.dataset.length);
+                            newShape = new Grid({ coor: [curPoint, curPoint] }, this.dataset.length, this);
                             newShape.creating = true;
                             break;
+                        case Shape.Brush:
+                            newShape = new Brush({ coor: [curPoint] }, this.dataset.length, this);
+                            newShape.creating = true;
+                            break
+                        case Shape.Eraser:
+                            newShape = new Eraser({ coor: [curPoint] }, this.dataset.length, this);
+                            newShape.creating = true;
+                            break
                         default:
                             break;
                     }
@@ -482,6 +502,9 @@ export default class CanvasSelect extends EventBus {
             this.crossY.coor = []
         }
         this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
+        const nx = Math.round(offsetX - this.originX / this.scale);
+        const ny = Math.round(offsetY - this.originY / this.scale);
+        this.position = [nx, ny]
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
             if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
                 const [[x, y]] = this.remmber;
@@ -556,8 +579,6 @@ export default class CanvasSelect extends EventBus {
                         }
                     }
                 } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type)) {
-                    const nx = Math.round(offsetX - this.originX / this.scale);
-                    const ny = Math.round(offsetY - this.originY / this.scale);
                     const newPoint = [nx, ny];
                     this.activeShape.coor.splice(this.ctrlIndex, 1, newPoint);
                 } else if (this.activeShape.type === Shape.Circle) {
@@ -598,15 +619,17 @@ export default class CanvasSelect extends EventBus {
                 }
                 if (noLimit) this.activeShape.coor = coor;
             } else if (this.activeShape.creating && this.isInBackground(e)) {
-                const x = Math.round(offsetX - this.originX / this.scale);
-                const y = Math.round(offsetY - this.originY / this.scale);
+                // const x = Math.round(offsetX - this.originX / this.scale);
+                // const y = Math.round(offsetY - this.originY / this.scale);
                 // 创建矩形
                 if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
-                    this.activeShape.coor.splice(1, 1, [x, y]);
+                    this.activeShape.coor.splice(1, 1, [nx, ny]);
                 } else if (this.activeShape.type === Shape.Circle) {
                     const [x0, y0] = this.activeShape.coor;
-                    const r = Math.sqrt((x0 - x) ** 2 + (y0 - y) ** 2);
+                    const r = Math.sqrt((x0 - nx) ** 2 + (y0 - ny) ** 2);
                     this.activeShape.radius = r;
+                } else if ([Shape.Brush, Shape.Eraser].includes(this.activeShape.type)) {
+                    this.activeShape.coor.push([nx, ny]);
                 }
             }
             this.update();
@@ -669,6 +692,9 @@ export default class CanvasSelect extends EventBus {
                         this.activeShape.creating = false;
                         this.emit('add', this.activeShape);
                     }
+                } else if ([Shape.Brush, Shape.Eraser].includes(this.activeShape.type)) {
+                    this.activeShape.creating = false;
+                    this.emit('add', this.activeShape);
                 }
                 this.update();
             }
@@ -796,29 +822,39 @@ export default class CanvasSelect extends EventBus {
                     let shape: any;
                     switch (item.type) {
                         case Shape.Rect:
-                            shape = new Rect(item, index);
+                            shape = new Rect(item, index, this);
                             shape.showRotation = item.showRotation ?? this.showRotation
+                            shape.lineWidth = item.lineWidth ?? this.lineWidth
                             break;
                         case Shape.Polygon:
-                            shape = new Polygon(item, index);
+                            shape = new Polygon(item, index, this);
                             break;
                         case Shape.Dot:
-                            shape = new Dot(item, index);
+                            shape = new Dot(item, index, this);
                             break;
                         case Shape.Line:
-                            shape = new Line(item, index);
+                            shape = new Line(item, index, this);
                             break;
                         case Shape.Circle:
-                            shape = new Circle(item, index);
+                            shape = new Circle(item, index, this);
                             break;
                         case Shape.Grid:
-                            shape = new Grid(item, index);
+                            shape = new Grid(item, index, this);
+                            break;
+                        case Shape.Brush:
+                            shape = new Brush(item, index, this);
+                            shape.brushSize = item.brushSize ?? this.brushSize;
+                            shape.brushStokeStyle = item.brushStokeStyle ?? this.brushStokeStyle;
+                            break;
+                        case Shape.Eraser:
+                            shape = new Eraser(item, index, this);
+                            shape.eraserSize = item.eraserSize ?? this.eraserSize;
                             break;
                         default:
                             console.warn('Invalid shape', item);
                             break;
                     }
-                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid].includes(item.type) && shape && initdata.push(shape);
+                    [Shape.Rect, Shape.Polygon, Shape.Dot, Shape.Line, Shape.Circle, Shape.Grid, Shape.Brush, Shape.Eraser].includes(item.type) && shape && initdata.push(shape);
                 } else {
                     console.warn('Shape must be an enumerable Object.', item);
                 }
@@ -962,7 +998,7 @@ export default class CanvasSelect extends EventBus {
      */
     drawRect(shape: Rect, sub?: Record<string, any>) {
         if (!this.ctx || shape.coor.length !== 2) return;
-        const { strokeStyle, fillStyle, active, creating, coor, lineWidth, rotation } = shape;
+        const { strokeStyle = '', fillStyle = '', active, creating, coor, lineWidth, rotation } = shape;
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         const centerX = (x0 + x1) / 2;
         const centerY = (y0 + y1) / 2;
@@ -971,8 +1007,12 @@ export default class CanvasSelect extends EventBus {
 
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (sub?.isSelected ? sub?.selectedFillStyle : (fillStyle || this.fillStyle));
-        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        if (sub?.isSelected) {
+            this.ctx.fillStyle = sub?.selectedFillStyle || fillStyle
+        } else {
+            this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : fillStyle;
+        }
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : strokeStyle;
 
         // 应用旋转
         this.ctx.translate(centerX, centerY);
@@ -991,12 +1031,12 @@ export default class CanvasSelect extends EventBus {
      */
     drawPolygon(shape: Polygon) {
         if (!this.ctx) return;
-        const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
+        const { strokeStyle = '', fillStyle = '', active, creating, coor, lineWidth } = shape;
         this.ctx.save();
         this.ctx.lineJoin = 'round';
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.fillStyle);
-        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : fillStyle;
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : strokeStyle;
         this.ctx.beginPath();
         coor.forEach((el: Point, i) => {
             const [x, y] = el.map((a) => Math.round(a * this.scale));
@@ -1024,12 +1064,12 @@ export default class CanvasSelect extends EventBus {
      */
     drawDot(shape: Dot) {
         if (!this.ctx) return;
-        const { strokeStyle, creating, fillStyle, active, coor, lineWidth } = shape;
+        const { strokeStyle = '', creating, fillStyle = '', active, coor, lineWidth } = shape;
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.ctrlFillStyle);
-        this.ctx.strokeStyle = active ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : fillStyle;
+        this.ctx.strokeStyle = active ? this.activeStrokeStyle : strokeStyle;
         this.ctx.beginPath();
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
         this.ctx.fill();
@@ -1045,12 +1085,12 @@ export default class CanvasSelect extends EventBus {
      */
     drawCirle(shape: Circle) {
         if (!this.ctx) return;
-        const { strokeStyle, fillStyle, active, coor, label, creating, radius, ctrlsData, lineWidth } = shape;
+        const { strokeStyle = '', fillStyle = '', active, coor, creating, radius, ctrlsData, lineWidth } = shape;
         const [x, y] = coor.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.fillStyle);
-        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : fillStyle;
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : strokeStyle;
         this.ctx.beginPath();
         this.ctx.arc(x, y, radius * this.scale, 0, 2 * Math.PI, true);
         this.ctx.fill();
@@ -1066,11 +1106,11 @@ export default class CanvasSelect extends EventBus {
      */
     drawLine(shape: Line) {
         if (!this.ctx) return;
-        const { strokeStyle, active, creating, coor, lineWidth } = shape;
+        const { strokeStyle = '', active, creating, coor, lineWidth } = shape;
         this.ctx.save();
         this.ctx.lineJoin = 'round';
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : strokeStyle;
         this.ctx.beginPath();
         coor.forEach((el: Point, i) => {
             const [x, y] = el.map((a) => Math.round(a * this.scale));
@@ -1097,12 +1137,12 @@ export default class CanvasSelect extends EventBus {
     drawGrid(shape: Grid) {
         if (!this.ctx) return;
         if (shape.coor.length !== 2) return;
-        const { strokeStyle, fillStyle, active, creating, coor, lineWidth } = shape;
+        const { strokeStyle = '', fillStyle = '', active, creating, coor, lineWidth } = shape;
         const [[x0, y0], [x1, y1]] = coor.map((a: Point) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save();
         this.ctx.lineWidth = lineWidth || this.lineWidth;
-        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : (fillStyle || this.fillStyle);
-        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : (strokeStyle || this.strokeStyle);
+        this.ctx.fillStyle = (active || creating) ? this.activeFillStyle : fillStyle;
+        this.ctx.strokeStyle = (active || creating) ? this.activeStrokeStyle : strokeStyle;
         shape.gridRects.forEach((rect: Rect, m) => {
             this.drawRect(rect, {
                 selectedFillStyle: shape.selectedFillStyle || this.gridSelectedFillStyle,
@@ -1116,17 +1156,72 @@ export default class CanvasSelect extends EventBus {
         this.ctx.restore();
         this.drawLabel(coor[0], shape);
     }
+    /**
+     * 绘制画笔路径
+     * @param shape 形状
+     */
+    drawBrushPath(shape: Brush) {
+        if (!this.ctx) return;
+        const { coor, brushSize = 1, brushStokeStyle = '' } = shape;
+        this.ctx.save()
+        this.ctx.globalCompositeOperation = 'source-over'; // 正常绘制模式
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.lineWidth = Math.round((brushSize) * this.scale);
+        this.ctx.strokeStyle = brushStokeStyle;
+        this.ctx.beginPath();
+        coor.forEach((el: Point, i) => {
+            const [x, y] = el.map((a) => Math.round(a * this.scale));
+            if (i === 0) {
+                this.ctx?.moveTo(x, y);
+            } else {
+                this.ctx?.lineTo(x, y);
+            }
+        });
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+    /**
+     * 绘制橡皮擦路径
+     * @param coor 折线坐标
+     * @param shape 形状
+     */
+    drawEraserPath(shape: Eraser) {
+        if (!this.ctx) return;
+        const { coor, eraserSize = 1 } = shape;
+        this.ctx.save()
+        this.ctx.globalCompositeOperation = 'destination-out';
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.lineWidth = Math.round(eraserSize * this.scale);
+        this.ctx.beginPath();
+        coor.forEach((el: Point, i) => {
+            const [x, y] = el.map((a) => Math.round(a * this.scale));
+            if (i === 0) {
+                this.ctx?.moveTo(x, y);
+            } else {
+                this.ctx?.lineTo(x, y);
+            }
+        });
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+    /** 清除画布 */
+    clearBrush() {
+        const newDateset = this.dataset.filter((el) => ![Shape.Brush, Shape.Eraser].includes(el.type));
+        this.setData(newDateset);
+    }
 
     /**
      * 绘制控制点
      * @param point 坐标
      */
-    drawCtrl(point: Point) {
+    drawCtrl(point: Point, color?: string) {
         if (!this.ctx) return;
         const [x, y] = point.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.fillStyle = this.ctrlFillStyle;
+        this.ctx.fillStyle = color || this.ctrlFillStyle;
         this.ctx.strokeStyle = this.ctrlStrokeStyle;
         this.ctx.arc(x, y, this.ctrlRadius, 0, 2 * Math.PI, true);
         this.ctx.fill();
@@ -1144,7 +1239,7 @@ export default class CanvasSelect extends EventBus {
             if (shape.type === Shape.Circle) {
                 if (i === 1) this.drawCtrl(point);
             } else {
-                this.drawCtrl(point);
+                this.drawCtrl(point, (shape.type === Shape.Rect && i === 8) ? 'yellow' : undefined);
             }
         });
     }
@@ -1215,16 +1310,29 @@ export default class CanvasSelect extends EventBus {
             this.ctx.save();
             this.ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
             this.ctx.translate(this.originX, this.originY);
-            if (this.IMAGE_WIDTH && this.IMAGE_HEIGHT) {
-                this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
-            }
+
             const renderList = this.focusMode ? (this.activeShape.type ? [this.activeShape] : []) : this.dataset;
-            if (!this.isCtrlKey && this.showCross) {
-                this.drawLine(this.crossX);
-                this.drawLine(this.crossY);
+            const BrushAndErasers = renderList.filter(item => item.type === Shape.Brush || item.type === Shape.Eraser);
+            for (let i = 0; i < BrushAndErasers.length; i++) {
+                const shape = BrushAndErasers[i];
+                if (shape.hide) continue;
+                switch (shape.type) {
+                    case Shape.Brush:
+                        shape.brushSize = shape.brushSize ?? this.brushSize;
+                        shape.brushStokeStyle = shape.brushStokeStyle ?? this.brushStokeStyle;
+                        this.drawBrushPath(shape as Brush);
+                        break;
+                    case Shape.Eraser:
+                        shape.eraserSize = shape.eraserSize ?? this.eraserSize;
+                        this.drawEraserPath(shape as Eraser);
+                        break;
+                    default:
+                        break;
+                }
             }
-            for (let i = 0; i < renderList.length; i++) {
-                const shape = renderList[i];
+            const NormalShapes = renderList.filter(item => item.type !== Shape.Brush && item.type !== Shape.Eraser);
+            for (let i = 0; i < NormalShapes.length; i++) {
+                const shape = NormalShapes[i];
                 if (shape.hide) continue;
                 switch (shape.type) {
                     case Shape.Rect:
@@ -1249,9 +1357,18 @@ export default class CanvasSelect extends EventBus {
                         break;
                 }
             }
+            if (!this.isCtrlKey && this.showCross) {
+                this.drawLine(this.crossX);
+                this.drawLine(this.crossY);
+            }
             if ([Shape.Rect, Shape.Polygon, Shape.Line, Shape.Circle, Shape.Grid].includes(this.activeShape.type) && !this.activeShape.hide) {
                 this.drawCtrlList(this.activeShape);
             }
+            this.ctx.globalCompositeOperation = 'destination-over';
+            if (this.IMAGE_WIDTH && this.IMAGE_HEIGHT) {
+                this.ctx.drawImage(this.image, 0, 0, this.IMAGE_WIDTH, this.IMAGE_HEIGHT);
+            }
+            this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.restore();
             this.emit('updated', this.dataset);
         });

@@ -5,10 +5,11 @@ export default class Rect extends Shape {
   /** 旋转角度（弧度） */
   public rotation: number = 0
   /** 是否显示旋转控制点 */
-  public showRotation: boolean = false
-  constructor(item: any, index: number) {
+  public showRotation: boolean | undefined
+  constructor(item: any, index: number, base: any) {
     super(item, index)
-    this.rotation = item.rotation || 0
+    this.fillStyle = item.fillStyle ?? base.fillStyle
+    this.strokeStyle = item.strokeStyle ?? base.strokeStyle
   }
   get ctrlsData() {
     const [[x0, y0], [x1, y1]] = this.coor;
@@ -31,7 +32,7 @@ export default class Rect extends Shape {
 
     // 如果需要显示旋转控制点，则添加到控制点数组中
     if (this.showRotation) {
-      baseCtrls.push([centerX, centerY - Math.max(width, height) * 0.6]); // 旋转控制点（索引8）
+      baseCtrls.push([centerX, y0 - 20, 'green']);
     }
 
     // 如果矩形没有旋转，直接返回控制点

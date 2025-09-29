@@ -8,11 +8,13 @@ export default class Grid extends Shape {
   public selected: number[] = []
   public selectedFillStyle: string | undefined
 
-  constructor(item: any, index: number) {
+  constructor(item: any, index: number, base: any) {
     super(item, index)
     this.row = item.row > 0 ? item.row : this.row
     this.col = item.col > 0 ? item.col : this.col
     this.selected = Array.isArray(item.selected) ? item.selected : []
+    this.fillStyle = item.fillStyle ?? base.fillStyle
+    this.strokeStyle = item.strokeStyle ?? base.strokeStyle
   }
 
   get ctrlsData() {
@@ -42,7 +44,7 @@ export default class Grid extends Shape {
         const shape = new Rect({
           coor: [startPoint, [startPoint[0] + w, startPoint[1] + h]],
           strokeStyle, fillStyle, active, creating, lineWidth
-        }, index);
+        }, index, {});
         list.push(shape)
       }
     }

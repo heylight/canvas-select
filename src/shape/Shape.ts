@@ -23,8 +23,8 @@ export default class Shape {
     public textFillStyle: string | undefined
     /** 标签文字字体 */
     public labelFont: string | undefined
-    /** 1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
-    public type: number | undefined // 形状
+    /** 标注类型 */
+    public type: number | undefined
     /** 当前是否处于活动状态 */
     public active: boolean = false
     /** 当前是否处于创建状态 */
