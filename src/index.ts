@@ -823,8 +823,6 @@ export default class CanvasSelect extends EventBus {
                     switch (item.type) {
                         case Shape.Rect:
                             shape = new Rect(item, index, this);
-                            shape.showRotation = item.showRotation ?? this.showRotation
-                            shape.lineWidth = item.lineWidth ?? this.lineWidth
                             break;
                         case Shape.Polygon:
                             shape = new Polygon(item, index, this);
@@ -843,12 +841,9 @@ export default class CanvasSelect extends EventBus {
                             break;
                         case Shape.Brush:
                             shape = new Brush(item, index, this);
-                            shape.brushSize = item.brushSize ?? this.brushSize;
-                            shape.brushStokeStyle = item.brushStokeStyle ?? this.brushStokeStyle;
                             break;
                         case Shape.Eraser:
                             shape = new Eraser(item, index, this);
-                            shape.eraserSize = item.eraserSize ?? this.eraserSize;
                             break;
                         default:
                             console.warn('Invalid shape', item);

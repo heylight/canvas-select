@@ -8,8 +8,10 @@ export default class Rect extends Shape {
   public showRotation: boolean | undefined
   constructor(item: any, index: number, base: any) {
     super(item, index)
+    this.lineWidth = item.lineWidth ?? base.lineWidth
     this.fillStyle = item.fillStyle ?? base.fillStyle
     this.strokeStyle = item.strokeStyle ?? base.strokeStyle
+    this.showRotation = item.showRotation ?? base.showRotation
   }
   get ctrlsData() {
     const [[x0, y0], [x1, y1]] = this.coor;
