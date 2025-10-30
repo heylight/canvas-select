@@ -9,5 +9,6 @@ export default class Eraser extends Shape {
     constructor(data: any, index: number, base: any) {
         super(data, index);
         this.eraserSize = data.eraserSize ?? base.eraserSize;
+        this.coor = data.coor;
     }
 }

@@ -11,5 +11,6 @@ export default class Brush extends Shape {
         super(data, index);
         this.brushSize = data.brushSize ?? base.brushSize
         this.brushStokeStyle = data.brushStokeStyle ?? base.brushStokeStyle
+        this.coor = data.coor
     }
 }
