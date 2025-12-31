@@ -747,7 +747,7 @@ export default class CanvasSelect extends EventBus {
                     this.deleteByIndex(this.activeShape.index);
                 }
                 this.update();
-            } else if (e.key === 'Backspace') {
+            } else if (['Delete', 'Backspace'].includes(e.key)) {
                 this.deleteByIndex(this.activeShape.index);
             }
         }
