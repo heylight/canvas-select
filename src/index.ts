@@ -153,6 +153,8 @@ export default class CanvasSelect extends EventBus {
     eraserSize = 20;
     /** 标注坐标 (以背景图片左上角为原点) */
     position: number[] = [0, 0];
+    /** 每次缩放变化值 */
+    scaleDelta: number = 0.05;
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -1433,8 +1435,9 @@ export default class CanvasSelect extends EventBus {
         }
         const abs = Math.abs(this.scaleStep);
         const width = this.IMAGE_WIDTH;
-        this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
-        this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
+        const scaleRatio = this.scaleStep >= 0 ? 1 + this.scaleDelta : 1 - this.scaleDelta;
+        this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * scaleRatio ** abs);
+        this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * scaleRatio ** abs);
         if (byMouse) {
             this.originX = x - realToLeft * this.scale;
             this.originY = y - realToRight * this.scale;
