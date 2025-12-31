@@ -638,7 +638,7 @@ export default class CanvasSelect extends EventBus {
         } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
-        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
+        } else if ((!this.isMobile && [1, 2].includes((e as MouseEvent).buttons)) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
