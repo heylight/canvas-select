@@ -285,17 +285,6 @@ export default class CanvasSelect extends EventBus {
                 }
                 this.magnifierCanvas.getContext('2d', { willReadFrequently: true })
                     ?.putImageData(areaImageData, 0, 0);
-
-                // 十字线 有需要可以加
-                // this.magnifierCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
-                // this.magnifierCtx.lineWidth = 1;
-                // this.magnifierCtx.beginPath();
-                // this.magnifierCtx.moveTo(magnifierSize / 2, 0);
-                // this.magnifierCtx.lineTo(magnifierSize / 2, magnifierSize);
-                // this.magnifierCtx.moveTo(0, magnifierSize / 2);
-                // this.magnifierCtx.lineTo(magnifierSize, magnifierSize / 2);
-                // this.magnifierCtx.stroke();
-
                 // // 绘制放大镜边框
                 this.magnifierCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
                 this.magnifierCtx.lineWidth = 2;
@@ -759,19 +748,34 @@ export default class CanvasSelect extends EventBus {
     initSetting() {
         if (!this.canvas || !this.offScreen) return;
         const dpr = window.devicePixelRatio || 1;
+
         // 处理图片跨域问题
         this.image.crossOrigin = 'anonymous';
         this.canvas.style.userSelect = 'none';
+
+        // 初始化主画布上下文
         this.ctx = this.ctx || this.canvas.getContext('2d', { alpha: this.alpha });
+
+        // 设置画布尺寸
         this.WIDTH = Math.round(this.canvas.clientWidth);
         this.HEIGHT = Math.round(this.canvas.clientHeight);
         this.canvas.width = this.WIDTH * dpr;
         this.canvas.height = this.HEIGHT * dpr;
         this.canvas.style.width = this.WIDTH + 'px';
         this.canvas.style.height = this.HEIGHT + 'px';
+
+        // 设置离屏画布尺寸
         this.offScreen.width = this.WIDTH;
         this.offScreen.height = this.HEIGHT;
-        this.offScreenCtx = this.offScreenCtx || this.offScreen.getContext('2d', { willReadFrequently: true });
+
+        // 初始化离屏画布上下文（优化内存使用）
+        if (!this.offScreenCtx) {
+            this.offScreenCtx = this.offScreen.getContext('2d', {
+                willReadFrequently: true,
+                alpha: false  // 碰撞检测不需要透明度，可节省内存
+            });
+        }
+
         this.ctx?.scale(dpr, dpr);
     }
 
@@ -1301,8 +1305,23 @@ export default class CanvasSelect extends EventBus {
      * 更新画布
      */
     update() {
-        window.cancelAnimationFrame(this.timer);
+        // 取消之前的动画帧，避免重复渲染
+        if (this.timer) {
+            window.cancelAnimationFrame(this.timer);
+            this.timer = 0;
+        }
+
+        // 安全检查：如果实例已被销毁，不执行渲染
+        if (!this.canvas || !this.ctx) {
+            return;
+        }
+
         this.timer = window.requestAnimationFrame(() => {
+            // 再次检查实例状态，防止在动画帧执行时实例已被销毁
+            if (!this.ctx || !this.canvas) {
+                this.timer = 0;
+                return;
+            }
             if (!this.ctx) return;
             this.ctx.save();
             this.ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
@@ -1368,6 +1387,9 @@ export default class CanvasSelect extends EventBus {
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.restore();
             this.emit('updated', this.dataset);
+
+            // 清理动画帧ID，表示当前帧已完成
+            this.timer = 0;
         });
     }
 
@@ -1402,6 +1424,8 @@ export default class CanvasSelect extends EventBus {
      * 计算缩放步长
      */
     calcStep(flag = '') {
+        if (this.lock) return; // 如果锁定状态，直接返回避免无限递归
+
         if (this.IMAGE_WIDTH < this.WIDTH && this.IMAGE_HEIGHT < this.HEIGHT) {
             if (flag === '' || flag === 'b') {
                 this.setScale(true, false, true);
@@ -1481,26 +1505,88 @@ export default class CanvasSelect extends EventBus {
      * 销毁
      */
     destroy() {
-        if (!this.canvas) return
-        this.image.removeEventListener('load', this.handleLoad);
+        if (!this.canvas) return;
+
+        // 1. 取消正在进行的动画帧
+        if (this.timer) {
+            window.cancelAnimationFrame(this.timer);
+            this.timer = 0;
+        }
+
+        // 2. 销毁放大镜
+        this.destroyMagnifier();
+
+        // 3. 清理所有事件监听器
+        if (this.image) {
+            this.image.removeEventListener('load', this.handleLoad);
+        }
+
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu);
         // @ts-ignore
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel);
         this.canvas.removeEventListener('wheel', this.handleMousewheel);
         this.canvas.removeEventListener('mousedown', this.handleMouseDown);
-        this.canvas.removeEventListener('touchend', this.handleMouseDown);
+        this.canvas.removeEventListener('touchstart', this.handleMouseDown);
         this.canvas.removeEventListener('mousemove', this.handleMouseMove);
         this.canvas.removeEventListener('touchmove', this.handleMouseMove);
         this.canvas.removeEventListener('mouseup', this.handleMouseUp);
         this.canvas.removeEventListener('touchend', this.handleMouseUp);
         this.canvas.removeEventListener('dblclick', this.handleDblclick);
+
         document.body.removeEventListener('keydown', this.handleKeydown, true);
         document.body.removeEventListener('keyup', this.handleKeyup, true);
+
+        // 4. 清理EventBus中的所有监听器
+        this.clearAllListeners();
+
+        // 5. 清理离屏画布
+        if (this.offScreen) {
+            this.offScreen.width = 0;
+            this.offScreen.height = 0;
+            this.offScreen = undefined;
+            this.offScreenCtx = null;
+        }
+
+        // 6. 清理数据和引用，防止循环引用
+        this.dataset.forEach(shape => {
+            // 清理形状对象中可能的循环引用
+            if (shape && typeof shape === 'object') {
+                Object.keys(shape).forEach(key => {
+                    if ((shape as any)[key] === this) {
+                        (shape as any)[key] = null;
+                    }
+                });
+                // 调用形状的清理方法
+                if (typeof (shape as any).cleanup === 'function') {
+                    (shape as any).cleanup();
+                }
+            }
+        });
+        this.dataset = [];
+
+        // 7. 清理Canvas引用
+        if (this.ctx) {
+            this.ctx = null;
+        }
+
+        // 8. 重置Canvas状态
         this.canvas.width = this.WIDTH;
         this.canvas.height = this.HEIGHT;
         this.canvas.style.width = '';
         this.canvas.style.height = '';
         this.canvas.style.userSelect = '';
+
+        // 9. 清理图片引用
+        if (this.image) {
+            this.image.src = '';
+            this.image = null as any;
+        }
+
+        // 10. 清理其他引用
+        this.canvas = null as any;
+        this.mouse = null as any;
+        this.remmber = null as any;
+        this.remmberOrigin = null as any;
     }
 
     /**

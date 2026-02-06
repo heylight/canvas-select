@@ -1,5 +1,5 @@
 export default class EventBus {
-    private _eventTree: Record<string, any> = {}
+    protected _eventTree: Record<string, any> = {}
     /**
    * 注册事件
    * @param eventName 事件名称
@@ -33,9 +33,30 @@ export default class EventBus {
      */
     off(eventName: string, cb: Function) {
         const fns = this._eventTree[eventName];
-        const index = fns.find((fn: Function) => fn === cb);
-        if (Array.isArray(fns) && index) {
-            fns.splice(index, 1);
+        if (Array.isArray(fns)) {
+            const index = fns.findIndex((fn: Function) => fn === cb);
+            if (index > -1) {
+                fns.splice(index, 1);
+                // 如果数组为空，删除事件名键
+                if (fns.length === 0) {
+                    delete this._eventTree[eventName];
+                }
+            }
         }
+    }
+
+    /**
+     * 清除所有事件监听器
+     */
+    clearAllListeners() {
+        this._eventTree = {};
+    }
+
+    /**
+     * 清除指定事件名的所有监听器
+     * @param eventName 事件名称
+     */
+    clearEventListeners(eventName: string) {
+        delete this._eventTree[eventName];
     }
 }

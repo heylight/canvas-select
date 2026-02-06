@@ -43,4 +43,17 @@ export default class Shape {
         this.index = index
         Object.assign(this, item)
     }
+
+    /**
+     * 清理循环引用，防止内存泄漏
+     */
+    cleanup() {
+        // 清理可能的循环引用
+        Object.keys(this).forEach(key => {
+            const value = (this as any)[key];
+            if (value && typeof value === 'object' && value.constructor.name === 'CanvasSelect') {
+                (this as any)[key] = null;
+            }
+        });
+    }
 }

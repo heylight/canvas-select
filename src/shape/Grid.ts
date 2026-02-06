@@ -13,8 +13,13 @@ export default class Grid extends Shape {
     this.row = item.row > 0 ? item.row : this.row
     this.col = item.col > 0 ? item.col : this.col
     this.selected = Array.isArray(item.selected) ? item.selected : []
-    this.fillStyle = item.fillStyle ?? base.fillStyle
-    this.strokeStyle = item.strokeStyle ?? base.strokeStyle
+    // 只提取需要的属性，不持有base的引用
+    this.fillStyle = item.fillStyle ?? base?.fillStyle
+    this.strokeStyle = item.strokeStyle ?? base?.strokeStyle
+    // 确保不会意外保存base引用
+    if (item.base) {
+      delete item.base;
+    }
   }
 
   get ctrlsData() {
