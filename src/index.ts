@@ -436,6 +436,7 @@ export default class CanvasSelect extends EventBus {
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
                         this.dataset.splice(hitShapeIndex, 1);
                         this.dataset.push(hitShape);
+                        this.dataset.sort((a, b) => a.index - b.index);
                         if (!this.readonly) {
                             this.remmber = [];
                             if ([Shape.Dot, Shape.Circle].includes(hitShape.type)) {
