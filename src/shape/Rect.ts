@@ -8,10 +8,15 @@ export default class Rect extends Shape {
   public showRotation: boolean | undefined
   constructor(item: any, index: number, base: any) {
     super(item, index)
-    this.lineWidth = item.lineWidth ?? base.lineWidth
-    this.fillStyle = item.fillStyle ?? base.fillStyle
-    this.strokeStyle = item.strokeStyle ?? base.strokeStyle
-    this.showRotation = item.showRotation ?? base.showRotation
+    // 只提取需要的属性，不持有base的引用
+    this.lineWidth = item.lineWidth ?? base?.lineWidth
+    this.fillStyle = item.fillStyle ?? base?.fillStyle
+    this.strokeStyle = item.strokeStyle ?? base?.strokeStyle
+    this.showRotation = item.showRotation ?? base?.showRotation
+    // 确保不会意外保存base引用
+    if (item.base) {
+      delete item.base;
+    }
   }
   get ctrlsData() {
     const [[x0, y0], [x1, y1]] = this.coor;
