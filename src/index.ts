@@ -94,11 +94,11 @@ export default class CanvasSelect extends EventBus {
     // 放大镜相关配置 End
 
     /** 记录锚点距离 */
-    remmber: number[][] = [];
+    remember: number[][] = [];
     /** 记录鼠标位置 */
     mouse: Point = [0, 0];
     /** 记录背景图鼠标位移 */
-    remmberOrigin: number[] = [0, 0];
+    rememberOrigin: number[] = [0, 0];
     /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
     createType: Shape = Shape.None; //
     /** 控制点索引 */
@@ -363,7 +363,7 @@ export default class CanvasSelect extends EventBus {
         const offsetX = Math.round(mouseX / this.scale);
         const offsetY = Math.round(mouseY / this.scale);
         this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
-        this.remmberOrigin = [mouseX - this.originX, mouseY - this.originY];
+        this.rememberOrigin = [mouseX - this.originX, mouseY - this.originY];
         if ((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) { // 鼠标左键
             const ctrls = this.activeShape.ctrlsData || [];
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
@@ -372,7 +372,7 @@ export default class CanvasSelect extends EventBus {
                 if (this.activeShape.type === Shape.Polygon && this.activeShape.coor.length > 2 && this.ctrlIndex === 0) {
                     this.handleDblclick(e)
                 }
-                this.remmber = [[offsetX - x0, offsetY - y0]];
+                this.remember = [[offsetX - x0, offsetY - y0]];
             } else if (this.isInBackground(e)) {
                 const nx = Math.round(offsetX - this.originX / this.scale);
                 const ny = Math.round(offsetY - this.originY / this.scale);
@@ -437,13 +437,13 @@ export default class CanvasSelect extends EventBus {
                         this.dataset.splice(hitShapeIndex, 1);
                         this.dataset.push(hitShape);
                         if (!this.readonly) {
-                            this.remmber = [];
+                            this.remember = [];
                             if ([Shape.Dot, Shape.Circle].includes(hitShape.type)) {
                                 const [x, y] = hitShape.coor;
-                                this.remmber = [[offsetX - x, offsetY - y]];
+                                this.remember = [[offsetX - x, offsetY - y]];
                             } else {
                                 hitShape.coor.forEach((pt: any) => {
-                                    this.remmber.push([offsetX - pt[0], offsetY - pt[1]]);
+                                    this.remember.push([offsetX - pt[0], offsetY - pt[1]]);
                                 });
                             }
                         }
@@ -497,8 +497,8 @@ export default class CanvasSelect extends EventBus {
         const ny = Math.round(offsetY - this.originY / this.scale);
         this.position = [nx, ny]
         if (((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) && this.activeShape.type) {
-            if (this.ctrlIndex > -1 && this.remmber.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
-                const [[x, y]] = this.remmber;
+            if (this.ctrlIndex > -1 && this.remember.length && (this.isInBackground(e) || this.activeShape.type === Shape.Circle)) {
+                const [[x, y]] = this.remember;
                 // resize矩形或旋转
                 if ([Shape.Rect, Shape.Grid].includes(this.activeShape.type)) {
                     // 处理旋转控制点（索引8）
@@ -594,14 +594,14 @@ export default class CanvasSelect extends EventBus {
                 const w = this.IMAGE_ORIGIN_WIDTH || this.WIDTH;
                 const h = this.IMAGE_ORIGIN_HEIGHT || this.HEIGHT;
                 if ([Shape.Dot, Shape.Circle].includes(this.activeShape.type)) {
-                    const [t1, t2] = this.remmber[0];
+                    const [t1, t2] = this.remember[0];
                     const x = offsetX - t1;
                     const y = offsetY - t2;
                     if (x < 0 || x > w || y < 0 || y > h) noLimit = false;
                     coor = [x, y];
                 } else {
                     for (let i = 0; i < this.activeShape.coor.length; i++) {
-                        const tar = this.remmber[i];
+                        const tar = this.remember[i];
                         const x = offsetX - tar[0];
                         const y = offsetY - tar[1];
                         if (x < 0 || x > w || y < 0 || y > h) noLimit = false;
@@ -629,8 +629,8 @@ export default class CanvasSelect extends EventBus {
             this.update();
         } else if ((!this.isMobile && [1, 2].includes((e as MouseEvent).buttons)) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
             // 拖动背景
-            this.originX = Math.round(mouseX - this.remmberOrigin[0]);
-            this.originY = Math.round(mouseY - this.remmberOrigin[1]);
+            this.originX = Math.round(mouseX - this.rememberOrigin[0]);
+            this.originY = Math.round(mouseY - this.rememberOrigin[1]);
             this.update();
         } else if (this.isMobile && (e as TouchEvent).touches?.length === 2) {
             this.isTouch2 = true;
@@ -661,7 +661,7 @@ export default class CanvasSelect extends EventBus {
             }
             this.dblTouchStore = Date.now();
         }
-        this.remmber = [];
+        this.remember = [];
         if (this.activeShape.type !== Shape.None && !this.isCtrlKey) {
             this.activeShape.dragging = false;
             if (this.activeShape.creating) {
@@ -1585,8 +1585,8 @@ export default class CanvasSelect extends EventBus {
         // 10. 清理其他引用
         this.canvas = null as any;
         this.mouse = null as any;
-        this.remmber = null as any;
-        this.remmberOrigin = null as any;
+        this.remember = null as any;
+        this.rememberOrigin = null as any;
     }
 
     /**
