@@ -97,6 +97,8 @@ export default class CanvasSelect extends EventBus {
     remember: number[][] = [];
     /** 记录鼠标位置 */
     mouse: Point = [0, 0];
+    /** 记录鼠标点击的原始目标 */
+    rememberTarget: EventTarget | null = null;
     /** 记录背景图鼠标位移 */
     rememberOrigin: number[] = [0, 0];
     /** 0 不创建，1 矩形，2 多边形，3 点，4 折线，5 圆，6 网格 */
@@ -170,6 +172,7 @@ export default class CanvasSelect extends EventBus {
         this.handleDblclick = this.handleDblclick.bind(this);
         this.handleKeyup = this.handleKeyup.bind(this);
         this.handleKeydown = this.handleKeydown.bind(this);
+        this.handleBodyMouseDown = this.handleBodyMouseDown.bind(this);
         const container = typeof el === 'string' ? document.querySelector(el) : el;
         if (container instanceof HTMLCanvasElement) {
             this.canvas = container;
@@ -364,6 +367,7 @@ export default class CanvasSelect extends EventBus {
         const offsetY = Math.round(mouseY / this.scale);
         this.mouse = this.isMobile && (e as TouchEvent).touches?.length === 2 ? [mouseCX, mouseCY] : [mouseX, mouseY];
         this.rememberOrigin = [mouseX - this.originX, mouseY - this.originY];
+        this.rememberTarget = e.target;
         if ((!this.isMobile && (e as MouseEvent).buttons === 1) || (this.isMobile && (e as TouchEvent).touches?.length === 1)) { // 鼠标左键
             const ctrls = this.activeShape.ctrlsData || [];
             this.ctrlIndex = ctrls.findIndex((coor: Point) => this.isPointInCircle(this.mouse, coor, this.ctrlRadius));
@@ -628,10 +632,12 @@ export default class CanvasSelect extends EventBus {
             // 多边形添加点
             this.update();
         } else if ((!this.isMobile && [1, 2].includes((e as MouseEvent).buttons)) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
-            // 拖动背景
-            this.originX = Math.round(mouseX - this.rememberOrigin[0]);
-            this.originY = Math.round(mouseY - this.rememberOrigin[1]);
-            this.update();
+            if (this.rememberTarget === e.target) {
+                // 拖动背景
+                this.originX = Math.round(mouseX - this.rememberOrigin[0]);
+                this.originY = Math.round(mouseY - this.rememberOrigin[1]);
+                this.update();
+            }
         } else if (this.isMobile && (e as TouchEvent).touches?.length === 2) {
             this.isTouch2 = true;
             const touch0 = (e as TouchEvent).touches[0];
@@ -648,6 +654,7 @@ export default class CanvasSelect extends EventBus {
 
     private handleMouseUp(e: MouseEvent | TouchEvent) {
         e.stopPropagation();
+        this.rememberTarget = null;
         if (this.lock) return;
         // 鼠标抬起则卸载放大器
         this.destroyMagnifier()
@@ -719,6 +726,7 @@ export default class CanvasSelect extends EventBus {
             }
         }
     }
+    
     private handleKeydown(e: KeyboardEvent) {
         if (e.code === this.ctrlCode) {
             this.isCtrlKey = true;
@@ -742,6 +750,10 @@ export default class CanvasSelect extends EventBus {
                 this.deleteByIndex(this.activeShape.index);
             }
         }
+    }
+    
+    private handleBodyMouseDown(e: MouseEvent | TouchEvent) {
+        this.rememberTarget = e.target;
     }
 
     /** 初始化配置 */
@@ -796,6 +808,8 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('dblclick', this.handleDblclick);
         document.body.addEventListener('keydown', this.handleKeydown, true);
         document.body.addEventListener('keyup', this.handleKeyup, true);
+        document.body.addEventListener('touchstart', this.handleBodyMouseDown, true);
+        document.body.addEventListener('mousedown', this.handleBodyMouseDown, true);
     }
 
     /**
@@ -1535,6 +1549,8 @@ export default class CanvasSelect extends EventBus {
 
         document.body.removeEventListener('keydown', this.handleKeydown, true);
         document.body.removeEventListener('keyup', this.handleKeyup, true);
+        document.body.removeEventListener('touchstart', this.handleBodyMouseDown, true);
+        document.body.removeEventListener('mousedown', this.handleBodyMouseDown, true);
 
         // 4. 清理EventBus中的所有监听器
         this.clearAllListeners();
@@ -1587,6 +1603,7 @@ export default class CanvasSelect extends EventBus {
         this.mouse = null as any;
         this.remember = null as any;
         this.rememberOrigin = null as any;
+        this.rememberTarget = null;
     }
 
     /**
