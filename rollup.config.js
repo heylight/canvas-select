@@ -4,6 +4,7 @@ import serve from "rollup-plugin-serve";
 import livereload from "rollup-plugin-livereload";
 import json from "@rollup/plugin-json";
 import terser from "@rollup/plugin-terser";
+import nodeResolve from "@rollup/plugin-node-resolve";
 
 const mergePlugins =
   process.env.NODE_ENV === "development"
@@ -24,9 +25,16 @@ const banner = `/*!
 const baseConfig = {
   input: "src/index.ts",
   plugins: [
-    babel({ babelHelpers: "bundled" }),
+    nodeResolve({
+      extensions: [".ts", ".js"],
+    }),
     typescript({
       tsconfig: "tsconfig.json",
+      declaration: false,
+    }),
+    babel({
+      babelHelpers: "bundled",
+      extensions: [".ts", ".js"],
     }),
     json(),
     ...mergePlugins,
