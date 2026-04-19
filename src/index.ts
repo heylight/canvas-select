@@ -799,6 +799,8 @@ export default class CanvasSelect extends EventBus {
      * @param source 图片链接或图片对象
      */
     setImage(source: string | HTMLImageElement) {
+        const src = typeof source === 'string' ? source : '';
+        this.emit('loading', src);
         if (typeof source === 'string') {
             this.image.src = source;
         } else {
