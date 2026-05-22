@@ -153,6 +153,8 @@ export default class CanvasSelect extends EventBus {
     eraserSize = 20;
     /** 标注坐标 (以背景图片左上角为原点) */
     position: number[] = [0, 0];
+    /** 每次缩放变化值 */
+    scaleDelta: number = 0.05;
     /**
      * @param el Valid CSS selector string, or DOM
      * @param src image src
@@ -637,7 +639,7 @@ export default class CanvasSelect extends EventBus {
         } else if ([Shape.Polygon, Shape.Line].includes(this.activeShape.type) && this.activeShape.creating) {
             // 多边形添加点
             this.update();
-        } else if ((!this.isMobile && (e as MouseEvent).buttons === 2 && (e as MouseEvent).which === 3) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
+        } else if ((!this.isMobile && [1, 2].includes((e as MouseEvent).buttons)) || (this.isMobile && (e as TouchEvent).touches?.length === 1 && !this.isTouch2)) {
             // 拖动背景
             this.originX = Math.round(mouseX - this.remmberOrigin[0]);
             this.originY = Math.round(mouseY - this.remmberOrigin[1]);
@@ -748,7 +750,7 @@ export default class CanvasSelect extends EventBus {
                     this.deleteByIndex(this.activeShape.index);
                 }
                 this.update();
-            } else if (e.key === 'Backspace') {
+            } else if (['Delete', 'Backspace'].includes(e.key)) {
                 this.deleteByIndex(this.activeShape.index);
             }
         }
@@ -798,6 +800,8 @@ export default class CanvasSelect extends EventBus {
      * @param source 图片链接或图片对象
      */
     setImage(source: string | HTMLImageElement) {
+        const src = typeof source === 'string' ? source : '';
+        this.emit('loading', src);
         if (typeof source === 'string') {
             this.image.src = source;
         } else {
@@ -1434,8 +1438,9 @@ export default class CanvasSelect extends EventBus {
         }
         const abs = Math.abs(this.scaleStep);
         const width = this.IMAGE_WIDTH;
-        this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
-        this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * (this.scaleStep >= 0 ? 1.05 : 0.95) ** abs);
+        const scaleRatio = this.scaleStep >= 0 ? 1 + this.scaleDelta : 1 - this.scaleDelta;
+        this.IMAGE_WIDTH = Math.round(this.IMAGE_ORIGIN_WIDTH * scaleRatio ** abs);
+        this.IMAGE_HEIGHT = Math.round(this.IMAGE_ORIGIN_HEIGHT * scaleRatio ** abs);
         if (byMouse) {
             this.originX = x - realToLeft * this.scale;
             this.originY = y - realToRight * this.scale;
