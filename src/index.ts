@@ -441,12 +441,29 @@ export default class CanvasSelect extends EventBus {
                     }
                 } else {
                     // 是否点击到形状
-                    const [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
+                    let hitShapeIndex: number;
+                    let hitShape: any;
+
+                    if (this.isCtrlKey && this.activeShape.type) {
+                        const hits = this.hitAllOnShape(this.mouse);
+                        const currentIdx = hits.findIndex((s: AllShape) => s.index === this.activeShape.index);
+                        hitShape = currentIdx >= 0 && currentIdx < hits.length - 1
+                            ? hits[currentIdx + 1]
+                            : hits[0];
+                        hitShapeIndex = hitShape ? this.dataset.indexOf(hitShape) : -1;
+                    } else {
+                        [hitShapeIndex, hitShape] = this.hitOnShape(this.mouse);
+                    }
+
                     if (hitShapeIndex > -1 && hitShape) {
+                        // Ctrl+点击时不改变层级顺序，以保证能遍历到所有重叠的形状
+                        if (!this.isCtrlKey) {
+                            this.dataset.splice(hitShapeIndex, 1);
+                            this.dataset.push(hitShape);
+                            hitShapeIndex = this.dataset.length - 1;
+                        }
                         hitShape.dragging = true;
                         this.dataset.forEach((item, i) => item.active = i === hitShapeIndex);
-                        this.dataset.splice(hitShapeIndex, 1);
-                        this.dataset.push(hitShape);
                         if (!this.readonly) {
                             this.remmber = [];
                             if ([Shape.Dot, Shape.Circle].includes(hitShape.type)) {
@@ -739,6 +756,15 @@ export default class CanvasSelect extends EventBus {
     private handleKeyup(e: KeyboardEvent) {
         if (e.code === this.ctrlCode) {
             this.isCtrlKey = false;
+            const activeShape = this.activeShape;
+            if (activeShape.type) {
+                const activeIdx = this.dataset.indexOf(activeShape);
+                if (activeIdx > -1 && activeIdx < this.dataset.length - 1) {
+                    this.dataset.splice(activeIdx, 1);
+                    this.dataset.push(activeShape);
+                    this.update();
+                }
+            }
         }
         if (this.lock || document.activeElement !== document.body || this.readonly) return;
         if (this.activeShape.type) {
@@ -864,31 +890,42 @@ export default class CanvasSelect extends EventBus {
     }
 
     /**
-     * 判断是否在标注实例上
+     * 判断点击位置是否在某形状上
+     * @param shape 形状
+     * @param mousePoint 点击位置
+     * @returns 布尔值
+     */
+    isShapeHit(shape: AllShape, mousePoint: Point): boolean {
+        if (shape.type === Shape.Dot) return this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius);
+        if (shape.type === Shape.Circle) return this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale);
+        if (shape.type === Shape.Rect) return this.isPointInRect(mousePoint, (shape as Rect).coor);
+        if (shape.type === Shape.Polygon) return this.isPointInPolygon(mousePoint, (shape as Polygon).coor);
+        if (shape.type === Shape.Line) return this.isPointInLine(mousePoint, (shape as Line).coor);
+        if (shape.type === Shape.Grid) return this.isPointInRect(mousePoint, (shape as Grid).coor);
+        return false;
+    }
+
+    hitOnShape(mousePoint: Point): [number, AllShape] {
+        const shape = this.hitAllOnShape(mousePoint)[0];
+        return shape ? [this.dataset.indexOf(shape), shape] : [-1, shape];
+    }
+
+    /**
+     * 获取点击位置下所有命中的形状（从上到下排列）
      * @param mousePoint 点击位置
      * @returns
      */
-    hitOnShape(mousePoint: Point): [number, AllShape] {
-        let hitShapeIndex = -1;
-        let hitShape: any;
+    hitAllOnShape(mousePoint: Point): AllShape[] {
+        const hits: AllShape[] = [];
         for (let i = this.dataset.length - 1; i > -1; i--) {
             const shape = this.dataset[i];
             if (shape.hide) continue;
-            if (
-                (shape.type === Shape.Dot && this.isPointInCircle(mousePoint, shape.coor as Point, this.ctrlRadius)) ||
-                (shape.type === Shape.Circle && this.isPointInCircle(mousePoint, shape.coor as Point, (shape as Circle).radius * this.scale)) ||
-                (shape.type === Shape.Rect && this.isPointInRect(mousePoint, (shape as Rect).coor)) ||
-                (shape.type === Shape.Polygon && this.isPointInPolygon(mousePoint, (shape as Polygon).coor)) ||
-                (shape.type === Shape.Line && this.isPointInLine(mousePoint, (shape as Line).coor)) ||
-                (shape.type === Shape.Grid && this.isPointInRect(mousePoint, (shape as Grid).coor))
-            ) {
+            if (this.isShapeHit(shape, mousePoint)) {
                 if (this.focusMode && !shape.active) continue;
-                hitShapeIndex = i;
-                hitShape = shape;
-                break;
+                hits.push(shape);
             }
         }
-        return [hitShapeIndex, hitShape];
+        return hits;
     }
 
     /**

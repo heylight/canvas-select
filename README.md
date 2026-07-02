@@ -183,6 +183,7 @@ instance.createType = 1; // 准备创建矩形
 - **拖动画布**：按住鼠标右键并拖动。
 - **拖动形状**：拖动选中的形状。
 - **缩放画布**：使用鼠标滚轮进行缩放 (可通过 `scrollZoom` 属性控制是否启用)。
+- **穿透选择**：当多个形状重叠时，按住 `Ctrl` 键点击重叠区域，可逐层向下选中。
 - **删除形状**：选中一个形状后，按 `Backspace` 键删除。
 
 ### 6. 事件监听
@@ -245,6 +246,7 @@ instance.on("updated", (allShapesData) => {
 | `labelMaxLen`           | `number`  |           `10`           |                  | 标签字符最大显示数量，超出部分将用 `...` 表示                               |
 | `alpha`                 | `boolean` |          `true`          |                  | 设置为 `false` 可以帮助浏览器进行内部优化 (例如，如果不需要透明度)          |
 | `focusMode`             | `boolean` |         `false`          |                  | 专注模式，开启后只有活动状态的标注会完整显示，其他标注可能半透明或隐藏      |
+| `ctrlCode`              | `string`  |      `"ControlLeft"`     |                  | 自定义辅助快捷键的 KeyboardEvent.code，用于穿透选择和画布操作              |
 | `gridMenuEnable`        | `boolean` |          `true`          |                  | 网格标注时是否启用右键 `prompt` 输入框，可关闭以使用自定义右键菜单          |
 | `gridSelectedFillStyle` | `string`  | `rgba(255, 255, 0, 0.6)` |       支持       | 网格标注中选中单元格的填充颜色                                              |
 | `brushSize`             | `number`  |           `2`            |       支持       | 画笔线条粗细                                                                |
