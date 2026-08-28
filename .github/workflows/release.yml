@@ -1,0 +1,55 @@
+name: Release
+
+# 推送形如 v2.37.0 的 tag 时自动发布到 npm
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    name: 发布到 npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # npm provenance 需要
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 校验 tag 与 package.json 版本一致
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag 版本 ($TAG_VERSION) 与 package.json 版本 ($PKG_VERSION) 不一致"
+            exit 1
+          fi
+          echo "版本校验通过: $PKG_VERSION"
+
+      - name: 代码规范检查
+        run: npm run lint
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 单元测试
+        run: npm run test
+
+      - name: 构建产物
+        run: npm run build
+
+      - name: 发布
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -791,7 +791,7 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('touchmove', this.handleMouseMove);
         this.canvas.addEventListener('touchend', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.handleContextmenu);
-        // @ts-ignore
+        // @ts-expect-error 非标准事件 mousewheel，仅为兼容旧版浏览器
         this.canvas.addEventListener('mousewheel', this.handleMousewheel);
         this.canvas.addEventListener('wheel', this.handleMousewheel);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
@@ -1505,7 +1505,7 @@ export default class CanvasSelect extends EventBus {
         if (!this.canvas) return
         this.image.removeEventListener('load', this.handleLoad);
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu);
-        // @ts-ignore
+        // @ts-expect-error 非标准事件 mousewheel，仅为兼容旧版浏览器
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel);
         this.canvas.removeEventListener('wheel', this.handleMousewheel);
         this.canvas.removeEventListener('mousedown', this.handleMouseDown);

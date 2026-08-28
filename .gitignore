@@ -1,5 +1,8 @@
+/lib
 node_modules
 .DS_Store
 yarn.lock
-/lib
 .ai-tracks/
+coverage
+dist
+*.log
