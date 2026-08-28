@@ -33,9 +33,11 @@ export default class EventBus {
      */
     off(eventName: string, cb: Function) {
         const fns = this._eventTree[eventName];
-        const index = fns.find((fn: Function) => fn === cb);
-        if (Array.isArray(fns) && index) {
-            fns.splice(index, 1);
+        if (Array.isArray(fns)) {
+            const index = fns.findIndex((fn: Function) => fn === cb);
+            if (index > -1) {
+                fns.splice(index, 1);
+            }
         }
     }
 }
