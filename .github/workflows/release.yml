@@ -20,12 +20,29 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
 
+      # npm 10.8.2 存在 "Exit handler never called!" 崩溃且返回 exit 0 的缺陷，
+      # 会导致依赖只装一半、.bin 未建立却被判定为成功，故固定到修复后的版本。
+      - name: 升级 npm
+        run: npm install -g npm@10.9.2
+
       - name: 安装依赖
         run: npm ci
+
+      # npm 崩溃时可能返回 exit 0，这里显式校验关键可执行文件已就位，
+      # 让问题在安装阶段暴露，而不是拖到后续步骤报 exit 127。
+      - name: 校验依赖完整性
+        run: |
+          for bin in eslint tsc vitest rollup; do
+            if [ ! -x "node_modules/.bin/$bin" ]; then
+              echo "::error::依赖安装不完整，缺少 node_modules/.bin/$bin"
+              exit 1
+            fi
+          done
+          echo "依赖完整性校验通过"
 
       - name: 校验 tag 与 package.json 版本一致
         run: |
