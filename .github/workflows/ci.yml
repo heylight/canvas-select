@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  # 主干/发布分支的 push 直接触发；特性分支交给 pull_request，避免同一分支跑两遍
+  push:
+    branches: [master, "release/**"]
+  pull_request:
+
+# 同一来源分支的新提交会取消仍在排队的旧任务，避免资源浪费。
+# PR 用 head_ref，push 用 ref_name，保证同一分支的两类触发落在同一并发组。
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 校验 (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # npm 10.8.2 存在 "Exit handler never called!" 崩溃且返回 exit 0 的缺陷，
+      # 会导致依赖只装一半、.bin 未建立却被判定为成功，故固定到修复后的版本。
+      - name: 升级 npm
+        run: npm install -g npm@10.9.2
+
+      # npm 崩溃时可能返回 exit 0，导致依赖只装一半、.bin 未建立却被判定为成功，
+      # 后续步骤才以 exit 127 失败。这里在安装后立即校验关键可执行文件，
+      # 缺失则清空 node_modules 重装，最多尝试 3 次。
+      - name: 安装依赖
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::第 $attempt 次安装依赖"
+            npm ci || echo "npm ci 返回非 0，继续校验产物"
+            echo "::endgroup::"
+
+            missing=""
+            for bin in eslint tsc vitest rollup; do
+              [ -x "node_modules/.bin/$bin" ] || missing="$missing $bin"
+            done
+
+            if [ -z "$missing" ]; then
+              echo "依赖完整性校验通过"
+              exit 0
+            fi
+
+            echo "::warning::第 $attempt 次安装不完整，缺少:$missing"
+            rm -rf node_modules
+          done
+
+          echo "::error::依赖安装连续 3 次不完整，缺少:$missing"
+          exit 1
+
+      - name: 代码规范检查
+        run: npm run lint
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 单元测试
+        run: npm run test
+
+      - name: 构建产物
+        run: npm run build

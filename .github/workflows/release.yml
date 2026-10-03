@@ -1,0 +1,129 @@
+name: Release
+
+# 合并到 master 后自动发布：版本已在 package.json 中升级时打 tag 并发布到 npm。
+# 也支持在 Actions 页面手动触发（workflow_dispatch）用于补发。
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# 发布串行执行，避免两个合并同时发布相互覆盖
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: 发布到 npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 推送自动创建的 tag
+      # npm provenance 需要
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 需要完整历史以创建/校验 tag
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      # npm 10.8.2 存在 "Exit handler never called!" 崩溃且返回 exit 0 的缺陷，
+      # 会导致依赖只装一半、.bin 未建立却被判定为成功，故固定到修复后的版本。
+      - name: 升级 npm
+        run: npm install -g npm@10.9.2
+
+      # 读取 package.json 版本，并通过 npm registry 判断是否已发布，实现幂等：
+      # 已发布的版本直接跳过（重复推送 master 不会重复发版）。
+      - name: 读取版本并判断是否需要发布
+        id: version
+        run: |
+          set -euo pipefail
+          PKG_NAME="$(node -p "require('./package.json').name")"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$PKG_NAME" >> "$GITHUB_OUTPUT"
+
+          # 预发布版本（含 -）发布到 next，正式版本发布到 latest
+          DIST_TAG=latest
+          case "$PKG_VERSION" in
+            *-*) DIST_TAG=next ;;
+          esac
+          echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+
+          if npm view "$PKG_NAME@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "版本 $PKG_VERSION 已存在于 npm，跳过发布"
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "版本 $PKG_VERSION 尚未发布，准备发布（dist-tag: ${DIST_TAG}）"
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # npm 崩溃时可能返回 exit 0，导致依赖只装一半、.bin 未建立却被判定为成功，
+      # 后续步骤才以 exit 127 失败。这里在安装后立即校验关键可执行文件，
+      # 缺失则清空 node_modules 重装，最多尝试 3 次。
+      - name: 安装依赖
+        if: steps.version.outputs.should_publish == 'true'
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::第 $attempt 次安装依赖"
+            npm ci || echo "npm ci 返回非 0，继续校验产物"
+            echo "::endgroup::"
+
+            missing=""
+            for bin in eslint tsc vitest rollup; do
+              [ -x "node_modules/.bin/$bin" ] || missing="$missing $bin"
+            done
+
+            if [ -z "$missing" ]; then
+              echo "依赖完整性校验通过"
+              exit 0
+            fi
+
+            echo "::warning::第 $attempt 次安装不完整，缺少:$missing"
+            rm -rf node_modules
+          done
+
+          echo "::error::依赖安装连续 3 次不完整，缺少:$missing"
+          exit 1
+
+      - name: 代码规范检查
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm run lint
+
+      - name: 类型检查
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm run typecheck
+
+      - name: 单元测试
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm run test
+
+      - name: 构建产物
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm run build
+
+      # 先打 tag：若后续发布失败，tag 已存在，重跑仍会补发
+      - name: 创建并推送 tag
+        if: steps.version.outputs.should_publish == 'true'
+        run: |
+          set -euo pipefail
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag $TAG 已存在，跳过创建"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "已创建并推送 tag $TAG"
+          fi
+
+      - name: 发布
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm publish --access public --provenance --tag "${{ steps.version.outputs.dist_tag }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

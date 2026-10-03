@@ -261,30 +261,13 @@ export default class CanvasSelect extends EventBus {
                 magnifierSize,
             ]);
             // 新的像素信息对象
-            const areaImageData = this.magnifierCanvas.getContext('2d', { willReadFrequently: true })
+            const areaImageData = this.magnifierCtx
                 ?.createImageData(this.magnifierCanvas.width, this.magnifierCanvas.height);
 
             if (areaImageData && originImageData) {
-                let count = 0;
-                for (let j = 0; j < magnifierSize; j += 1) {
-                    for (let i = 0; i < magnifierSize; i += 1) {
-                        for (let k = j; k < j + 1; k++) {
-                            for (let m = i; m < i + 1; m++) {
-                                const index = (k * magnifierSize + m) * 4;
-                                areaImageData.data[index] = originImageData.data[count];
-                                areaImageData.data[index + 1] =
-                                    originImageData.data[count + 1];
-                                areaImageData.data[index + 2] =
-                                    originImageData.data[count + 2];
-                                areaImageData.data[index + 3] =
-                                    originImageData.data[count + 3];
-                            }
-                        }
-                        count += 4;
-                    }
-                }
-                this.magnifierCanvas.getContext('2d', { willReadFrequently: true })
-                    ?.putImageData(areaImageData, 0, 0);
+                // 逐像素拷贝等价于整块内存拷贝，直接 set 即可（subarray 防御两端长度不一致）
+                areaImageData.data.set(originImageData.data.subarray(0, areaImageData.data.length));
+                this.magnifierCtx?.putImageData(areaImageData, 0, 0);
 
                 // 十字线 有需要可以加
                 // this.magnifierCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
@@ -416,7 +399,6 @@ export default class CanvasSelect extends EventBus {
                             break;
                         case Shape.Circle:
                             newShape = new Circle({ coor: curPoint }, this.dataset.length, this);
-                            console.log(newShape);
                             newShape.creating = true;
                             break;
                         case Shape.Grid:
@@ -809,7 +791,7 @@ export default class CanvasSelect extends EventBus {
         this.canvas.addEventListener('touchmove', this.handleMouseMove);
         this.canvas.addEventListener('touchend', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.handleContextmenu);
-        // @ts-ignore
+        // @ts-expect-error 非标准事件 mousewheel，仅为兼容旧版浏览器
         this.canvas.addEventListener('mousewheel', this.handleMousewheel);
         this.canvas.addEventListener('wheel', this.handleMousewheel);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
@@ -1523,7 +1505,7 @@ export default class CanvasSelect extends EventBus {
         if (!this.canvas) return
         this.image.removeEventListener('load', this.handleLoad);
         this.canvas.removeEventListener('contextmenu', this.handleContextmenu);
-        // @ts-ignore
+        // @ts-expect-error 非标准事件 mousewheel，仅为兼容旧版浏览器
         this.canvas.removeEventListener('mousewheel', this.handleMousewheel);
         this.canvas.removeEventListener('wheel', this.handleMousewheel);
         this.canvas.removeEventListener('mousedown', this.handleMouseDown);

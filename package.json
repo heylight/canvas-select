@@ -1,6 +1,6 @@
 {
   "name": "canvas-select",
-  "version": "2.36.0",
+  "version": "2.37.0",
   "description": "一个用于图片标注的javascript库，基于canvas，简单轻量，支持矩形、多边形、点、折线、圆形、网格、画笔、橡皮擦",
   "main": "lib/canvas-select.min.js",
   "module": "lib/canvas-select.esm.js",
@@ -8,7 +8,13 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development rollup -c -w",
-    "build": "cross-env NODE_ENV=production rollup -c"
+    "build": "cross-env NODE_ENV=production rollup -c && npm run build:types",
+    "build:types": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "files": [
     "/lib"
@@ -43,14 +49,18 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@typescript-eslint/eslint-plugin": "^4.28.4",
-    "@typescript-eslint/parser": "^4.28.4",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.68.0",
+    "@vitest/coverage-v8": "^3.2.7",
     "cross-env": "^7.0.3",
+    "eslint": "^8.57.1",
     "rollup": "^4.29.1",
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-serve": "^3.0.0",
     "rollup-plugin-typescript2": "^0.36.0",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.7"
   },
   "homepage": "https://github.com/heylight/canvas-select",
   "repository": {
