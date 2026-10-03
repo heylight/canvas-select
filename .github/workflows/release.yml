@@ -31,12 +31,24 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          registry-url: https://registry.npmjs.org
+          # 不再配置 registry-url：避免 setup-node 写入 _authToken 占位，
+          # 改用 npm Trusted Publishing（OIDC），npm 默认即发布到 registry.npmjs.org
 
-      # npm 10.8.2 存在 "Exit handler never called!" 崩溃且返回 exit 0 的缺陷，
-      # 会导致依赖只装一半、.bin 未建立却被判定为成功，故固定到修复后的版本。
+      # Trusted Publishing(OIDC) 需要 npm CLI >= 11.5.1（Node >= 22.14），
+      # 因此不再固定 npm@10，升级到 11.x 并校验版本。
       - name: 升级 npm
-        run: npm install -g npm@10.9.2
+        run: npm install -g npm@11
+
+      - name: 校验 npm 版本满足 Trusted Publishing 要求
+        run: |
+          set -euo pipefail
+          NPM_VERSION="$(npm -v)"
+          node -e "
+            const [a,b,c] = '$NPM_VERSION'.split('.').map(Number);
+            const ok = a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1)));
+            if (!ok) { console.error('npm 版本过低: ' + '$NPM_VERSION' + '，Trusted Publishing 需要 >= 11.5.1'); process.exit(1); }
+            console.log('npm 版本满足 Trusted Publishing 要求: ' + '$NPM_VERSION');
+          "
 
       # 读取 package.json 版本，并通过 npm registry 判断是否已发布，实现幂等：
       # 已发布的版本直接跳过（重复推送 master 不会重复发版）。
@@ -124,6 +136,5 @@ jobs:
 
       - name: 发布
         if: steps.version.outputs.should_publish == 'true'
+        # Trusted Publishing：不使用 NODE_AUTH_TOKEN，由 GitHub OIDC 向 npm 换取短期凭证
         run: npm publish --access public --provenance --tag "${{ steps.version.outputs.dist_tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
