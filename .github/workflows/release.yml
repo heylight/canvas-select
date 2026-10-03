@@ -1,52 +1,31 @@
 name: Release
 
-# 推送形如 v2.37.0 的 tag 时自动发布到 npm
+# 合并到 master 后自动发布：版本已在 package.json 中升级时打 tag 并发布到 npm。
+# 也支持在 Actions 页面手动触发（workflow_dispatch）用于补发。
 on:
   push:
-    tags:
-      - "v*"
+    branches: [master]
+  workflow_dispatch:
+
+# 发布串行执行，避免两个合并同时发布相互覆盖
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   publish:
     name: 发布到 npm
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # 推送自动创建的 tag
       # npm provenance 需要
       id-token: write
 
     steps:
       - uses: actions/checkout@v4
         with:
-          # 需要完整历史与分支，用于校验 tag 来源分支
+          # 需要完整历史以创建/校验 tag
           fetch-depth: 0
-
-      # 发布前先做来源与命名校验，避免从任意 tag 或未合入的提交误发布
-      - name: 校验 tag 命名与来源分支
-        run: |
-          set -euo pipefail
-
-          # 只允许 v<major>.<minor>.<patch>，可带预发布后缀，如 v2.37.0 / v2.38.0-rc.1
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::tag 命名不合法: $GITHUB_REF_NAME（应形如 v1.2.3 或 v1.2.3-rc.1）"
-            exit 1
-          fi
-
-          # 拉取受保护分支以判断 tag 提交是否已合入
-          git fetch --no-tags origin '+refs/heads/master:refs/remotes/origin/master'
-          git fetch --no-tags origin '+refs/heads/release/*:refs/remotes/origin/release/*' || true
-
-          reachable=0
-          if git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then reachable=1; fi
-          for ref in $(git for-each-ref --format='%(refname)' refs/remotes/origin/release); do
-            if git merge-base --is-ancestor "$GITHUB_SHA" "$ref"; then reachable=1; fi
-          done
-
-          if [ "$reachable" -ne 1 ]; then
-            echo "::error::tag $GITHUB_REF_NAME 所在提交不属于 master 或 release/* 分支，禁止发布"
-            exit 1
-          fi
-          echo "tag 来源校验通过: $GITHUB_REF_NAME"
 
       - uses: actions/setup-node@v4
         with:
@@ -59,10 +38,37 @@ jobs:
       - name: 升级 npm
         run: npm install -g npm@10.9.2
 
+      # 读取 package.json 版本，并通过 npm registry 判断是否已发布，实现幂等：
+      # 已发布的版本直接跳过（重复推送 master 不会重复发版）。
+      - name: 读取版本并判断是否需要发布
+        id: version
+        run: |
+          set -euo pipefail
+          PKG_NAME="$(node -p "require('./package.json').name")"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$PKG_NAME" >> "$GITHUB_OUTPUT"
+
+          # 预发布版本（含 -）发布到 next，正式版本发布到 latest
+          DIST_TAG=latest
+          case "$PKG_VERSION" in
+            *-*) DIST_TAG=next ;;
+          esac
+          echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+
+          if npm view "$PKG_NAME@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "版本 $PKG_VERSION 已存在于 npm，跳过发布"
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "版本 $PKG_VERSION 尚未发布，准备发布（dist-tag: ${DIST_TAG}）"
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # npm 崩溃时可能返回 exit 0，导致依赖只装一半、.bin 未建立却被判定为成功，
       # 后续步骤才以 exit 127 失败。这里在安装后立即校验关键可执行文件，
       # 缺失则清空 node_modules 重装，最多尝试 3 次。
       - name: 安装依赖
+        if: steps.version.outputs.should_publish == 'true'
         run: |
           for attempt in 1 2 3; do
             echo "::group::第 $attempt 次安装依赖"
@@ -86,36 +92,38 @@ jobs:
           echo "::error::依赖安装连续 3 次不完整，缺少:$missing"
           exit 1
 
-      - name: 校验 tag 与 package.json 版本一致
-        run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::tag 版本 ($TAG_VERSION) 与 package.json 版本 ($PKG_VERSION) 不一致"
-            exit 1
-          fi
-          echo "版本校验通过: $PKG_VERSION"
-
       - name: 代码规范检查
+        if: steps.version.outputs.should_publish == 'true'
         run: npm run lint
 
       - name: 类型检查
+        if: steps.version.outputs.should_publish == 'true'
         run: npm run typecheck
 
       - name: 单元测试
+        if: steps.version.outputs.should_publish == 'true'
         run: npm run test
 
       - name: 构建产物
+        if: steps.version.outputs.should_publish == 'true'
         run: npm run build
 
-      - name: 发布
+      # 先打 tag：若后续发布失败，tag 已存在，重跑仍会补发
+      - name: 创建并推送 tag
+        if: steps.version.outputs.should_publish == 'true'
         run: |
-          # 预发布 tag（如 v2.38.0-rc.1）发布到 next，正式 tag 发布到 latest
-          DIST_TAG=latest
-          case "$GITHUB_REF_NAME" in
-            *-*) DIST_TAG=next ;;
-          esac
-          echo "发布 dist-tag: $DIST_TAG"
-          npm publish --access public --provenance --tag "$DIST_TAG"
+          set -euo pipefail
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag $TAG 已存在，跳过创建"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "已创建并推送 tag $TAG"
+          fi
+
+      - name: 发布
+        if: steps.version.outputs.should_publish == 'true'
+        run: npm publish --access public --provenance --tag "${{ steps.version.outputs.dist_tag }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
