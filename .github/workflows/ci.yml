@@ -1,14 +1,15 @@
 name: CI
 
 on:
+  # 主干/发布分支的 push 直接触发；特性分支交给 pull_request，避免同一分支跑两遍
   push:
-    branches: ["**"]
+    branches: [master, "release/**"]
   pull_request:
-    branches: ["**"]
 
-# 同一分支的新提交会取消仍在排队的旧任务，避免资源浪费
+# 同一来源分支的新提交会取消仍在排队的旧任务，避免资源浪费。
+# PR 用 head_ref，push 用 ref_name，保证同一分支的两类触发落在同一并发组。
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

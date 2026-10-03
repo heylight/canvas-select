@@ -17,6 +17,36 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 需要完整历史与分支，用于校验 tag 来源分支
+          fetch-depth: 0
+
+      # 发布前先做来源与命名校验，避免从任意 tag 或未合入的提交误发布
+      - name: 校验 tag 命名与来源分支
+        run: |
+          set -euo pipefail
+
+          # 只允许 v<major>.<minor>.<patch>，可带预发布后缀，如 v2.37.0 / v2.38.0-rc.1
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::tag 命名不合法: $GITHUB_REF_NAME（应形如 v1.2.3 或 v1.2.3-rc.1）"
+            exit 1
+          fi
+
+          # 拉取受保护分支以判断 tag 提交是否已合入
+          git fetch --no-tags origin '+refs/heads/master:refs/remotes/origin/master'
+          git fetch --no-tags origin '+refs/heads/release/*:refs/remotes/origin/release/*' || true
+
+          reachable=0
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then reachable=1; fi
+          for ref in $(git for-each-ref --format='%(refname)' refs/remotes/origin/release); do
+            if git merge-base --is-ancestor "$GITHUB_SHA" "$ref"; then reachable=1; fi
+          done
+
+          if [ "$reachable" -ne 1 ]; then
+            echo "::error::tag $GITHUB_REF_NAME 所在提交不属于 master 或 release/* 分支，禁止发布"
+            exit 1
+          fi
+          echo "tag 来源校验通过: $GITHUB_REF_NAME"
 
       - uses: actions/setup-node@v4
         with:
@@ -79,6 +109,13 @@ jobs:
         run: npm run build
 
       - name: 发布
-        run: npm publish --access public --provenance
+        run: |
+          # 预发布 tag（如 v2.38.0-rc.1）发布到 next，正式 tag 发布到 latest
+          DIST_TAG=latest
+          case "$GITHUB_REF_NAME" in
+            *-*) DIST_TAG=next ;;
+          esac
+          echo "发布 dist-tag: $DIST_TAG"
+          npm publish --access public --provenance --tag "$DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
